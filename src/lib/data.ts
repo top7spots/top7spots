@@ -3,6 +3,7 @@ import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import type { AdminCollection, Attraction, City, Destination, Guide } from "@/lib/types";
+import { slugify } from "@/lib/format";
 
 const dataDirectory = path.join(process.cwd(), "src", "data");
 
@@ -77,8 +78,9 @@ export async function getFeaturedCities() {
 }
 
 export async function getCityBySlug(slug: string) {
+  const normalizedSlug = slugify(slug);
   const cities = await getCities();
-  return cities.find((city) => city.slug === slug);
+  return cities.find((city) => city.slug === normalizedSlug);
 }
 
 export async function getDestinations() {
@@ -92,8 +94,9 @@ export async function getPublishedDestinations() {
 }
 
 export async function getDestinationsByCity(citySlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const destinations = await getPublishedDestinations();
-  return destinations.filter((destination) => destination.citySlug === citySlug);
+  return destinations.filter((destination) => destination.citySlug === normalizedCitySlug);
 }
 
 export async function getDestination(slug: string) {
@@ -102,9 +105,11 @@ export async function getDestination(slug: string) {
 }
 
 export async function getDestinationByCityAndSlug(citySlug: string, destinationSlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const destinations = await getPublishedDestinations();
   return destinations.find(
-    (destination) => destination.citySlug === citySlug && destination.slug === destinationSlug,
+    (destination) =>
+      destination.citySlug === normalizedCitySlug && destination.slug === destinationSlug,
   );
 }
 
@@ -119,8 +124,9 @@ export async function getPublishedGuides() {
 }
 
 export async function getGuidesByCity(citySlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const guides = await getPublishedGuides();
-  return guides.filter((guide) => guide.citySlug === citySlug);
+  return guides.filter((guide) => guide.citySlug === normalizedCitySlug);
 }
 
 export async function getGuide(slug: string) {
@@ -129,8 +135,9 @@ export async function getGuide(slug: string) {
 }
 
 export async function getGuideByCityAndSlug(citySlug: string, guideSlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const guides = await getPublishedGuides();
-  return guides.find((guide) => guide.citySlug === citySlug && guide.slug === guideSlug);
+  return guides.find((guide) => guide.citySlug === normalizedCitySlug && guide.slug === guideSlug);
 }
 
 export async function getAttractions() {
@@ -144,14 +151,17 @@ export async function getPublishedAttractions() {
 }
 
 export async function getAttractionsByCity(citySlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const attractions = await getPublishedAttractions();
-  return attractions.filter((attraction) => attraction.citySlug === citySlug);
+  return attractions.filter((attraction) => attraction.citySlug === normalizedCitySlug);
 }
 
 export async function getAttractionByCityAndSlug(citySlug: string, attractionSlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
   const attractions = await getPublishedAttractions();
   return attractions.find(
-    (attraction) => attraction.citySlug === citySlug && attraction.slug === attractionSlug,
+    (attraction) =>
+      attraction.citySlug === normalizedCitySlug && attraction.slug === attractionSlug,
   );
 }
 
@@ -180,6 +190,41 @@ export async function upsertItem<T extends AdminCollection>(
   }
 
   await writeCollection(collection, items);
+}
+
+export async function updateCityReferences(previousSlug: string, city: Pick<City, "id" | "name" | "slug">) {
+  const normalizedPreviousSlug = slugify(previousSlug);
+
+  if (!normalizedPreviousSlug || normalizedPreviousSlug === city.slug) {
+    return;
+  }
+
+  const destinations = await readCollection("destinations");
+  const updatedDestinations = destinations.map((destination) =>
+    slugify(destination.citySlug) === normalizedPreviousSlug
+      ? { ...destination, cityId: city.id, citySlug: city.slug, city: city.name }
+      : destination,
+  );
+
+  const guides = await readCollection("guides");
+  const updatedGuides = guides.map((guide) =>
+    slugify(guide.citySlug) === normalizedPreviousSlug
+      ? { ...guide, cityId: city.id, citySlug: city.slug }
+      : guide,
+  );
+
+  const attractions = await readCollection("attractions");
+  const updatedAttractions = attractions.map((attraction) =>
+    slugify(attraction.citySlug) === normalizedPreviousSlug
+      ? { ...attraction, cityId: city.id, citySlug: city.slug, city: city.name }
+      : attraction,
+  );
+
+  await Promise.all([
+    writeCollection("destinations", updatedDestinations),
+    writeCollection("guides", updatedGuides),
+    writeCollection("attractions", updatedAttractions),
+  ]);
 }
 
 export async function deleteItem(collection: AdminCollection, id: string) {

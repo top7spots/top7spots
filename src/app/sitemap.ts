@@ -5,6 +5,7 @@ import {
   getPublishedDestinations,
   getPublishedGuides,
 } from "@/lib/data";
+import { slugify } from "@/lib/format";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -29,25 +30,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     ...cities.map((city) => ({
-      url: absoluteUrl(`/${city.slug}`),
+      url: absoluteUrl(`/${slugify(city.slug)}`),
       lastModified: lastModified(city.updatedAt, city.createdAt),
       changeFrequency: "weekly" as const,
       priority: 0.9,
     })),
     ...destinations.map((destination) => ({
-      url: absoluteUrl(`/${destination.citySlug}/destinations/${destination.slug}`),
+      url: absoluteUrl(`/${slugify(destination.citySlug)}/destinations/${destination.slug}`),
       lastModified: lastModified(destination.updatedAt, destination.createdAt),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
     ...guides.map((guide) => ({
-      url: absoluteUrl(`/${guide.citySlug}/guides/${guide.slug}`),
+      url: absoluteUrl(`/${slugify(guide.citySlug)}/guides/${guide.slug}`),
       lastModified: lastModified(guide.updatedAt, guide.createdAt),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
     ...attractions.map((attraction) => ({
-      url: absoluteUrl(`/${attraction.citySlug}/attractions/${attraction.slug}`),
+      url: absoluteUrl(`/${slugify(attraction.citySlug)}/attractions/${attraction.slug}`),
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),

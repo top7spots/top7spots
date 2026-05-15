@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
-import { deleteItem, getCityBySlug, upsertItem } from "@/lib/data";
+import { deleteItem, getCities, getCityBySlug, updateCityReferences, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
 import type { Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
@@ -34,7 +34,7 @@ function idFrom(prefix: string, name: string) {
 }
 
 async function cityContext(formData: FormData) {
-  const citySlug = value(formData, "citySlug") || "muscat";
+  const citySlug = slugify(value(formData, "citySlug")) || "muscat";
   const city = await getCityBySlug(citySlug);
 
   return {
@@ -48,6 +48,13 @@ function redirectWithUploadError(error: unknown): never {
   const message =
     error instanceof Error ? error.message : "Image upload failed. Please choose another image.";
   redirect(`/admin/dashboard?uploadError=${encodeURIComponent(message)}`);
+}
+
+function redirectWithCityError(error: string, formData: FormData): never {
+  const id = value(formData, "id");
+  const mode = id ? `&mode=edit&id=${encodeURIComponent(id)}` : "&mode=add";
+
+  redirect(`/admin/dashboard?section=cities${mode}&saveError=${encodeURIComponent(error)}`);
 }
 
 function revalidateCoreRoutes(citySlug?: string, itemSlug?: string, type?: "destinations" | "guides") {
@@ -81,7 +88,24 @@ export async function logoutAction() {
 
 export async function saveCityAction(formData: FormData) {
   const name = value(formData, "name");
-  const slug = value(formData, "slug") || slugify(name);
+  const slug = slugify(name);
+  const id = value(formData, "id") || slug;
+  const existingSlug = slugify(value(formData, "existingSlug"));
+
+  if (!name || !slug) {
+    redirectWithCityError("City name is required to generate a URL-safe slug.", formData);
+  }
+
+  const cities = await getCities();
+  const duplicate = cities.find((city) => slugify(city.slug) === slug && city.id !== id);
+
+  if (duplicate) {
+    redirectWithCityError(
+      `A city with the slug "${slug}" already exists. Use a different city name.`,
+      formData,
+    );
+  }
+
   let heroImage: string;
 
   try {
@@ -113,7 +137,7 @@ export async function saveCityAction(formData: FormData) {
   }
 
   const item: City = {
-    id: value(formData, "id") || slug,
+    id,
     name,
     slug,
     country: value(formData, "country"),
@@ -135,6 +159,10 @@ export async function saveCityAction(formData: FormData) {
   };
 
   await upsertItem("cities", item);
+  await updateCityReferences(existingSlug, item);
+  if (existingSlug && existingSlug !== item.slug) {
+    revalidateCoreRoutes(existingSlug);
+  }
   revalidateCoreRoutes(item.slug);
   redirect("/admin/dashboard?section=cities&updated=cities");
 }

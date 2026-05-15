@@ -34,6 +34,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { slugify } from "@/lib/format";
 import type { AdminCollection, Attraction, City, Destination, Guide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
 export function AdminCrud({ data, searchParams }: AdminCrudProps) {
   const activeSection = getSection(searchParams.section);
   const uploadError = getParam(searchParams.uploadError);
+  const saveError = getParam(searchParams.saveError);
   const flash = getParam(searchParams.updated) || getParam(searchParams.deleted);
 
   return (
@@ -129,8 +131,8 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
           </Link>
         </div>
 
-        {uploadError ? (
-          <Alert tone="danger">{uploadError}</Alert>
+        {uploadError || saveError ? (
+          <Alert tone="danger">{uploadError || saveError}</Alert>
         ) : null}
         {flash ? (
           <Alert tone="success">Content saved. The CMS section has been refreshed.</Alert>
@@ -580,10 +582,11 @@ function CityForm({ title, city, backHref }: { title: string; city?: City; backH
     <EditShell title={title} backHref={backHref}>
       <form action={saveCityAction} className="grid gap-6">
         <input type="hidden" name="id" value={city?.id ?? ""} />
+        <input type="hidden" name="existingSlug" value={city?.slug ?? ""} />
         <HiddenTimestamps createdAt={city?.createdAt} />
         <FormSection title="Basic info">
           <Field label="Name" name="name" defaultValue={city?.name} placeholder="Dubai" />
-          <Field label="Slug" name="slug" defaultValue={city?.slug} placeholder="dubai" />
+          <SlugPreview slug={city ? slugify(city.name) || slugify(city.slug) : ""} />
           <Field label="Country" name="country" defaultValue={city?.country} placeholder="United Arab Emirates" />
           <Field label="Country code" name="countryCode" defaultValue={city?.countryCode} placeholder="AE" />
           <Field label="Region" name="region" defaultValue={city?.region} placeholder="Dubai Emirate" />
@@ -1085,6 +1088,20 @@ function Field({
     <div className="grid gap-2">
       <Label htmlFor={name}>{label}</Label>
       <Input id={name} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} />
+    </div>
+  );
+}
+
+function SlugPreview({ slug }: { slug: string }) {
+  return (
+    <div className="grid gap-2">
+      <Label>Slug</Label>
+      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+        Slug: {slug || "generated-from-city-name"}
+      </div>
+      <p className="text-xs leading-5 text-slate-500">
+        Generated automatically from the city name and saved as a lowercase URL-safe slug.
+      </p>
     </div>
   );
 }

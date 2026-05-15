@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
@@ -6,8 +7,16 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getDestinations } from "@/lib/data";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = seoMetadata({
+  title: "Destinations and Hidden Gems | Top7Spots",
+  description:
+    "Explore curated destinations, hidden gems, beaches, mountains, city spots, and travel ideas from Top7Spots.",
+  path: "/destinations",
+});
 
 const filters = [
   "Beaches",

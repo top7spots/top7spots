@@ -20,17 +20,19 @@ import { BrandLogo } from "@/components/brand-logo";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteFooter } from "@/components/site-footer";
 import { getPublishedCities } from "@/lib/data";
+import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Top7Spots | Discover The World's Best Travel Spots",
-  description:
-    "Curated travel cities, hidden gems, beaches, mountains, road trips, and unforgettable experiences.",
-};
-
 const heroImage = "/uploads/global/home-hero.jpg";
+
+export const metadata: Metadata = seoMetadata({
+  title: defaultSeoTitle,
+  description: defaultSeoDescription,
+  path: "/",
+  image: heroImage,
+});
 
 const categoryPills = [
   { label: "Beaches", icon: Waves },

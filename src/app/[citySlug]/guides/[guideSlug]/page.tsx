@@ -16,6 +16,7 @@ import {
   getPublishedGuides,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -42,15 +43,16 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
     return {};
   }
 
-  return {
+  return seoMetadata({
     title: guide.seoTitle || `${guide.title} | Top7Spots Travel Guides`,
-    description: guide.seoDescription || guide.excerpt || `A practical ${city.name} travel guide from Top7Spots.`,
-    openGraph: {
-      title: `${guide.title} | Top7Spots`,
-      description: guide.seoDescription || guide.excerpt,
-      images: guide.coverImage || guide.image ? [guide.coverImage || guide.image] : undefined,
-    },
-  };
+    description:
+      guide.seoDescription ||
+      guide.excerpt ||
+      `A practical ${city.name} travel guide from Top7Spots.`,
+    path: `/${city.slug}/guides/${guide.slug}`,
+    image: guide.coverImage || guide.image,
+    type: "article",
+  });
 }
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {

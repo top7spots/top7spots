@@ -32,6 +32,7 @@ import {
   getPublishedCities,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -70,18 +71,20 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     return {};
   }
 
+  const title = city.seoTitle || `Top 7 Spots in ${city.name}, ${city.country} | Top7Spots`;
+  const description =
+    city.seoDescription ||
+    city.shortDescription ||
+    `Discover curated travel spots, guides, and attractions in ${city.name}, ${city.country}.`;
+
   return {
-    title: city.seoTitle || `Top 7 Spots in ${city.name}, ${city.country} | Top7Spots`,
-    description:
-      city.seoDescription ||
-      city.shortDescription ||
-      `Discover curated travel spots, guides, and attractions in ${city.name}, ${city.country}.`,
+    ...seoMetadata({
+      title,
+      description,
+      path: `/${city.slug}`,
+      image: city.heroImage || city.featuredImage || city.cardImage,
+    }),
     keywords: city.seoKeywords,
-    openGraph: {
-      title: city.seoTitle || `Top 7 Spots in ${city.name}, ${city.country}`,
-      description: city.seoDescription || city.shortDescription,
-      images: city.heroImage ? [city.heroImage] : undefined,
-    },
   };
 }
 

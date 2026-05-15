@@ -1,18 +1,41 @@
 import type { Metadata } from "next";
+import {
+  absoluteImageUrl,
+  absoluteUrl,
+  defaultSeoDescription,
+  defaultSeoTitle,
+  siteBaseUrl,
+  siteName,
+} from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Top7Spots | Curated Travel Destinations and Hidden Gems",
-  description:
-    "Top7Spots is a premium global travel discovery platform for curated destinations, hidden gems, road trips, beaches, mountains, guides, and luxury experiences.",
-  metadataBase: new URL("https://top7spots.com"),
+  title: defaultSeoTitle,
+  description: defaultSeoDescription,
+  metadataBase: new URL(siteBaseUrl),
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
   openGraph: {
-    title: "Top7Spots",
-    description:
-      "Discover curated travel destinations, hidden gems, guides, and top recommended places around the world.",
-    url: "https://top7spots.com",
-    siteName: "Top7Spots",
+    title: defaultSeoTitle,
+    description: defaultSeoDescription,
+    url: absoluteUrl("/"),
+    siteName,
     type: "website",
+    images: [
+      {
+        url: absoluteImageUrl(),
+        width: 1200,
+        height: 630,
+        alt: defaultSeoTitle,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultSeoTitle,
+    description: defaultSeoDescription,
+    images: [absoluteImageUrl()],
   },
 };
 

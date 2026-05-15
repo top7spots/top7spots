@@ -13,6 +13,7 @@ import {
   getPublishedAttractions,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -39,18 +40,15 @@ export async function generateMetadata({ params }: AttractionPageProps): Promise
     return {};
   }
 
-  return {
+  return seoMetadata({
     title: attraction.seoTitle || `${attraction.name} in ${city.name} | Top7Spots`,
     description:
       attraction.seoDescription ||
       attraction.description ||
       `Explore ${attraction.name} in ${city.name} with Top7Spots.`,
-    openGraph: {
-      title: `${attraction.name} | Top7Spots`,
-      description: attraction.seoDescription || attraction.description,
-      images: attraction.image ? [attraction.image] : undefined,
-    },
-  };
+    path: `/${city.slug}/attractions/${attraction.slug}`,
+    image: attraction.image,
+  });
 }
 
 export default async function AttractionPage({ params }: AttractionPageProps) {

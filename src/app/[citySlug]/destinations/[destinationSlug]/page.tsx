@@ -29,6 +29,7 @@ import {
   getPublishedDestinations,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -57,18 +58,15 @@ export async function generateMetadata({
     return {};
   }
 
-  return {
+  return seoMetadata({
     title: destination.seoTitle || `${destination.name} in ${city.name} | Top7Spots`,
     description:
       destination.seoDescription ||
       destination.summary ||
       `Explore ${destination.name} in ${city.name} with Top7Spots.`,
-    openGraph: {
-      title: destination.seoTitle || `${destination.name} | Top7Spots`,
-      description: destination.seoDescription || destination.summary,
-      images: destination.image ? [destination.image] : undefined,
-    },
-  };
+    path: `/${city.slug}/destinations/${destination.slug}`,
+    image: destination.image,
+  });
 }
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { BookOpen, Compass, Search } from "lucide-react";
 import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
@@ -5,8 +6,17 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Input } from "@/components/ui/input";
 import { getGuides } from "@/lib/data";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = seoMetadata({
+  title: "Travel Guides and Inspiration | Top7Spots",
+  description:
+    "Read practical travel guides, road trip ideas, seasonal tips, and curated destination inspiration from Top7Spots.",
+  path: "/guides",
+  type: "article",
+});
 
 export default async function GuidesPage() {
   const guides = await getGuides();

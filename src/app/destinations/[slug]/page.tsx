@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { getAttractions, getDestination, getDestinations } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -45,17 +46,15 @@ export async function generateMetadata({
     return {};
   }
 
-  return {
-    title: `${destination.name} Travel Guide | Top7Spots`,
+  return seoMetadata({
+    title: destination.seoTitle || `${destination.name} Travel Guide | Top7Spots`,
     description:
+      destination.seoDescription ||
       destination.summary ||
       `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`,
-    openGraph: {
-      title: `${destination.name} | Top7Spots`,
-      description: destination.summary,
-      images: destination.image ? [destination.image] : undefined,
-    },
-  };
+    path: `/destinations/${destination.slug}`,
+    image: destination.image,
+  });
 }
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {

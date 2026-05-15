@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { getGuide, getGuides } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +30,13 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
     return {};
   }
 
-  return {
-    title: `${guide.title} | Top7Spots Travel Guides`,
-    description: guide.excerpt || "A practical travel guide from Top7Spots.",
-    openGraph: {
-      title: `${guide.title} | Top7Spots`,
-      description: guide.excerpt,
-      images: guide.image ? [guide.image] : undefined,
-    },
-  };
+  return seoMetadata({
+    title: guide.seoTitle || `${guide.title} | Top7Spots Travel Guides`,
+    description: guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots.",
+    path: `/guides/${guide.slug}`,
+    image: guide.coverImage || guide.image,
+    type: "article",
+  });
 }
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {

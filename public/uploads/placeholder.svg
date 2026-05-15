@@ -1,0 +1,7 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#E5E7EB"/>
+  <rect x="80" y="80" width="1040" height="640" rx="48" fill="#F8FAFC"/>
+  <path d="M260 570L455 365L600 505L720 385L940 570H260Z" fill="#CBD5E1"/>
+  <circle cx="795" cy="255" r="72" fill="#93C5FD"/>
+  <text x="600" y="675" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#0A2A66">Top7Spots Image</text>
+</svg>

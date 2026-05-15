@@ -1,0 +1,2 @@
+cd "C:\Web Project\xplorevia"
+npm run dev

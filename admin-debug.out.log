@@ -1,0 +1,42 @@
+
+> xplorevia@0.1.0 dev
+> next dev --turbopack --hostname localhost --port 3001
+
+   ▲ Next.js 15.5.18 (Turbopack)
+   - Local:        http://localhost:3001
+   - Network:      http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 8.4s
+ GET / 200 in 13192ms
+ GET / 200 in 1912ms
+ GET / 200 in 1468ms
+ ✓ Compiled in 724ms
+ ✓ Compiled / in 410ms
+ GET / 200 in 1998ms
+ ✓ Compiled in 292ms
+ ○ Compiling / ...
+ ✓ Compiled / in 507ms
+ GET / 200 in 2033ms
+ ✓ Compiled in 286ms
+ ✓ Compiled / in 186ms
+ GET / 200 in 2118ms
+ ✓ Compiled in 1005ms
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 1715ms
+ GET / 404 in 2196ms
+ GET / 404 in 407ms
+ GET / 404 in 912ms
+ ✓ Compiled in 1594ms
+ GET / 200 in 1988ms
+ GET / 200 in 604ms
+ ○ Compiling /_error ...
+ GET / 200 in 1669ms
+ ✓ Compiled in 6.5s
+ ✓ Compiled /_error in 7.3s
+ GET /_next/image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1500530855697-b586d89ba3ee%3Fauto%3Dformat%26fit%3Dcrop%26w%3D2200%26q%3D85&w=1920&q=75 500 in 14980ms
+ GET /_next/image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1500530855697-b586d89ba3ee%3Fauto%3Dformat%26fit%3Dcrop%26w%3D2200%26q%3D85&w=1920&q=75 500 in 7638ms
+ GET / 200 in 1183ms
+[?25h

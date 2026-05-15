@@ -1,0 +1,260 @@
+[
+  {
+    "id": "dst-muscat-mutrah",
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "slug": "mutrah-corniche",
+    "name": "Mutrah Corniche",
+    "city": "Muscat",
+    "region": "Muscat Governorate",
+    "category": "Coastal city walk",
+    "location": "Muscat, Muscat Governorate",
+    "duration": "2-4 hours",
+    "bestSeason": "October to April",
+    "image": "/uploads/destinations/mutrah-corniche-60fdae94-b7d1-4dc4-a5b7-95c1ce795643.jpg",
+    "galleryImages": [
+      "/uploads/destinations/mutrah-corniche-gallery-1-1d84266d-e90d-4580-961e-28ac37b7425f.jpg"
+    ],
+    "summary": "A waterfront promenade framed by old merchant houses, frankincense stalls, and the harbor-side rhythm of Muscat.",
+    "description": "Mutrah is one of Oman's easiest first-day experiences: wander the corniche, browse the souq, then climb toward the fort viewpoints as the light turns gold over the harbor.",
+    "highlights": [
+      "Mutrah Souq fragrance stalls",
+      "Harbor viewpoints",
+      "Evening walks along the corniche"
+    ],
+    "practicalInfo": [
+      "Arrive near sunset for cooler weather",
+      "Carry small cash for the souq",
+      "Dress modestly around traditional market areas"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "Arrive near sunset for cooler weather",
+      "Carry small cash for the souq",
+      "Dress modestly around traditional market areas"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 1,
+    "seoTitle": "Mutrah Corniche in Muscat | Top7Spots",
+    "seoDescription": "A waterfront promenade framed by old merchant houses, frankincense stalls, and the harbor-side rhythm of Muscat.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T18:03:12.795Z"
+  },
+  {
+    "id": "dst-jebel-akhdar",
+    "slug": "jebel-akhdar",
+    "name": "Jebel Akhdar",
+    "city": "Nizwa",
+    "region": "Al Dakhiliyah",
+    "category": "Mountain escape",
+    "duration": "Full day or overnight",
+    "bestSeason": "March to May",
+    "image": "/uploads/destinations/jebel-akhdar.jpg",
+    "summary": "Terraced villages, canyon views, rose farms, and crisp mountain air high above central Oman.",
+    "description": "Known as the Green Mountain, Jebel Akhdar rewards travelers with cooler temperatures, old stone villages, and balcony trails overlooking dramatic wadis.",
+    "highlights": [
+      "Diana's Point views",
+      "Rose terraces in spring",
+      "Village balcony walks"
+    ],
+    "practicalInfo": [
+      "A 4WD is required at the mountain checkpoint",
+      "Bring a light layer for evenings",
+      "Book lunch stops ahead in peak season"
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "location": "Nizwa, Al Dakhiliyah",
+    "galleryImages": [
+      "/uploads/destinations/jebel-akhdar-gallery-1.jpg"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "A 4WD is required at the mountain checkpoint",
+      "Bring a light layer for evenings",
+      "Book lunch stops ahead in peak season"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 2,
+    "seoTitle": "Jebel Akhdar in Muscat | Top7Spots",
+    "seoDescription": "Terraced villages, canyon views, rose farms, and crisp mountain air high above central Oman.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "dst-wahiba-sands",
+    "slug": "wahiba-sands",
+    "name": "Wahiba Sands",
+    "city": "Bidiyah",
+    "region": "Ash Sharqiyah",
+    "category": "Desert experience",
+    "duration": "Overnight",
+    "bestSeason": "November to March",
+    "image": "/uploads/destinations/wahiba-sands.jpg",
+    "summary": "Rolling copper dunes, quiet camps, and star-heavy skies at the edge of Oman's eastern desert.",
+    "description": "Wahiba Sands is ideal for a slow overnight: cross soft dunes at golden hour, share Omani coffee, and wake before sunrise when the desert is almost silent.",
+    "highlights": [
+      "Dune viewpoints",
+      "Desert camps",
+      "Sunrise photography"
+    ],
+    "practicalInfo": [
+      "Use an experienced local driver for dune routes",
+      "Pack warm layers in winter",
+      "Confirm camp transfer details before arrival"
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "location": "Bidiyah, Ash Sharqiyah",
+    "galleryImages": [
+      "/uploads/destinations/wahiba-sands-gallery-1.jpg"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "Use an experienced local driver for dune routes",
+      "Pack warm layers in winter",
+      "Confirm camp transfer details before arrival"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 3,
+    "seoTitle": "Wahiba Sands in Muscat | Top7Spots",
+    "seoDescription": "Rolling copper dunes, quiet camps, and star-heavy skies at the edge of Oman's eastern desert.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "dst-salalah",
+    "slug": "salalah-khareef",
+    "name": "Salalah Khareef",
+    "city": "Salalah",
+    "region": "Dhofar",
+    "category": "Seasonal nature",
+    "duration": "3-5 days",
+    "bestSeason": "June to September",
+    "image": "/uploads/destinations/salalah-khareef.jpg",
+    "summary": "Mist, waterfalls, coconut palms, and green hills during Oman's remarkable monsoon season.",
+    "description": "During Khareef, Dhofar feels completely different from northern Oman. Use Salalah as a base for wadis, viewpoints, beaches, and frankincense heritage sites.",
+    "highlights": [
+      "Ayn waterfalls",
+      "Frankincense heritage",
+      "Misty mountain drives"
+    ],
+    "practicalInfo": [
+      "Expect crowds during festival weekends",
+      "Roads can be foggy in the hills",
+      "Reserve accommodation early for Khareef"
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "location": "Salalah, Dhofar",
+    "galleryImages": [
+      "/uploads/destinations/salalah-khareef-gallery-1.jpg"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "Expect crowds during festival weekends",
+      "Roads can be foggy in the hills",
+      "Reserve accommodation early for Khareef"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 4,
+    "seoTitle": "Salalah Khareef in Muscat | Top7Spots",
+    "seoDescription": "Mist, waterfalls, coconut palms, and green hills during Oman's remarkable monsoon season.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "dst-wadi-shab",
+    "slug": "wadi-shab",
+    "name": "Wadi Shab",
+    "city": "Tiwi",
+    "region": "Ash Sharqiyah",
+    "category": "Wadi adventure",
+    "duration": "Half day",
+    "bestSeason": "October to April",
+    "image": "/uploads/destinations/wadi-shab.jpg",
+    "summary": "A canyon hike with turquoise pools, palm pockets, and a hidden cave swim near the coast road.",
+    "description": "Wadi Shab blends a short boat crossing, rocky hiking, and swimming. It is one of Oman's best active day trips when water levels and conditions are suitable.",
+    "highlights": [
+      "Turquoise pools",
+      "Canyon hiking",
+      "Hidden cave swim"
+    ],
+    "practicalInfo": [
+      "Wear water-friendly shoes",
+      "Keep valuables dry",
+      "Avoid visiting after heavy rain warnings"
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "location": "Tiwi, Ash Sharqiyah",
+    "galleryImages": [
+      "/uploads/destinations/wadi-shab-gallery-1.jpg"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "Wear water-friendly shoes",
+      "Keep valuables dry",
+      "Avoid visiting after heavy rain warnings"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 5,
+    "seoTitle": "Wadi Shab in Muscat | Top7Spots",
+    "seoDescription": "A canyon hike with turquoise pools, palm pockets, and a hidden cave swim near the coast road.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "dst-nizwa-fort",
+    "slug": "nizwa-fort",
+    "name": "Nizwa Fort",
+    "city": "Nizwa",
+    "region": "Al Dakhiliyah",
+    "category": "Heritage landmark",
+    "duration": "2-3 hours",
+    "bestSeason": "October to April",
+    "image": "/uploads/destinations/nizwa-fort.jpg",
+    "summary": "A monumental circular tower, old souq lanes, and a gateway into Oman's interior heritage routes.",
+    "description": "Nizwa Fort anchors a rewarding heritage day. Pair the fort with the souq, nearby villages, and mountain drives into Al Dakhiliyah.",
+    "highlights": [
+      "Fort tower views",
+      "Nizwa Souq",
+      "Nearby date and pottery shops"
+    ],
+    "practicalInfo": [
+      "Go early for quieter courtyards",
+      "Friday market starts very early",
+      "Combine with Bahla or Jabrin for a full heritage loop"
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "location": "Nizwa, Al Dakhiliyah",
+    "galleryImages": [
+      "/uploads/destinations/nizwa-fort-gallery-1.jpg"
+    ],
+    "howToGo": "",
+    "travelTips": [
+      "Go early for quieter courtyards",
+      "Friday market starts very early",
+      "Combine with Bahla or Jabrin for a full heritage loop"
+    ],
+    "nearbyAttractions": [],
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 6,
+    "seoTitle": "Nizwa Fort in Muscat | Top7Spots",
+    "seoDescription": "A monumental circular tower, old souq lanes, and a gateway into Oman's interior heritage routes.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  }
+]

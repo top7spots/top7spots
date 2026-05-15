@@ -1,0 +1,102 @@
+[
+  {
+    "id": "guide-first-trip",
+    "slug": "first-time-oman-itinerary",
+    "title": "First-Time Oman Itinerary",
+    "category": "Planning",
+    "readTime": "7 min read",
+    "image": "/uploads/guides/first-time-oman-itinerary.jpg",
+    "excerpt": "A balanced route for Muscat, the mountains, desert, wadis, and coastal towns without rushing every day.",
+    "content": [
+      "Start with two nights in Muscat to settle into the pace of Oman and visit Mutrah, the Sultan Qaboos Grand Mosque, and the coast.",
+      "Continue inland to Nizwa and Jebel Akhdar for forts, souqs, villages, and cooler mountain air.",
+      "Add one night in Wahiba Sands, then return toward Muscat via Wadi Shab or Sur for a compact but varied loop."
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "coverImage": "/uploads/guides/first-time-oman-itinerary-cover.jpg",
+    "author": "Top7Spots Editorial",
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 1,
+    "seoTitle": "First-Time Oman Itinerary | Top7Spots",
+    "seoDescription": "A balanced route for Muscat, the mountains, desert, wadis, and coastal towns without rushing every day.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "guide-driving",
+    "slug": "driving-in-oman",
+    "title": "Driving in Oman",
+    "category": "Transport",
+    "readTime": "5 min read",
+    "image": "/uploads/guides/driving-in-oman.jpg",
+    "excerpt": "What to know before renting a car, choosing a 4WD, and planning fuel stops between regions.",
+    "content": [
+      "Major highways are generally straightforward, but distances can be long and services become sparse away from towns.",
+      "A 4WD is essential for Jebel Akhdar and useful for some desert approaches, mountain tracks, and remote beaches.",
+      "Avoid wadi crossings during rain alerts and leave extra time for mountain roads after dark."
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "coverImage": "/uploads/guides/driving-in-oman-cover.jpg",
+    "author": "Top7Spots Editorial",
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 2,
+    "seoTitle": "Driving in Oman | Top7Spots",
+    "seoDescription": "What to know before renting a car, choosing a 4WD, and planning fuel stops between regions.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "guide-seasons",
+    "slug": "best-time-to-visit-oman",
+    "title": "Best Time to Visit Oman",
+    "category": "Seasons",
+    "readTime": "4 min read",
+    "image": "/uploads/guides/best-time-to-visit-oman.jpg",
+    "excerpt": "A seasonal guide to winter road trips, spring roses, summer mountains, and Salalah's Khareef.",
+    "content": [
+      "October to April is the classic travel window for comfortable city walks, hikes, camping, and road trips.",
+      "March and April bring rose season to Jebel Akhdar, while summer travelers often focus on higher elevations or Dhofar.",
+      "Salalah's Khareef season runs in the summer months, when mist and greenery transform the south."
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "coverImage": "/uploads/guides/best-time-to-visit-oman-cover.jpg",
+    "author": "Top7Spots Editorial",
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 3,
+    "seoTitle": "Best Time to Visit Oman | Top7Spots",
+    "seoDescription": "A seasonal guide to winter road trips, spring roses, summer mountains, and Salalah's Khareef.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  },
+  {
+    "id": "guide-culture",
+    "slug": "oman-culture-etiquette",
+    "title": "Oman Culture and Etiquette",
+    "category": "Culture",
+    "readTime": "6 min read",
+    "image": "/uploads/guides/oman-culture-etiquette.jpg",
+    "excerpt": "Simple, respectful tips for markets, mosques, clothing, greetings, and photography.",
+    "content": [
+      "Dress modestly in towns, souqs, villages, and religious sites; swimwear belongs at pools, beaches, and resort areas.",
+      "Ask before photographing people, especially in traditional markets and rural communities.",
+      "Hospitality is central to Omani culture, so accept coffee or dates graciously when offered and keep interactions unhurried."
+    ],
+    "cityId": "muscat",
+    "citySlug": "muscat",
+    "coverImage": "/uploads/guides/oman-culture-etiquette-cover.jpg",
+    "author": "Top7Spots Editorial",
+    "status": "published",
+    "isFeatured": true,
+    "displayOrder": 4,
+    "seoTitle": "Oman Culture and Etiquette | Top7Spots",
+    "seoDescription": "Simple, respectful tips for markets, mosques, clothing, greetings, and photography.",
+    "createdAt": "2026-05-15T00:00:00.000Z",
+    "updatedAt": "2026-05-15T00:00:00.000Z"
+  }
+]

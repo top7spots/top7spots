@@ -72,9 +72,6 @@ export default async function Home() {
             <Link href="#inspiration" className="transition hover:text-[#1D4ED8]">
               Inspiration
             </Link>
-            <Link href="/admin/login" className="transition hover:text-[#1D4ED8]">
-              Admin
-            </Link>
           </nav>
           <button
             type="button"

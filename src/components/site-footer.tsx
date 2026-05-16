@@ -32,7 +32,6 @@ export function SiteFooter() {
             <Link href="/" className="hover:text-white">Discover</Link>
             <Link href="/destinations" className="hover:text-white">Destinations</Link>
             <Link href="/guides" className="hover:text-white">Travel guides</Link>
-            <Link href="/admin/login" className="hover:text-white">Admin</Link>
           </div>
         </div>
 

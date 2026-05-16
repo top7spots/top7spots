@@ -130,9 +130,6 @@ export default async function CityPage({ params }: CityPageProps) {
               <Link href={`/${city.slug}`} className="transition hover:text-[#1D4ED8]">
                 {city.name}
               </Link>
-              <Link href="/admin/login" className="transition hover:text-[#1D4ED8]">
-                Admin
-              </Link>
             </nav>
 
             <button

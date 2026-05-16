@@ -42,29 +42,27 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 Invalid admin credentials.
               </div>
             ) : null}
-            <form action="/api/admin/login" method="post" autoComplete="off" className="grid gap-5">
-              <input type="text" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
-              <input type="password" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" />
+            <form action="/api/admin/login" method="post" className="grid gap-5">
               <div className="grid gap-2">
-                <Label htmlFor="admin-user-entry">Email</Label>
+                <Label htmlFor="admin-user">Email</Label>
                 <Input
-                  id="admin-user-entry"
-                  name="admin_user"
-                  type="text"
+                  id="admin-user"
+                  name="email"
+                  type="email"
                   inputMode="email"
-                  autoComplete="off"
+                  autoComplete="username"
                   autoCorrect="off"
                   autoCapitalize="none"
                   spellCheck={false}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="admin-pass-entry">Password</Label>
+                <Label htmlFor="admin-password">Password</Label>
                 <Input
-                  id="admin-pass-entry"
-                  name="admin_pass"
+                  id="admin-password"
+                  name="password"
                   type="password"
-                  autoComplete="new-password"
+                  autoComplete="current-password"
                 />
               </div>
               <button

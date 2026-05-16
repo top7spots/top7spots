@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Globe2, Menu, Search } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -15,7 +14,6 @@ const navigation = [
   { href: "/", label: "Discover" },
   { href: "/destinations", label: "Destinations" },
   { href: "/guides", label: "Guides" },
-  { href: "/admin/login", label: "Admin" },
 ];
 
 export function SiteHeader() {
@@ -35,7 +33,7 @@ export function SiteHeader() {
         </div>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-          {navigation.slice(0, 3).map((item) => (
+          {navigation.map((item) => (
             <Link key={item.href} href={item.href} className="transition hover:text-[#1D4ED8]">
               {item.label}
             </Link>
@@ -47,15 +45,6 @@ export function SiteHeader() {
             <Globe2 className="size-4" aria-hidden="true" />
             EN
           </Button>
-          <Link
-            href="/admin/login"
-            className={buttonVariants({
-              size: "sm",
-              className: "rounded-full bg-[#0A2A66] px-4 text-white hover:bg-[#1D4ED8]",
-            })}
-          >
-            Admin
-          </Link>
         </div>
 
         <Sheet>

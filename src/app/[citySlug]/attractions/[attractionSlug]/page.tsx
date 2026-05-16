@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, MapPin, Sparkles } from "lucide-react";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: AttractionPageProps): Promise
   }
 
   return seoMetadata({
-    title: attraction.seoTitle || `${attraction.name} in ${city.name} | Top7Spots`,
+    title: attraction.seoTitle || `${attraction.name}, ${city.name} | Top7Spots`,
     description:
       attraction.seoDescription ||
       attraction.description ||
@@ -58,6 +59,12 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: city.name, path: `/${city.slug}` },
+          { name: attraction.name, path: `/${city.slug}/attractions/${attraction.slug}` },
+        ]}
+      />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <BreadcrumbJsonLd items={[{ name: "Destinations", path: "/destinations" }]} />
       <SiteHeader />
       <main>
         <section className="border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8">

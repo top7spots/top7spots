@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, Clock, Sparkles } from "lucide-react";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +28,9 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
   }
 
   return seoMetadata({
-    title: guide.seoTitle || `${guide.title} | Top7Spots Travel Guides`,
+    title: guide.seoTitle || `${guide.title} | Top7Spots`,
     description: guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots.",
-    path: `/guides/${guide.slug}`,
+    path: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
     image: guide.coverImage || guide.image,
     type: "article",
   });
@@ -47,6 +48,15 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Guides", path: "/guides" },
+          {
+            name: guide.title,
+            path: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+          },
+        ]}
+      />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">

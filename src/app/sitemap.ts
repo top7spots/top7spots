@@ -29,6 +29,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1,
     },
+    {
+      url: absoluteUrl("/destinations"),
+      changeFrequency: "daily",
+      priority: 0.85,
+    },
+    {
+      url: absoluteUrl("/guides"),
+      changeFrequency: "daily",
+      priority: 0.85,
+    },
     ...cities.map((city) => ({
       url: absoluteUrl(`/${slugify(city.slug)}`),
       lastModified: lastModified(city.updatedAt, city.createdAt),

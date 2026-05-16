@@ -23,6 +23,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { DestinationCard } from "@/components/destination-card";
 import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import {
   getAttractionsByCity,
@@ -66,7 +67,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
     return {};
   }
 
-  const title = city.seoTitle || `Top 7 Spots in ${city.name}, ${city.country} | Top7Spots`;
+  const title = city.seoTitle || `${city.name}, ${city.country} | Top7Spots`;
   const description =
     city.seoDescription ||
     city.shortDescription ||
@@ -108,6 +109,7 @@ export default async function CityPage({ params }: CityPageProps) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
+      <BreadcrumbJsonLd items={[{ name: city.name, path: `/${city.slug}` }]} />
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <header className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">

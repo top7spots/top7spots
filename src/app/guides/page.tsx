@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BookOpen, Compass, Search } from "lucide-react";
 import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ export default async function GuidesPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <BreadcrumbJsonLd items={[{ name: "Guides", path: "/guides" }]} />
       <SiteHeader />
       <main>
         <section className="relative overflow-hidden bg-[#0A2A66] px-4 py-16 text-white sm:px-6 lg:px-8">

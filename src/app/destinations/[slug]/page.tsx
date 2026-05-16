@@ -17,6 +17,7 @@ import {
 import { AttractionCard } from "@/components/attraction-card";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
+import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -43,12 +44,14 @@ export async function generateMetadata({
   }
 
   return seoMetadata({
-    title: destination.seoTitle || `${destination.name} Travel Guide | Top7Spots`,
+    title: destination.seoTitle || `${destination.name} | Top7Spots`,
     description:
       destination.seoDescription ||
       destination.summary ||
       `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`,
-    path: `/destinations/${destination.slug}`,
+    path: destination.citySlug
+      ? `/${destination.citySlug}/destinations/${destination.slug}`
+      : `/destinations/${destination.slug}`,
     image: destination.image,
   });
 }
@@ -89,6 +92,17 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 md:pb-0">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Destinations", path: "/destinations" },
+          {
+            name: destination.name,
+            path: destination.citySlug
+              ? `/${destination.citySlug}/destinations/${destination.slug}`
+              : `/destinations/${destination.slug}`,
+          },
+        ]}
+      />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">

@@ -20,7 +20,9 @@ export function DestinationCard({ destination }: DestinationCardProps) {
     [destination.location, destination.city].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||
     "Global";
-  const href = `/${destination.citySlug || "muscat"}/destinations/${destination.slug}`;
+  const href = destination.citySlug
+    ? `/${destination.citySlug}/destinations/${destination.slug}`
+    : `/destinations/${destination.slug}`;
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">

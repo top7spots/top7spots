@@ -46,21 +46,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     })),
     ...destinations.map((destination) => ({
-      url: absoluteUrl(`/${slugify(destination.citySlug)}/destinations/${destination.slug}`),
+      url: absoluteUrl(
+        destination.citySlug
+          ? `/${slugify(destination.citySlug)}/destinations/${destination.slug}`
+          : `/destinations/${destination.slug}`,
+      ),
       lastModified: lastModified(destination.updatedAt, destination.createdAt),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
     ...guides.map((guide) => ({
-      url: absoluteUrl(`/${slugify(guide.citySlug)}/guides/${guide.slug}`),
+      url: absoluteUrl(
+        guide.citySlug ? `/${slugify(guide.citySlug)}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+      ),
       lastModified: lastModified(guide.updatedAt, guide.createdAt),
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
-    ...attractions.map((attraction) => ({
-      url: absoluteUrl(`/${slugify(attraction.citySlug)}/attractions/${attraction.slug}`),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
+    ...attractions
+      .filter((attraction) => attraction.citySlug)
+      .map((attraction) => ({
+        url: absoluteUrl(`/${slugify(attraction.citySlug)}/attractions/${attraction.slug}`),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
   ];
 }

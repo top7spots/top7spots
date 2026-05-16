@@ -12,7 +12,7 @@ type GuideCardProps = {
 
 export function GuideCard({ guide }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
-  const href = `/${guide.citySlug || "muscat"}/guides/${guide.slug}`;
+  const href = guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
   const imageAlt = `${guide.title} travel guide${guide.citySlug ? ` for ${guide.citySlug}` : ""}`;
 
   return (

@@ -141,7 +141,11 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
                 {featuredDestinations.slice(0, 5).map((destination) => (
                   <Link
                     key={destination.id}
-                    href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                    href={
+                      destination.citySlug
+                        ? `/${destination.citySlug}/destinations/${destination.slug}`
+                        : `/destinations/${destination.slug}`
+                    }
                     className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                   >
                     {destination.name} in {destination.city}

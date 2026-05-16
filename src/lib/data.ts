@@ -11,98 +11,10 @@ type CollectionMap = {
   attractions: Attraction;
 };
 
-type CityRow = {
-  id: string;
-  name: string;
-  slug: string;
-  country: string | null;
-  country_code: string | null;
-  region: string | null;
-  short_description: string | null;
-  long_description: string | null;
-  hero_image: string | null;
-  card_image: string | null;
-  featured_image: string | null;
-  status: string | null;
-  is_featured: boolean | null;
-  display_order: number | null;
-  seo_title: string | null;
-  seo_description: string | null;
-  seo_keywords: string[] | string | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
-type DestinationRow = {
-  id: string;
-  city_id: string | null;
-  city_slug: string | null;
-  slug: string;
-  name: string;
-  city: string | null;
-  category: string | null;
-  location: string | null;
-  region: string | null;
-  duration: string | null;
-  best_season: string | null;
-  image: string | null;
-  gallery_images: string[] | null;
-  summary: string | null;
-  description: string | null;
-  highlights: string[] | null;
-  practical_info: string[] | null;
-  how_to_go: string | null;
-  travel_tips: string[] | null;
-  nearby_attractions: string[] | null;
-  status: string | null;
-  is_featured: boolean | null;
-  display_order: number | null;
-  seo_title: string | null;
-  seo_description: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
-type GuideRow = {
-  id: string;
-  city_id: string | null;
-  city_slug: string | null;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string[] | null;
-  cover_image: string | null;
-  image: string | null;
-  author: string | null;
-  read_time: string | null;
-  category: string | null;
-  status: string | null;
-  is_featured: boolean | null;
-  display_order: number | null;
-  seo_title: string | null;
-  seo_description: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
-
-type AttractionRow = {
-  id: string;
-  city_id: string | null;
-  city_slug: string | null;
-  name: string;
-  slug: string;
-  city: string | null;
-  image: string | null;
-  category: string | null;
-  type: string | null;
-  description: string | null;
-  summary: string | null;
-  recommended_time: string | null;
-  status: string | null;
-  display_order: number | null;
-  seo_title: string | null;
-  seo_description: string | null;
-};
+type CityRow = Record<string, unknown>;
+type DestinationRow = Record<string, unknown>;
+type GuideRow = Record<string, unknown>;
+type AttractionRow = Record<string, unknown>;
 
 type RowMap = {
   cities: CityRow;
@@ -129,13 +41,46 @@ function byDisplayOrder<T extends { displayOrder?: number; name?: string; title?
   return String(a.name ?? a.title ?? "").localeCompare(String(b.name ?? b.title ?? ""));
 }
 
-function status(value?: string | null): ContentStatus {
-  return value === "draft" ? "draft" : "published";
+function getField(row: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return undefined;
 }
 
-function arrayValue(value: string[] | string | null | undefined) {
-  if (Array.isArray(value)) {
+function stringField(row: Record<string, unknown>, ...keys: string[]) {
+  const value = getField(row, ...keys);
+  return value === undefined ? "" : String(value);
+}
+
+function numberField(row: Record<string, unknown>, ...keys: string[]) {
+  const value = getField(row, ...keys);
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function booleanField(row: Record<string, unknown>, ...keys: string[]) {
+  const value = getField(row, ...keys);
+
+  if (typeof value === "boolean") {
     return value;
+  }
+
+  return String(value ?? "").toLowerCase() === "true";
+}
+
+function status(value?: string | null): ContentStatus {
+  return value?.toLowerCase() === "draft" ? "draft" : "published";
+}
+
+function arrayValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).filter(Boolean);
   }
 
   return String(value ?? "")
@@ -145,107 +90,113 @@ function arrayValue(value: string[] | string | null | undefined) {
 }
 
 function mapCity(row: CityRow): City {
+  const name = stringField(row, "name");
+
   return {
-    id: row.id,
-    name: row.name,
-    slug: slugify(row.slug || row.name),
-    country: row.country || "",
-    countryCode: row.country_code || "",
-    region: row.region || "",
-    shortDescription: row.short_description || "",
-    longDescription: row.long_description || "",
-    heroImage: row.hero_image || "",
-    cardImage: row.card_image || "",
-    featuredImage: row.featured_image || "",
-    status: status(row.status),
-    isFeatured: Boolean(row.is_featured),
-    displayOrder: row.display_order ?? 0,
-    seoTitle: row.seo_title || "",
-    seoDescription: row.seo_description || "",
-    seoKeywords: arrayValue(row.seo_keywords),
-    createdAt: row.created_at || "",
-    updatedAt: row.updated_at || "",
+    id: stringField(row, "id") || slugify(name),
+    name,
+    slug: slugify(stringField(row, "slug") || name),
+    country: stringField(row, "country"),
+    countryCode: stringField(row, "country_code", "countryCode"),
+    region: stringField(row, "region"),
+    shortDescription: stringField(row, "short_description", "shortDescription"),
+    longDescription: stringField(row, "long_description", "longDescription"),
+    heroImage: stringField(row, "hero_image", "heroImage"),
+    cardImage: stringField(row, "card_image", "cardImage"),
+    featuredImage: stringField(row, "featured_image", "featuredImage"),
+    status: status(stringField(row, "status")),
+    isFeatured: booleanField(row, "is_featured", "isFeatured"),
+    displayOrder: numberField(row, "display_order", "displayOrder"),
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    seoDescription: stringField(row, "seo_description", "seoDescription"),
+    seoKeywords: arrayValue(getField(row, "seo_keywords", "seoKeywords")),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
 }
 
 function mapDestination(row: DestinationRow): Destination {
+  const name = stringField(row, "name");
+
   return {
-    id: row.id,
-    cityId: row.city_id || "",
-    citySlug: slugify(row.city_slug || ""),
-    slug: slugify(row.slug || row.name),
-    name: row.name,
-    city: row.city || "",
-    category: row.category || "",
-    location: row.location || "",
-    region: row.region || "",
-    duration: row.duration || "",
-    bestSeason: row.best_season || "",
-    image: row.image || "",
-    galleryImages: row.gallery_images || [],
-    summary: row.summary || "",
-    description: row.description || "",
-    highlights: row.highlights || [],
-    practicalInfo: row.practical_info || [],
-    howToGo: row.how_to_go || "",
-    travelTips: row.travel_tips || [],
-    nearbyAttractions: row.nearby_attractions || [],
-    status: status(row.status),
-    isFeatured: Boolean(row.is_featured),
-    displayOrder: row.display_order ?? 0,
-    seoTitle: row.seo_title || "",
-    seoDescription: row.seo_description || "",
-    createdAt: row.created_at || "",
-    updatedAt: row.updated_at || "",
+    id: stringField(row, "id"),
+    cityId: stringField(row, "city_id", "cityId"),
+    citySlug: slugify(stringField(row, "city_slug", "citySlug")),
+    slug: slugify(stringField(row, "slug") || name),
+    name,
+    city: stringField(row, "city"),
+    category: stringField(row, "category"),
+    location: stringField(row, "location"),
+    region: stringField(row, "region"),
+    duration: stringField(row, "duration"),
+    bestSeason: stringField(row, "best_season", "bestSeason"),
+    image: stringField(row, "image"),
+    galleryImages: arrayValue(getField(row, "gallery_images", "galleryImages")),
+    summary: stringField(row, "summary"),
+    description: stringField(row, "description"),
+    highlights: arrayValue(getField(row, "highlights")),
+    practicalInfo: arrayValue(getField(row, "practical_info", "practicalInfo")),
+    howToGo: stringField(row, "how_to_go", "howToGo"),
+    travelTips: arrayValue(getField(row, "travel_tips", "travelTips")),
+    nearbyAttractions: arrayValue(getField(row, "nearby_attractions", "nearbyAttractions")),
+    status: status(stringField(row, "status")),
+    isFeatured: booleanField(row, "is_featured", "isFeatured"),
+    displayOrder: numberField(row, "display_order", "displayOrder"),
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    seoDescription: stringField(row, "seo_description", "seoDescription"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
 }
 
 function mapGuide(row: GuideRow): Guide {
-  const image = row.image || row.cover_image || "";
+  const title = stringField(row, "title");
+  const image = stringField(row, "image") || stringField(row, "cover_image", "coverImage");
 
   return {
-    id: row.id,
-    cityId: row.city_id || "",
-    citySlug: slugify(row.city_slug || ""),
-    slug: slugify(row.slug || row.title),
-    title: row.title,
-    excerpt: row.excerpt || "",
-    content: row.content || [],
-    coverImage: row.cover_image || image,
+    id: stringField(row, "id"),
+    cityId: stringField(row, "city_id", "cityId"),
+    citySlug: slugify(stringField(row, "city_slug", "citySlug")),
+    slug: slugify(stringField(row, "slug") || title),
+    title,
+    excerpt: stringField(row, "excerpt"),
+    content: arrayValue(getField(row, "content")),
+    coverImage: stringField(row, "cover_image", "coverImage") || image,
     image,
-    author: row.author || "",
-    readTime: row.read_time || "",
-    category: row.category || "",
-    status: status(row.status),
-    isFeatured: Boolean(row.is_featured),
-    displayOrder: row.display_order ?? 0,
-    seoTitle: row.seo_title || "",
-    seoDescription: row.seo_description || "",
-    createdAt: row.created_at || "",
-    updatedAt: row.updated_at || "",
+    author: stringField(row, "author"),
+    readTime: stringField(row, "read_time", "readTime"),
+    category: stringField(row, "category"),
+    status: status(stringField(row, "status")),
+    isFeatured: booleanField(row, "is_featured", "isFeatured"),
+    displayOrder: numberField(row, "display_order", "displayOrder"),
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    seoDescription: stringField(row, "seo_description", "seoDescription"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
 }
 
 function mapAttraction(row: AttractionRow): Attraction {
-  const category = row.category || row.type || "";
+  const name = stringField(row, "name");
+  const category = stringField(row, "category") || stringField(row, "type");
 
   return {
-    id: row.id,
-    cityId: row.city_id || "",
-    citySlug: slugify(row.city_slug || ""),
-    name: row.name,
-    slug: slugify(row.slug || row.name),
-    city: row.city || "",
-    image: row.image || "",
+    id: stringField(row, "id"),
+    cityId: stringField(row, "city_id", "cityId"),
+    citySlug: slugify(stringField(row, "city_slug", "citySlug")),
+    name,
+    slug: slugify(stringField(row, "slug") || name),
+    city: stringField(row, "city"),
+    image: stringField(row, "image"),
     category,
     type: category,
-    description: row.description || "",
-    summary: row.summary || row.description || "",
-    recommendedTime: row.recommended_time || "",
-    status: status(row.status),
-    displayOrder: row.display_order ?? 0,
-    seoTitle: row.seo_title || "",
-    seoDescription: row.seo_description || "",
+    description: stringField(row, "description"),
+    summary: stringField(row, "summary") || stringField(row, "description"),
+    recommendedTime: stringField(row, "recommended_time", "recommendedTime"),
+    status: status(stringField(row, "status")),
+    displayOrder: numberField(row, "display_order", "displayOrder"),
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    seoDescription: stringField(row, "seo_description", "seoDescription"),
   };
 }
 
@@ -352,6 +303,9 @@ function toAttractionRow(item: Attraction): AttractionRow {
 
 async function readRows<T extends AdminCollection>(collection: T): Promise<RowMap[T][]> {
   if (!hasSupabaseConfig()) {
+    console.error(
+      `[Top7Spots Supabase] Missing Supabase env while reading "${collection}". Expected NEXT_PUBLIC_SUPABASE_URL plus SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY.`,
+    );
     return [];
   }
 
@@ -359,8 +313,23 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
   const { data, error } = await supabase.from(tableNames[collection]).select("*");
 
   if (error) {
-    console.error(`Failed to read ${collection} from Supabase:`, error.message);
+    console.error(`[Top7Spots Supabase] Failed to read "${collection}".`, {
+      table: tableNames[collection],
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
     return [];
+  }
+
+  if (process.env.NODE_ENV === "production" && (!data || data.length === 0)) {
+    console.error(`[Top7Spots Supabase] Read "${collection}" returned 0 rows.`, {
+      table: tableNames[collection],
+      hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()),
+      hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+      hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()),
+    });
   }
 
   return (data || []) as RowMap[T][];

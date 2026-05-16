@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, MapPin, Sparkles } from "lucide-react";
-import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
+import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,20 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
           { name: attraction.name, path: `/${city.slug}/attractions/${attraction.slug}` },
         ]}
       />
+      <PlaceJsonLd
+        name={attraction.name}
+        description={
+          attraction.seoDescription ||
+          attraction.description ||
+          attraction.summary ||
+          `Explore ${attraction.name} in ${city.name} with Top7Spots.`
+        }
+        image={attraction.image}
+        path={`/${city.slug}/attractions/${attraction.slug}`}
+        city={city.name}
+        country={city.country}
+        region={city.region}
+      />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
@@ -106,7 +120,7 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                 <Image
                   src={image}
-                  alt={attraction.name}
+                  alt={`${attraction.name} in ${city.name}`}
                   fill
                   priority
                   sizes="(min-width: 1024px) 420px, 100vw"

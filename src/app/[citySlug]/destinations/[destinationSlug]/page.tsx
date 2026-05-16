@@ -17,7 +17,7 @@ import {
 import { AttractionCard } from "@/components/attraction-card";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
-import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
+import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +99,20 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           { name: destination.name, path: `/${city.slug}/destinations/${destination.slug}` },
         ]}
       />
+      <TouristDestinationJsonLd
+        name={destination.name}
+        description={
+          destination.seoDescription ||
+          destination.summary ||
+          destination.description ||
+          `Explore ${destination.name} in ${city.name} with Top7Spots.`
+        }
+        image={destination.image}
+        path={`/${city.slug}/destinations/${destination.slug}`}
+        city={city.name}
+        country={city.country}
+        region={destination.region || city.region}
+      />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
@@ -166,7 +180,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
             <div className="relative min-h-[360px] overflow-hidden bg-slate-200 md:min-h-[560px]">
               <Image
                 src={image}
-                alt={`${destination.name} hero image`}
+                alt={`${destination.name} in ${city.name}`}
                 fill
                 priority
                 sizes="(min-width: 1024px) 65vw, 100vw"
@@ -178,7 +192,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 <div key={`${galleryImage}-${index}`} className="relative min-h-44 overflow-hidden bg-slate-200">
                   <Image
                     src={galleryImage}
-                    alt={`${destination.name} gallery image ${index + 1}`}
+                    alt={`${destination.name} travel view in ${city.name} ${index + 1}`}
                     fill
                     sizes="(min-width: 1024px) 35vw, 50vw"
                     className="object-cover"

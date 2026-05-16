@@ -17,7 +17,7 @@ import {
 import { AttractionCard } from "@/components/attraction-card";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
-import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
+import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,9 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const image = resolveImagePath(destination.image);
   const category = destination.category || "Travel spot";
   const location = [destination.city, destination.region].filter(Boolean).join(", ") || "Global";
+  const canonicalPath = destination.citySlug
+    ? `/${destination.citySlug}/destinations/${destination.slug}`
+    : `/destinations/${destination.slug}`;
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const nearbyAttractions =
     attractions.filter(
@@ -97,11 +100,22 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           { name: "Destinations", path: "/destinations" },
           {
             name: destination.name,
-            path: destination.citySlug
-              ? `/${destination.citySlug}/destinations/${destination.slug}`
-              : `/destinations/${destination.slug}`,
+            path: canonicalPath,
           },
         ]}
+      />
+      <TouristDestinationJsonLd
+        name={destination.name}
+        description={
+          destination.seoDescription ||
+          destination.summary ||
+          destination.description ||
+          `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`
+        }
+        image={destination.image}
+        path={canonicalPath}
+        city={destination.city}
+        region={destination.region}
       />
       <SiteHeader />
       <main>
@@ -170,7 +184,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
             <div className="relative min-h-[360px] overflow-hidden bg-slate-200 md:min-h-[560px]">
               <Image
                 src={image}
-                alt={`${destination.name} hero image`}
+                alt={`${destination.name}${destination.city ? ` in ${destination.city}` : ""}`}
                 fill
                 priority
                 sizes="(min-width: 1024px) 65vw, 100vw"
@@ -182,7 +196,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 <div key={`${galleryImage}-${index}`} className="relative min-h-44 overflow-hidden bg-slate-200">
                   <Image
                     src={galleryImage}
-                    alt={`${destination.name} gallery image ${index + 1}`}
+                    alt={`${destination.name} travel view ${index + 1}`}
                     fill
                     sizes="(min-width: 1024px) 35vw, 50vw"
                     className="object-cover"

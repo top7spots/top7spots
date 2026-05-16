@@ -23,7 +23,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { DestinationCard } from "@/components/destination-card";
 import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
-import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
+import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import {
   getAttractionsByCity,
@@ -117,6 +117,19 @@ export default async function CityPage({ params }: CityPageProps) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
       <BreadcrumbJsonLd items={[{ name: city.name, path: `/${city.slug}` }]} />
+      <PlaceJsonLd
+        name={`${city.name}, ${city.country}`}
+        description={
+          city.seoDescription ||
+          city.shortDescription ||
+          `Discover curated travel spots, guides, and attractions in ${city.name}, ${city.country}.`
+        }
+        image={city.heroImage || city.featuredImage || city.cardImage}
+        path={`/${city.slug}`}
+        city={city.name}
+        country={city.country}
+        region={city.region}
+      />
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <header className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">

@@ -13,13 +13,14 @@ type GuideCardProps = {
 export function GuideCard({ guide }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
   const href = `/${guide.citySlug || "muscat"}/guides/${guide.slug}`;
+  const imageAlt = `${guide.title} travel guide${guide.citySlug ? ` for ${guide.citySlug}` : ""}`;
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
         <Image
           src={image}
-          alt={guide.title}
+          alt={imageAlt}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover transition duration-700 ease-out group-hover:scale-110"

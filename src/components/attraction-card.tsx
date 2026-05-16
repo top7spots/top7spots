@@ -11,13 +11,16 @@ type AttractionCardProps = {
 
 export function AttractionCard({ attraction }: AttractionCardProps) {
   const image = resolveImagePath(attraction.image);
+  const imageAlt = `${attraction.name}${attraction.city ? ` in ${attraction.city}` : ""}${
+    attraction.type ? ` ${attraction.type.toLowerCase()}` : " attraction"
+  }`;
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
       <div className="relative aspect-[16/11] overflow-hidden bg-slate-100">
         <Image
           src={image}
-          alt={attraction.name}
+          alt={imageAlt}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover transition duration-700 ease-out group-hover:scale-110"

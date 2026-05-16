@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, Clock, Sparkles } from "lucide-react";
-import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   }
 
   const image = resolveImagePath(guide.coverImage || guide.image);
+  const canonicalPath = guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -53,9 +54,19 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
           { name: "Guides", path: "/guides" },
           {
             name: guide.title,
-            path: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+            path: canonicalPath,
           },
         ]}
+      />
+      <ArticleJsonLd
+        title={guide.title}
+        description={guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots."}
+        image={guide.coverImage || guide.image}
+        path={canonicalPath}
+        author={guide.author}
+        datePublished={guide.createdAt}
+        dateModified={guide.updatedAt}
+        section={guide.category || "Travel guide"}
       />
       <SiteHeader />
       <main>
@@ -96,7 +107,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                 <Image
                   src={image}
-                  alt={guide.title}
+                  alt={`${guide.title} travel guide on Top7Spots`}
                   fill
                   priority
                   sizes="(min-width: 1024px) 420px, 100vw"

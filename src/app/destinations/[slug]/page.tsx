@@ -23,7 +23,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getAttractions, getDestination, getDestinations, getGuides } from "@/lib/data";
+import { countryPath } from "@/lib/country-hubs";
+import { getAttractions, getDestination, getDestinations, getGuides, getPublishedCities } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -59,11 +60,12 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { slug } = await params;
-  const [destination, destinations, attractions, guides] = await Promise.all([
+  const [destination, destinations, attractions, guides, cities] = await Promise.all([
     getDestination(slug),
     getDestinations(),
     getAttractions(),
     getGuides(),
+    getPublishedCities(),
   ]);
 
   if (!destination) {
@@ -76,6 +78,10 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const canonicalPath = destination.citySlug
     ? `/${destination.citySlug}/destinations/${destination.slug}`
     : `/destinations/${destination.slug}`;
+  const parentCity = destination.citySlug
+    ? cities.find((city) => city.slug === destination.citySlug)
+    : undefined;
+  const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const relatedGuides = guides
     .filter((guide) => destination.citySlug && guide.citySlug === destination.citySlug)
@@ -103,6 +109,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
       <BreadcrumbJsonLd
         items={[
           { name: "Destinations", path: "/destinations" },
+          ...(countryHref && parentCity ? [{ name: parentCity.country, path: countryHref }] : []),
           {
             name: destination.name,
             path: canonicalPath,
@@ -120,6 +127,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         image={destination.image}
         path={canonicalPath}
         city={destination.city}
+        country={parentCity?.country}
         region={destination.region}
       />
       <SiteHeader />
@@ -129,6 +137,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
             <BreadcrumbTrail
               items={[
                 { label: "Destinations", href: "/destinations" },
+                ...(countryHref && parentCity ? [{ label: parentCity.country, href: countryHref }] : []),
                 ...(destination.citySlug && destination.city
                   ? [{ label: destination.city, href: `/${destination.citySlug}` }]
                   : []),
@@ -324,9 +333,15 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               </p>
               {destination.citySlug && destination.city ? (
                 <div className="mt-5 border-t border-slate-100 pt-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Parent city
-                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Related hubs</p>
+                  {countryHref && parentCity ? (
+                    <Link
+                      href={countryHref}
+                      className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                    >
+                      Explore {parentCity.country}
+                    </Link>
+                  ) : null}
                   <Link
                     href={`/${destination.citySlug}`}
                     className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"

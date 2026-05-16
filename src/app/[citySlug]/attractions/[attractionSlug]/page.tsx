@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { countryPath } from "@/lib/country-hubs";
 import {
   getAttractionByCityAndSlug,
   getCityBySlug,
@@ -57,11 +58,13 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
   }
 
   const image = resolveImagePath(attraction.image);
+  const countryHref = city.country ? countryPath(city.country) : "";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <BreadcrumbJsonLd
         items={[
+          ...(countryHref ? [{ name: city.country, path: countryHref }] : []),
           { name: city.name, path: `/${city.slug}` },
           { name: attraction.name, path: `/${city.slug}/attractions/${attraction.slug}` },
         ]}
@@ -86,6 +89,7 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
           <div className="mx-auto max-w-7xl">
             <BreadcrumbTrail
               items={[
+                ...(countryHref ? [{ label: city.country, href: countryHref }] : []),
                 { label: city.name, href: `/${city.slug}` },
                 { label: "Attractions", href: `/${city.slug}` },
                 { label: attraction.name },

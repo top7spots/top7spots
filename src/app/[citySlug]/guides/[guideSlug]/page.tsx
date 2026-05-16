@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { countryPath } from "@/lib/country-hubs";
 import {
   getCityBySlug,
   getDestinationsByCity,
@@ -66,11 +67,13 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   const image = resolveImagePath(guide.coverImage || guide.image);
   const relatedGuides = guides.filter((item) => item.id !== guide.id);
   const relatedDestinations = destinations.slice(0, 4);
+  const countryHref = city.country ? countryPath(city.country) : "";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <BreadcrumbJsonLd
         items={[
+          ...(countryHref ? [{ name: city.country, path: countryHref }] : []),
           { name: city.name, path: `/${city.slug}` },
           { name: guide.title, path: `/${city.slug}/guides/${guide.slug}` },
         ]}
@@ -91,6 +94,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
           <div className="mx-auto max-w-7xl">
             <BreadcrumbTrail
               items={[
+                ...(countryHref ? [{ label: city.country, href: countryHref }] : []),
                 { label: city.name, href: `/${city.slug}` },
                 { label: "Guides", href: "/guides" },
                 { label: guide.title },
@@ -166,6 +170,11 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
               visual, and easy to revisit.
             </p>
             <div className="mt-5 grid gap-2 border-t border-white/10 pt-5">
+              {countryHref ? (
+                <Link href={countryHref} className="text-sm font-semibold text-white transition hover:text-orange-200">
+                  Explore {city.country}
+                </Link>
+              ) : null}
               <Link href={`/${city.slug}`} className="text-sm font-semibold text-white transition hover:text-orange-200">
                 Explore {city.name}
               </Link>

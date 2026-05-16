@@ -5,6 +5,7 @@ import {
   getPublishedDestinations,
   getPublishedGuides,
 } from "@/lib/data";
+import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
 import { absoluteUrl } from "@/lib/seo";
 
@@ -22,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedGuides(),
     getPublishedAttractions(),
   ]);
+  const countries = buildCountryHubs({ cities, destinations, guides, attractions });
 
   return [
     {
@@ -44,6 +46,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: lastModified(city.updatedAt, city.createdAt),
       changeFrequency: "weekly" as const,
       priority: 0.9,
+    })),
+    ...countries.map((country) => ({
+      url: absoluteUrl(countryPath(country.slug)),
+      lastModified: lastModified(country.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.86,
     })),
     ...destinations.map((destination) => ({
       url: absoluteUrl(

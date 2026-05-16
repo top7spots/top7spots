@@ -9,7 +9,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getDestinations, getGuide } from "@/lib/data";
+import { countryPath } from "@/lib/country-hubs";
+import { getDestinations, getGuide, getPublishedCities } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -39,7 +40,11 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { slug } = await params;
-  const [guide, destinations] = await Promise.all([getGuide(slug), getDestinations()]);
+  const [guide, destinations, cities] = await Promise.all([
+    getGuide(slug),
+    getDestinations(),
+    getPublishedCities(),
+  ]);
 
   if (!guide) {
     notFound();
@@ -47,6 +52,8 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   const image = resolveImagePath(guide.coverImage || guide.image);
   const canonicalPath = guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
+  const parentCity = guide.citySlug ? cities.find((city) => city.slug === guide.citySlug) : undefined;
+  const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = destinations
     .filter((destination) => guide.citySlug && destination.citySlug === guide.citySlug)
     .slice(0, 4);
@@ -56,6 +63,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       <BreadcrumbJsonLd
         items={[
           { name: "Guides", path: "/guides" },
+          ...(countryHref && parentCity ? [{ name: parentCity.country, path: countryHref }] : []),
           {
             name: guide.title,
             path: canonicalPath,
@@ -79,6 +87,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
             <BreadcrumbTrail
               items={[
                 { label: "Guides", href: "/guides" },
+                ...(countryHref && parentCity ? [{ label: parentCity.country, href: countryHref }] : []),
                 ...(guide.citySlug ? [{ label: "City hub", href: `/${guide.citySlug}` }] : []),
                 { label: guide.title },
               ]}
@@ -153,6 +162,11 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
               visual, and easy to revisit.
             </p>
             <div className="mt-5 grid gap-2 border-t border-white/10 pt-5">
+              {countryHref && parentCity ? (
+                <Link href={countryHref} className="text-sm font-semibold text-white transition hover:text-orange-200">
+                  Explore {parentCity.country}
+                </Link>
+              ) : null}
               {guide.citySlug ? (
                 <Link href={`/${guide.citySlug}`} className="text-sm font-semibold text-white transition hover:text-orange-200">
                   Open city hub

@@ -20,6 +20,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
+import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City } from "@/lib/types";
@@ -82,6 +83,12 @@ export default async function Home() {
   const visibleCities = featuredCities.length > 0 ? featuredCities : cities;
   const homepageDestinations = destinations.filter((destination) => destination.citySlug).slice(0, 4);
   const homepageGuides = guides.slice(0, 4);
+  const homepageCountries = buildCountryHubs({
+    cities,
+    destinations,
+    guides,
+    attractions: [],
+  }).slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
@@ -242,6 +249,34 @@ export default async function Home() {
             <EmptyState title="No cities published yet" text="Publish a city in the admin dashboard to show it here." />
           )}
         </section>
+
+        {homepageCountries.length > 0 ? (
+          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                Explore by country
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
+                Country travel hubs on Top7Spots
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Country pages connect published cities, destination pages, and travel guides into a
+                broader planning path.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {homepageCountries.map((country) => (
+                  <Link
+                    key={country.slug}
+                    href={countryPath(country.slug)}
+                    className="rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                  >
+                    {country.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {(homepageDestinations.length > 0 || homepageGuides.length > 0) ? (
           <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

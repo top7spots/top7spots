@@ -23,6 +23,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { countryPath } from "@/lib/country-hubs";
 import {
   getAttractionsByCity,
   getCityBySlug,
@@ -87,6 +88,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const attractionIdeas = attractions;
   const relatedGuides = guides.slice(0, 4);
+  const countryHref = city.country ? countryPath(city.country) : "";
   const galleryImages = Array.from(
     new Set(
       [image, ...destination.galleryImages, ...relatedDestinations.map((item) => resolveImagePath(item.image))]
@@ -99,6 +101,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     <div className="min-h-screen bg-[#F8FAFC] pb-20 md:pb-0">
       <BreadcrumbJsonLd
         items={[
+          ...(countryHref ? [{ name: city.country, path: countryHref }] : []),
           { name: city.name, path: `/${city.slug}` },
           { name: destination.name, path: `/${city.slug}/destinations/${destination.slug}` },
         ]}
@@ -123,6 +126,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           <div className="mx-auto max-w-7xl">
             <BreadcrumbTrail
               items={[
+                ...(countryHref ? [{ label: city.country, href: countryHref }] : []),
                 { label: city.name, href: `/${city.slug}` },
                 { label: "Destinations", href: "/destinations" },
                 { label: destination.name },
@@ -318,9 +322,15 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 payments, or carts.
               </p>
               <div className="mt-5 border-t border-slate-100 pt-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Parent city
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Related hubs</p>
+                {countryHref ? (
+                  <Link
+                    href={countryHref}
+                    className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                  >
+                    Explore {city.country}
+                  </Link>
+                ) : null}
                 <Link
                   href={`/${city.slug}`}
                   className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"

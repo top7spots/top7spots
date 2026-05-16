@@ -25,6 +25,7 @@ import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
+import { countryPath } from "@/lib/country-hubs";
 import {
   getAttractionsByCity,
   getCityBySlug,
@@ -111,12 +112,18 @@ export default async function CityPage({ params }: CityPageProps) {
         .filter(Boolean),
     ),
   ).slice(0, 6);
+  const countryHref = city.country ? countryPath(city.country) : "";
   const pillButtonClass =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
-      <BreadcrumbJsonLd items={[{ name: city.name, path: `/${city.slug}` }]} />
+      <BreadcrumbJsonLd
+        items={[
+          ...(countryHref ? [{ name: city.country, path: countryHref }] : []),
+          { name: city.name, path: `/${city.slug}` },
+        ]}
+      />
       <PlaceJsonLd
         name={`${city.name}, ${city.country}`}
         description={
@@ -152,6 +159,11 @@ export default async function CityPage({ params }: CityPageProps) {
               <Link href={`/${city.slug}`} className="transition hover:text-[#1D4ED8]">
                 {city.name}
               </Link>
+              {countryHref ? (
+                <Link href={countryHref} className="transition hover:text-[#1D4ED8]">
+                  {city.country}
+                </Link>
+              ) : null}
             </nav>
 
             <button
@@ -211,6 +223,14 @@ export default async function CityPage({ params }: CityPageProps) {
                   <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
                     {attractions.length} attractions
                   </span>
+                  {countryHref ? (
+                    <Link
+                      href={countryHref}
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                    >
+                      Explore {city.country}
+                    </Link>
+                  ) : null}
                 </div>
               </div>
               <div className="relative min-h-72 overflow-hidden bg-slate-200 lg:min-h-full">

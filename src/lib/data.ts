@@ -2,7 +2,7 @@ import "server-only";
 
 import type { AdminCollection, Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
 import { slugify } from "@/lib/format";
-import { getSupabaseAdminClient, hasSupabaseConfig } from "@/lib/supabase";
+import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
 type CollectionMap = {
   cities: City;
@@ -319,6 +319,7 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
       code: error.code,
       details: error.details,
       hint: error.hint,
+      supabase: getSupabaseEnvStatus(),
     });
     return [];
   }

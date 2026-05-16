@@ -7,20 +7,16 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getGuide, getGuides } from "@/lib/data";
+import { getGuide } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type GuideDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-export async function generateStaticParams() {
-  const guides = await getGuides();
-  return guides.map((guide) => ({ slug: guide.slug }));
-}
 
 export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
   const { slug } = await params;

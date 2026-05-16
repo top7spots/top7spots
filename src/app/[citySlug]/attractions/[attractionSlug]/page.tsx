@@ -10,24 +10,16 @@ import { buttonVariants } from "@/components/ui/button";
 import {
   getAttractionByCityAndSlug,
   getCityBySlug,
-  getPublishedAttractions,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type AttractionPageProps = {
   params: Promise<{ citySlug: string; attractionSlug: string }>;
 };
-
-export async function generateStaticParams() {
-  const attractions = await getPublishedAttractions();
-  return attractions.map((attraction) => ({
-    citySlug: attraction.citySlug,
-    attractionSlug: attraction.slug,
-  }));
-}
 
 export async function generateMetadata({ params }: AttractionPageProps): Promise<Metadata> {
   const { citySlug, attractionSlug } = await params;

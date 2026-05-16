@@ -24,6 +24,7 @@ import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const heroImage = "/uploads/global/home-hero.jpg";
 

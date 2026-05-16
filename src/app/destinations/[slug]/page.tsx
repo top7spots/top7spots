@@ -26,15 +26,11 @@ import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type DestinationDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-export async function generateStaticParams() {
-  const destinations = await getDestinations();
-  return destinations.map((destination) => ({ slug: destination.slug }));
-}
 
 export async function generateMetadata({
   params,

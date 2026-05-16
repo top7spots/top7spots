@@ -26,24 +26,16 @@ import {
   getCityBySlug,
   getDestinationByCityAndSlug,
   getDestinationsByCity,
-  getPublishedDestinations,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type DestinationDetailPageProps = {
   params: Promise<{ citySlug: string; destinationSlug: string }>;
 };
-
-export async function generateStaticParams() {
-  const destinations = await getPublishedDestinations();
-  return destinations.map((destination) => ({
-    citySlug: destination.citySlug,
-    destinationSlug: destination.slug,
-  }));
-}
 
 export async function generateMetadata({
   params,

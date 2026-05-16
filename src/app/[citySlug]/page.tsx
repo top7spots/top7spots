@@ -29,12 +29,12 @@ import {
   getCityBySlug,
   getDestinationsByCity,
   getGuidesByCity,
-  getPublishedCities,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type CityPageProps = {
   params: Promise<{ citySlug: string }>;
@@ -57,11 +57,6 @@ const inspiration = [
   "Luxury escapes and boutique routes",
   "Historic forts, souqs, and old towns",
 ];
-
-export async function generateStaticParams() {
-  const cities = await getPublishedCities();
-  return cities.map((city) => ({ citySlug: city.slug }));
-}
 
 export async function generateMetadata({ params }: CityPageProps): Promise<Metadata> {
   const { citySlug } = await params;

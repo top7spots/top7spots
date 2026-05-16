@@ -13,24 +13,16 @@ import {
   getCityBySlug,
   getGuideByCityAndSlug,
   getGuidesByCity,
-  getPublishedGuides,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type GuideDetailPageProps = {
   params: Promise<{ citySlug: string; guideSlug: string }>;
 };
-
-export async function generateStaticParams() {
-  const guides = await getPublishedGuides();
-  return guides.map((guide) => ({
-    citySlug: guide.citySlug,
-    guideSlug: guide.slug,
-  }));
-}
 
 export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
   const { citySlug, guideSlug } = await params;

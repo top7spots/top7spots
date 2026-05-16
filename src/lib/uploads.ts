@@ -1,9 +1,9 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
-import { promises as fs } from "fs";
 import path from "path";
 import { slugify } from "@/lib/format";
+import { getSupabaseAdminClient, supabaseStorageBucket } from "@/lib/supabase";
 
 const maxImageSize = 5 * 1024 * 1024;
 
@@ -56,17 +56,22 @@ async function saveUploadedImage(file: File, folder: UploadFolder, fallbackName?
     throw new Error("Image upload must be 5MB or smaller.");
   }
 
-  const uploadsDirectory = path.join(process.cwd(), "public", "uploads", folder);
-  await fs.mkdir(uploadsDirectory, { recursive: true });
-
+  const supabase = getSupabaseAdminClient();
   const baseName = safeBaseName(fallbackName || file.name);
   const filename = `${baseName}-${randomUUID()}.${extension}`;
-  const destination = path.join(uploadsDirectory, filename);
+  const storagePath = `${folder}/${filename}`;
   const bytes = Buffer.from(await file.arrayBuffer());
+  const { error } = await supabase.storage.from(supabaseStorageBucket).upload(storagePath, bytes, {
+    contentType: file.type,
+    upsert: false,
+  });
 
-  await fs.writeFile(destination, bytes);
+  if (error) {
+    throw new Error(`Image upload failed: ${error.message}`);
+  }
 
-  return `/uploads/${folder}/${filename}`;
+  const { data } = supabase.storage.from(supabaseStorageBucket).getPublicUrl(storagePath);
+  return data.publicUrl;
 }
 
 export async function getImagePathFromForm(formData: FormData, options: ImageUploadOptions) {

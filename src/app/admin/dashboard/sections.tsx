@@ -533,9 +533,8 @@ function MediaSection() {
       <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           <p className="text-sm leading-6 text-slate-600">
-            Local image handling is MVP-based: uploaded files are saved into collection folders
-            under <code>public/uploads</code> when attached to a city, destination, guide, or
-            attraction form.
+            Uploaded files are saved to Supabase Storage and attached to a city, destination,
+            guide, or attraction record as public media URLs.
           </p>
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             Use each content form to upload and persist images directly into the correct media

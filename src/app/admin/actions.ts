@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
 import { deleteItem, getCities, getCityBySlug, updateCityReferences, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
-import type { Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
+import type { AdminCollection, Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
 function value(formData: FormData, key: string) {
@@ -55,6 +55,13 @@ function redirectWithCityError(error: string, formData: FormData): never {
   const mode = id ? `&mode=edit&id=${encodeURIComponent(id)}` : "&mode=add";
 
   redirect(`/admin/dashboard?section=cities${mode}&saveError=${encodeURIComponent(error)}`);
+}
+
+function redirectWithSaveError(section: AdminCollection, error: unknown, id?: string): never {
+  const message = error instanceof Error ? error.message : "Content could not be saved.";
+  const mode = id ? `&mode=edit&id=${encodeURIComponent(id)}` : "";
+
+  redirect(`/admin/dashboard?section=${section}${mode}&saveError=${encodeURIComponent(message)}`);
 }
 
 function revalidateCoreRoutes(citySlug?: string, itemSlug?: string, type?: "destinations" | "guides") {
@@ -158,8 +165,13 @@ export async function saveCityAction(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await upsertItem("cities", item);
-  await updateCityReferences(existingSlug, item);
+  try {
+    await upsertItem("cities", item);
+    await updateCityReferences(existingSlug, item);
+  } catch (error) {
+    redirectWithCityError(error instanceof Error ? error.message : "City could not be saved.", formData);
+  }
+
   if (existingSlug && existingSlug !== item.slug) {
     revalidateCoreRoutes(existingSlug);
   }
@@ -169,7 +181,11 @@ export async function saveCityAction(formData: FormData) {
 
 export async function deleteCityAction(formData: FormData) {
   const slug = value(formData, "slug");
-  await deleteItem("cities", value(formData, "id"));
+  try {
+    await deleteItem("cities", value(formData, "id"));
+  } catch (error) {
+    redirectWithSaveError("cities", error);
+  }
   revalidateCoreRoutes(slug);
   redirect("/admin/dashboard?section=cities&deleted=cities");
 }
@@ -232,7 +248,12 @@ export async function saveDestinationAction(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await upsertItem("destinations", item);
+  try {
+    await upsertItem("destinations", item);
+  } catch (error) {
+    redirectWithSaveError("destinations", error, item.id);
+  }
+
   revalidateCoreRoutes(item.citySlug, item.slug, "destinations");
   revalidatePath("/destinations");
   redirect("/admin/dashboard?section=destinations&updated=destinations");
@@ -240,7 +261,11 @@ export async function saveDestinationAction(formData: FormData) {
 
 export async function deleteDestinationAction(formData: FormData) {
   const citySlug = value(formData, "citySlug");
-  await deleteItem("destinations", value(formData, "id"));
+  try {
+    await deleteItem("destinations", value(formData, "id"));
+  } catch (error) {
+    redirectWithSaveError("destinations", error);
+  }
   revalidateCoreRoutes(citySlug);
   revalidatePath("/destinations");
   redirect("/admin/dashboard?section=destinations&deleted=destinations");
@@ -284,7 +309,12 @@ export async function saveGuideAction(formData: FormData) {
     updatedAt: new Date().toISOString(),
   };
 
-  await upsertItem("guides", item);
+  try {
+    await upsertItem("guides", item);
+  } catch (error) {
+    redirectWithSaveError("guides", error, item.id);
+  }
+
   revalidateCoreRoutes(item.citySlug, item.slug, "guides");
   revalidatePath("/guides");
   redirect("/admin/dashboard?section=guides&updated=guides");
@@ -292,7 +322,11 @@ export async function saveGuideAction(formData: FormData) {
 
 export async function deleteGuideAction(formData: FormData) {
   const citySlug = value(formData, "citySlug");
-  await deleteItem("guides", value(formData, "id"));
+  try {
+    await deleteItem("guides", value(formData, "id"));
+  } catch (error) {
+    redirectWithSaveError("guides", error);
+  }
   revalidateCoreRoutes(citySlug);
   revalidatePath("/guides");
   redirect("/admin/dashboard?section=guides&deleted=guides");
@@ -333,14 +367,23 @@ export async function saveAttractionAction(formData: FormData) {
     seoDescription: value(formData, "seoDescription"),
   };
 
-  await upsertItem("attractions", item);
+  try {
+    await upsertItem("attractions", item);
+  } catch (error) {
+    redirectWithSaveError("attractions", error, item.id);
+  }
+
   revalidateCoreRoutes(item.citySlug);
   redirect("/admin/dashboard?section=attractions&updated=attractions");
 }
 
 export async function deleteAttractionAction(formData: FormData) {
   const citySlug = value(formData, "citySlug");
-  await deleteItem("attractions", value(formData, "id"));
+  try {
+    await deleteItem("attractions", value(formData, "id"));
+  } catch (error) {
+    redirectWithSaveError("attractions", error);
+  }
   revalidateCoreRoutes(citySlug);
   redirect("/admin/dashboard?section=attractions&deleted=attractions");
 }

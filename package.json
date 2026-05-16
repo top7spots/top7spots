@@ -6,10 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:supabase": "node scripts/migrate-json-to-supabase.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
+    "@supabase/supabase-js": "^2.105.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",

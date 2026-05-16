@@ -22,8 +22,17 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL(redirectTo, requestUrl), 303);
   }
 
-  await deleteItem(collection, id);
-  revalidateDeletedContent(collection, formData);
+  try {
+    await deleteItem(collection, id);
+    revalidateDeletedContent(collection, formData);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Content could not be deleted.";
+    const separator = redirectTo.includes("?") ? "&" : "?";
+    return NextResponse.redirect(
+      new URL(`${redirectTo}${separator}saveError=${encodeURIComponent(message)}`, requestUrl),
+      303,
+    );
+  }
 
   return NextResponse.redirect(new URL(redirectTo, requestUrl), 303);
 }

@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import {
   saveAttractionAction,
-  saveCityAction,
   saveDestinationAction,
   saveGuideAction,
 } from "@/app/admin/actions";
@@ -117,7 +116,7 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
               {sectionTitle(activeSection)}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              City-first travel content management for local JSON records.
+              City-first travel content management for Supabase records.
             </p>
           </div>
           <Link
@@ -579,7 +578,7 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
 function CityForm({ title, city, backHref }: { title: string; city?: City; backHref: string }) {
   return (
     <EditShell title={title} backHref={backHref}>
-      <form action={saveCityAction} className="grid gap-6">
+      <form action="/api/admin/cities" method="post" className="grid gap-6">
         <input type="hidden" name="id" value={city?.id ?? ""} />
         <input type="hidden" name="existingSlug" value={city?.slug ?? ""} />
         <HiddenTimestamps createdAt={city?.createdAt} />

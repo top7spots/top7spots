@@ -10,6 +10,18 @@ export function hasSupabaseConfig() {
   return Boolean(getSupabaseUrl() && getSupabaseKey());
 }
 
+export function getSupabaseEnvStatus() {
+  const supabaseUrl = getSupabaseUrl();
+
+  return {
+    hasUrl: Boolean(supabaseUrl),
+    urlHost: safeUrlHost(supabaseUrl),
+    hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+    hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()),
+    storageBucket: supabaseStorageBucket,
+  };
+}
+
 export function getSupabaseAdminClient() {
   const supabaseUrl = getSupabaseUrl();
   const supabaseKey = getSupabaseKey();
@@ -51,4 +63,16 @@ function getSupabaseKey() {
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
   );
+}
+
+function safeUrlHost(url?: string) {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    return new URL(url).host;
+  } catch {
+    return "invalid-url";
+  }
 }

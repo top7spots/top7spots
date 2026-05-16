@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
-import { deleteItem, getCities, getCityBySlug, updateCityReferences, upsertItem } from "@/lib/data";
+import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
+import { deleteItem, getCityBySlug, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
-import type { AdminCollection, Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
+import type { AdminCollection, Attraction, ContentStatus, Destination, Guide } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
 function value(formData: FormData, key: string) {
@@ -50,13 +51,6 @@ function redirectWithUploadError(error: unknown): never {
   redirect(`/admin/dashboard?uploadError=${encodeURIComponent(message)}`);
 }
 
-function redirectWithCityError(error: string, formData: FormData): never {
-  const id = value(formData, "id");
-  const mode = id ? `&mode=edit&id=${encodeURIComponent(id)}` : "&mode=add";
-
-  redirect(`/admin/dashboard?section=cities${mode}&saveError=${encodeURIComponent(error)}`);
-}
-
 function redirectWithSaveError(section: AdminCollection, error: unknown, id?: string): never {
   const message = error instanceof Error ? error.message : "Content could not be saved.";
   const mode = id ? `&mode=edit&id=${encodeURIComponent(id)}` : "";
@@ -94,88 +88,12 @@ export async function logoutAction() {
 }
 
 export async function saveCityAction(formData: FormData) {
-  const name = value(formData, "name");
-  const slug = slugify(name);
-  const id = value(formData, "id") || slug;
-  const existingSlug = slugify(value(formData, "existingSlug"));
+  const result = await saveCityFromForm(formData);
 
-  if (!name || !slug) {
-    redirectWithCityError("City name is required to generate a URL-safe slug.", formData);
+  if (!result.ok) {
+    redirect(citySaveErrorRedirectPath(formData, result.message));
   }
 
-  const cities = await getCities();
-  const duplicate = cities.find((city) => slugify(city.slug) === slug && city.id !== id);
-
-  if (duplicate) {
-    redirectWithCityError(
-      `A city with the slug "${slug}" already exists. Use a different city name.`,
-      formData,
-    );
-  }
-
-  let heroImage: string;
-
-  try {
-    heroImage = await getImagePathFromForm(formData, {
-      fieldName: "heroImage",
-      folder: "cities",
-      fallbackName: `${slug}-hero`,
-    });
-  } catch (error) {
-    redirectWithUploadError(error);
-  }
-
-  let cardImage: string;
-  let featuredImage: string;
-
-  try {
-    cardImage = await getImagePathFromForm(formData, {
-      fieldName: "cardImage",
-      folder: "cities",
-      fallbackName: `${slug}-card`,
-    });
-    featuredImage = await getImagePathFromForm(formData, {
-      fieldName: "featuredImage",
-      folder: "cities",
-      fallbackName: `${slug}-featured`,
-    });
-  } catch (error) {
-    redirectWithUploadError(error);
-  }
-
-  const item: City = {
-    id,
-    name,
-    slug,
-    country: value(formData, "country"),
-    countryCode: value(formData, "countryCode"),
-    region: value(formData, "region"),
-    shortDescription: value(formData, "shortDescription"),
-    longDescription: value(formData, "longDescription"),
-    heroImage,
-    cardImage: cardImage || heroImage,
-    featuredImage: featuredImage || heroImage,
-    status: statusValue(formData),
-    isFeatured: checkboxValue(formData, "isFeatured"),
-    displayOrder: numberValue(formData, "displayOrder"),
-    seoTitle: value(formData, "seoTitle"),
-    seoDescription: value(formData, "seoDescription"),
-    seoKeywords: listFromTextarea(formData.get("seoKeywords")),
-    createdAt: timestamp(formData),
-    updatedAt: new Date().toISOString(),
-  };
-
-  try {
-    await upsertItem("cities", item);
-    await updateCityReferences(existingSlug, item);
-  } catch (error) {
-    redirectWithCityError(error instanceof Error ? error.message : "City could not be saved.", formData);
-  }
-
-  if (existingSlug && existingSlug !== item.slug) {
-    revalidateCoreRoutes(existingSlug);
-  }
-  revalidateCoreRoutes(item.slug);
   redirect("/admin/dashboard?section=cities&updated=cities");
 }
 

@@ -48,9 +48,28 @@ const categoryPills = [
 ];
 
 const inspiration = [
-  "Curated city guides built around the best places to start",
-  "Hidden gems, beaches, mountains, and road trips by region",
-  "Premium travel inspiration without bookings, carts, or noise",
+  {
+    title: "Travel guides and inspiration",
+    text: "Use city guides and planning notes to understand when to go, what kind of trip fits the place, and how to connect nearby experiences into a better route.",
+    href: "/guides",
+  },
+  {
+    title: "Destination ideas with context",
+    text: "Browse beaches, mountain escapes, heritage landmarks, scenic drives, and hidden gems with summaries designed for quick, confident trip research.",
+    href: "/destinations",
+  },
+  {
+    title: "City-first discovery",
+    text: "Start with a city, then move naturally into its best places to visit, local guides, attractions, weekend escapes, and nearby destination ideas.",
+    href: "#featured-cities",
+  },
+];
+
+const whyTop7Spots = [
+  "Curated pages keep research focused on places worth comparing instead of endless search results.",
+  "City hubs connect destinations, attractions, and guides so travel planning feels organized from the first click.",
+  "Clean editorial pages make it easy to scan highlights, travel tips, best seasons, and related ideas.",
+  "Top7Spots is built for inspiration, not bookings, so every page can stay useful, calm, and easy to revisit.",
 ];
 
 export default async function Home() {
@@ -106,8 +125,8 @@ export default async function Home() {
                 Discover The World&apos;s Best Spots
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-blue-50 md:text-lg">
-                Curated travel cities, hidden gems, beaches, mountains, road trips, and
-                unforgettable experiences.
+                Discover top travel spots, hidden gems, city guides, scenic destinations, and
+                practical travel inspiration for memorable trips around the world.
               </p>
 
               <div className="mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/15 bg-white/95 p-2 shadow-2xl shadow-blue-950/30 backdrop-blur sm:flex-row">
@@ -146,7 +165,7 @@ export default async function Home() {
                 {[
                   [String(visibleCities.length), "featured cities"],
                   ["Global", "travel scope"],
-                  ["MVP", "editorial ready"],
+                  ["Curated", "travel ideas"],
                 ].map(([value, label]) => (
                   <div key={label} className="rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                     <p className="text-2xl font-semibold">{value}</p>
@@ -175,10 +194,37 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="border-b border-slate-200 bg-white py-14">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                Discover top travel spots worldwide
+              </p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
+                A cleaner way to find the best places to visit
+              </h2>
+            </div>
+            <div className="grid gap-5 text-sm leading-7 text-slate-600 md:grid-cols-2">
+              <p>
+                Top7Spots helps travelers move from broad inspiration to useful destination
+                research without losing time in noisy search results. Each page is organized around
+                cities, destination ideas, local attractions, and travel guides, so you can compare
+                places by mood, geography, season, and trip style.
+              </p>
+              <p>
+                Whether you are looking for beaches, mountains, road trips, historic neighborhoods,
+                luxury escapes, family-friendly ideas, or quieter hidden gems, the site is designed
+                to make discovery feel visual, calm, and practical. Start with a city, browse its
+                best places to visit, then follow related links into guides and nearby destinations.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section id="featured-cities" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Featured Cities" title="Start with top cities around the world">
-            Explore curated city pages that can grow into destination lists, local guides,
-            attractions, and travel inspiration.
+          <SectionHeading eyebrow="Explore destinations by city" title="Start with top cities around the world">
+            City pages bring together the best local places to visit, travel tips, destination
+            cards, nearby attractions, and guide links so each trip starts with useful context.
           </SectionHeading>
           {visibleCities.length > 0 ? (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -194,7 +240,8 @@ export default async function Home() {
         <section id="categories" className="border-y border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Explore By Category" title="Choose the mood of your next trip">
-              Category filters are dummy UI for now and ready for city-level browsing later.
+              Browse travel ideas by the way you want a trip to feel, from coastal escapes and
+              mountain air to road trips, luxury stays, hidden gems, and family-friendly places.
             </SectionHeading>
             <div className="flex flex-wrap gap-3">
               {categoryPills.map((category) => (
@@ -212,24 +259,50 @@ export default async function Home() {
         </section>
 
         <section id="inspiration" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Travel Inspiration" title="A global travel platform ready to scale">
-            Top7Spots keeps discovery visual, fast, and editorial while leaving room for future
-            guides and city collections.
+          <SectionHeading eyebrow="Travel guides and inspiration" title="Plan with destination context">
+            Travel planning is easier when destination ideas, local guides, and city pages support
+            each other. Use these paths to move from inspiration into practical research.
           </SectionHeading>
           <div className="grid gap-5 md:grid-cols-3">
             {inspiration.map((item) => (
-              <div
-                key={item}
+              <Link
+                key={item.title}
+                href={item.href}
                 className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <Star className="mb-5 size-7 fill-[#FF6B00] text-[#FF6B00]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold text-[#111827]">{item}</h3>
+                <h3 className="text-lg font-semibold text-[#111827]">{item.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Built as placeholder inspiration now, with a clean path toward future editorial
-                  travel content.
+                  {item.text}
                 </p>
-              </div>
+              </Link>
             ))}
+          </div>
+        </section>
+
+        <section className="border-t border-slate-200 bg-white py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="Why use Top7Spots" title="Travel discovery without the clutter">
+              Top7Spots is made for travelers who want clear, curated starting points before they
+              compare routes, seasons, neighborhoods, and destination styles.
+            </SectionHeading>
+            <div className="grid gap-4 md:grid-cols-2">
+              {whyTop7Spots.map((item) => (
+                <div key={item} className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 text-sm leading-7 text-slate-600">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/destinations" className="inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]">
+                Browse destinations
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+              <Link href="/guides" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition hover:bg-blue-50">
+                Read travel guides
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </section>
       </main>
@@ -268,7 +341,7 @@ function CityCard({ city }: { city: City }) {
           <p className="text-sm font-semibold text-orange-200">{city.country}</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">{city.name}</h2>
           <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-100">
-            {city.shortDescription || "A curated Top7Spots city ready for travel discovery."}
+            {city.shortDescription || "Explore destination ideas, local guides, and travel inspiration for this city."}
           </p>
           <Link
             href={`/${city.slug}`}

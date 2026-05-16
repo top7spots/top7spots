@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
@@ -7,7 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getDestinations } from "@/lib/data";
+import { getDestinations, getPublishedCities } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -37,10 +38,15 @@ type DestinationsPageProps = {
 };
 
 export default async function DestinationsPage({ searchParams }: DestinationsPageProps) {
-  const [{ city }, destinations] = await Promise.all([searchParams, getDestinations()]);
+  const [{ city }, destinations, cities] = await Promise.all([
+    searchParams,
+    getDestinations(),
+    getPublishedCities(),
+  ]);
   const filtered = city
     ? destinations.filter((destination) => destination.city.toLowerCase() === city.toLowerCase())
     : destinations;
+  const featuredDestinations = filtered.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -55,18 +61,20 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
                   Destinations
                 </p>
                 <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-[#111827] md:text-6xl">
-                  Curated places for your next top seven.
+                  Best destinations, hidden gems, and travel ideas
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                  Explore beaches, mountains, cities, heritage landmarks, and hidden gems from the
-                  Top7Spots travel library.
+                  Explore curated places to visit across city guides, scenic routes, beaches,
+                  mountains, heritage landmarks, and hidden gems. Each destination page is built to
+                  help you understand why a place belongs on your route, when it may fit your trip,
+                  and what nearby ideas are worth comparing.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <Input
-                    placeholder="Search UI coming soon"
+                    placeholder="Search destinations"
                     className="h-12 rounded-full border-slate-200 bg-white pl-11 shadow-sm"
                   />
                 </div>
@@ -92,6 +100,49 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-10 grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[1fr_1fr]">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                Explore destinations by city
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Start with a city to see local destination ideas in context. City hubs connect the
+                best places to visit with nearby attractions and travel guides, making it easier to
+                compare coastal stops, mountain viewpoints, cultural landmarks, and day trip routes.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {cities.slice(0, 10).map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/${item.slug}`}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                Popular destination pages
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Use destination detail pages for concise summaries, highlights, practical notes,
+                best-season guidance when available, and links back to related city content.
+              </p>
+              <div className="mt-4 grid gap-2">
+                {featuredDestinations.slice(0, 5).map((destination) => (
+                  <Link
+                    key={destination.id}
+                    href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                    className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                  >
+                    {destination.name} in {destination.city}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
           <SectionHeading
             eyebrow={city ? `City: ${city}` : "All travel ideas"}
             title={city ? `Places near ${city}` : "Top destinations and hidden gems"}

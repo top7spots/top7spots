@@ -140,7 +140,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
                     <Star className="size-4 fill-[#FF6B00] text-[#FF6B00]" aria-hidden="true" />
-                    4.8 traveler rating
+                    Curated Top7Spots pick
                   </span>
                 </div>
               </div>
@@ -206,13 +206,27 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 Overview
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
-                Why this spot belongs on your route
+                Why visit {destination.name}
               </h2>
               <p className="mt-5 text-base leading-8 text-slate-600 md:text-lg">
                 {destination.description ||
                   "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route."}
               </p>
             </section>
+
+            {destination.howToGo ? (
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                  How to plan this stop
+                </p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
+                  Getting there and fitting it into your route
+                </h2>
+                <p className="mt-5 text-base leading-8 text-slate-600 md:text-lg">
+                  {destination.howToGo}
+                </p>
+              </section>
+            ) : null}
 
             <section>
               <h2 className="text-3xl font-semibold tracking-tight text-[#111827]">Highlights</h2>
@@ -262,10 +276,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                   <Map className="size-6" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-semibold text-[#111827]">Map preview</h2>
+                  <h2 className="text-2xl font-semibold text-[#111827]">Route planning note</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Interactive maps are ready to plug in later. For now, use this location cue:
-                    {` ${location}`}.
+                    Use this destination with related city content to compare nearby attractions,
+                    destination ideas, and any available travel tips before finalizing your route.
+                    Location cue: {location}.
                   </p>
                 </div>
               </div>

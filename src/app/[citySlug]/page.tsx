@@ -104,6 +104,13 @@ export default async function CityPage({ params }: CityPageProps) {
         .filter((area): area is string => Boolean(area)),
     ),
   );
+  const cityTravelTips = Array.from(
+    new Set(
+      destinations
+        .flatMap((destination) => [...destination.travelTips, ...destination.practicalInfo])
+        .filter(Boolean),
+    ),
+  ).slice(0, 6);
   const pillButtonClass =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]";
 
@@ -208,10 +215,51 @@ export default async function CityPage({ params }: CityPageProps) {
                 <div className="absolute bottom-5 left-5 right-5 rounded-xl bg-white/90 p-4 shadow-xl backdrop-blur">
                   <p className="text-sm font-semibold text-[#0A2A66]">{city.region}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    City-first travel discovery, filtered by local content.
+                    City-first travel discovery with destinations, guides, and local travel ideas.
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="mb-10 grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[1fr_0.85fr]">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                {city.name} travel guide
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">
+                Plan your visit with local context
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                {city.longDescription ||
+                  city.shortDescription ||
+                  `${city.name} is a Top7Spots city hub where destination ideas, local attractions, and travel guides are grouped together for easier trip research.`}
+              </p>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                Use this page to compare the best places to visit in {city.name}, scan practical
+                travel notes, and follow links into detailed destination pages when a place fits
+                your route.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                Travel tips for {city.name}
+              </h2>
+              <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
+                {(cityTravelTips.length > 0
+                  ? cityTravelTips
+                  : [
+                      "Check opening hours and seasonal conditions before adding a place to your route.",
+                      "Group nearby destinations together to reduce travel time between stops.",
+                      "Use city guides and destination summaries together for a more balanced itinerary.",
+                    ]
+                ).map((tip) => (
+                  <li key={tip} className="flex gap-3">
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FF6B00]" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
@@ -240,8 +288,8 @@ export default async function CityPage({ params }: CityPageProps) {
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Top Rated Spots" title={`Highly recommended places in ${city.name}`}>
-            Premium cards support unlimited city content and automatically wrap into clean rows
-            across desktop, tablet, and mobile.
+            Compare recommended places from the {city.name} library, then open a destination
+            page for highlights, timing notes, travel tips, and related nearby ideas.
           </SectionHeading>
           {destinations.length > 0 ? (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -250,14 +298,15 @@ export default async function CityPage({ params }: CityPageProps) {
               ))}
             </div>
           ) : (
-            <EmptyState title="Top rated spots coming soon" text="Published destinations will appear here automatically." />
+            <EmptyState title="Recommended spots will appear here" text="Published destinations will appear here automatically." />
           )}
         </section>
 
         <section className="border-y border-slate-200 bg-white py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow={`Explore ${city.name}`} title={`Neighborhoods and routes around ${city.name}`}>
-              Use this city page as the landing hub for local spots, guides, and attractions.
+            <SectionHeading eyebrow={`Explore ${city.name}`} title={`Nearby destinations and areas around ${city.name}`}>
+              Use local areas and destination clusters to connect nearby experiences into a more
+              efficient route.
             </SectionHeading>
             {cityAreas.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -269,14 +318,14 @@ export default async function CityPage({ params }: CityPageProps) {
                   >
                     <span>
                       <span className="block text-lg font-semibold text-[#111827]">{area}</span>
-                      <span className="text-sm text-slate-500">Explore nearby experiences</span>
+                      <span className="text-sm text-slate-500">Explore nearby destination ideas</span>
                     </span>
                     <Map className="size-5 text-[#1D4ED8] transition group-hover:translate-x-1" />
                   </Link>
                 ))}
               </div>
             ) : (
-              <EmptyState title="Local areas coming soon" text="Destination locations will become neighborhood and route links here." />
+              <EmptyState title="Nearby areas will appear here" text="Add destination locations to build neighborhood and route links for this city." />
             )}
           </div>
         </section>
@@ -293,7 +342,7 @@ export default async function CityPage({ params }: CityPageProps) {
               ))}
             </div>
           ) : (
-            <EmptyState title="Hidden gems coming soon" text="Add city destinations to unlock this collection." />
+            <EmptyState title="Hidden gems will appear here" text="Add city destinations to unlock this collection." />
           )}
         </section>
 
@@ -311,7 +360,8 @@ export default async function CityPage({ params }: CityPageProps) {
                   <Sparkles className="mb-5 size-7 text-[#FF6B00]" aria-hidden="true" />
                   <h3 className="text-lg font-semibold">{item}</h3>
                   <p className="mt-3 text-sm leading-6 text-blue-100">
-                    A polished inspiration tile ready for future curated collections.
+                    Use this idea as a starting point when comparing routes, terrain, and travel
+                    style around {city.name}.
                   </p>
                 </div>
               ))}
@@ -330,7 +380,7 @@ export default async function CityPage({ params }: CityPageProps) {
               ))}
             </div>
           ) : (
-            <EmptyState title="Guides coming soon" text="Published city guides will appear in this section." />
+            <EmptyState title="Guides will appear here" text="Published city guides will appear in this section." />
           )}
         </section>
 
@@ -346,7 +396,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 ))}
               </div>
             ) : (
-              <EmptyState title="Attractions coming soon" text="Add published attractions to complete this city guide." />
+              <EmptyState title="Attractions will appear here" text="Add published attractions to complete this city guide." />
             )}
           </div>
         </section>
@@ -376,8 +426,8 @@ export default async function CityPage({ params }: CityPageProps) {
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Featured Experiences" title={`Signature ways to discover ${city.name}`}>
-            Experience tiles are dummy UI for now and ready for future booking-free editorial
-            collections.
+            These route ideas help connect the city page with destination details, attractions,
+            and guide content without turning Top7Spots into a booking platform.
           </SectionHeading>
           <div className="grid gap-4 md:grid-cols-3">
             {[

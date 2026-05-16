@@ -7,7 +7,7 @@ import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Input } from "@/components/ui/input";
-import { getGuides } from "@/lib/data";
+import { getGuides, getPublishedCities } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,22 @@ export const metadata: Metadata = seoMetadata({
 });
 
 export default async function GuidesPage() {
-  const guides = await getGuides();
+  const [guides, cities] = await Promise.all([getGuides(), getPublishedCities()]);
+  const guideCategories = Array.from(
+    guides.reduce((groups, guide) => {
+      const category = guide.category || "Travel planning";
+      const current = groups.get(category) || [];
+      groups.set(category, [...current, guide]);
+      return groups;
+    }, new Map<string, typeof guides>()),
+  ).slice(0, 6);
+  const guideCitySections = cities
+    .map((city) => ({
+      city,
+      guides: guides.filter((guide) => guide.citySlug === city.slug).slice(0, 4),
+    }))
+    .filter((section) => section.guides.length > 0)
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -102,6 +117,81 @@ export default async function GuidesPage() {
             ))}
           </div>
         </section>
+
+        {(guideCategories.length > 0 || guideCitySections.length > 0) ? (
+          <section className="border-t border-slate-200 bg-white py-14">
+            <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
+              {guideCategories.length > 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-6">
+                  <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                    Browse guides by topic
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Category hubs help connect planning articles around shared travel intent, from
+                    city guides to seasonal inspiration and route ideas.
+                  </p>
+                  <div className="mt-5 grid gap-4">
+                    {guideCategories.map(([category, categoryGuides]) => (
+                      <div key={category}>
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                          {category}
+                        </h3>
+                        <div className="mt-2 grid gap-2">
+                          {categoryGuides.slice(0, 3).map((guide) => (
+                            <Link
+                              key={guide.id}
+                              href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+                              className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                            >
+                              {guide.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {guideCitySections.length > 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-6">
+                  <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                    City guide hubs
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Follow city-specific guides back into their parent city pages and related
+                    destinations for cleaner trip research.
+                  </p>
+                  <div className="mt-5 grid gap-4">
+                    {guideCitySections.map((section) => (
+                      <div key={section.city.id}>
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                            {section.city.name}
+                          </h3>
+                          <Link href={`/${section.city.slug}`} className="text-xs font-semibold text-slate-500 transition hover:text-[#1D4ED8]">
+                            City hub
+                          </Link>
+                        </div>
+                        <div className="mt-2 grid gap-2">
+                          {section.guides.map((guide) => (
+                            <Link
+                              key={guide.id}
+                              href={`/${section.city.slug}/guides/${guide.slug}`}
+                              className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                            >
+                              {guide.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
       </main>
       <SiteFooter />
     </div>

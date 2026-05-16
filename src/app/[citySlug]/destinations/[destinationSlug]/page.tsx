@@ -15,6 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import { AttractionCard } from "@/components/attraction-card";
+import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
@@ -27,6 +28,7 @@ import {
   getCityBySlug,
   getDestinationByCityAndSlug,
   getDestinationsByCity,
+  getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
@@ -64,11 +66,12 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { citySlug, destinationSlug } = await params;
-  const [city, destination, destinations, attractions] = await Promise.all([
+  const [city, destination, destinations, attractions, guides] = await Promise.all([
     getCityBySlug(citySlug),
     getDestinationByCityAndSlug(citySlug, destinationSlug),
     getDestinationsByCity(citySlug),
     getAttractionsByCity(citySlug),
+    getGuidesByCity(citySlug),
   ]);
 
   if (!city || !destination) {
@@ -83,6 +86,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     city.name;
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const attractionIdeas = attractions;
+  const relatedGuides = guides.slice(0, 4);
   const galleryImages = Array.from(
     new Set(
       [image, ...destination.galleryImages, ...relatedDestinations.map((item) => resolveImagePath(item.image))]
@@ -117,6 +121,13 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
+            <BreadcrumbTrail
+              items={[
+                { label: city.name, href: `/${city.slug}` },
+                { label: "Destinations", href: "/destinations" },
+                { label: destination.name },
+              ]}
+            />
             <Link
               href={`/${city.slug}`}
               className={buttonVariants({
@@ -306,6 +317,17 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 Save this as inspiration for a future itinerary. Top7Spots does not take bookings,
                 payments, or carts.
               </p>
+              <div className="mt-5 border-t border-slate-100 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  Parent city
+                </p>
+                <Link
+                  href={`/${city.slug}`}
+                  className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                >
+                  Explore {city.name}
+                </Link>
+              </div>
               <Link
                 href={`/${city.slug}`}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B00] px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
@@ -316,6 +338,25 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
             </div>
           </aside>
         </section>
+
+        {relatedGuides.length > 0 ? (
+          <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="Relevant guides" title={`Travel guides for ${city.name}`}>
+              Add planning context from city guides before choosing nearby stops and route details.
+            </SectionHeading>
+            <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+              {relatedGuides.map((guide) => (
+                <Link
+                  key={guide.id}
+                  href={`/${city.slug}/guides/${guide.slug}`}
+                  className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                >
+                  {guide.title}
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">

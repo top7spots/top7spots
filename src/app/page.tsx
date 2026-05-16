@@ -20,7 +20,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
-import { getPublishedCities } from "@/lib/data";
+import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City } from "@/lib/types";
 
@@ -73,9 +73,15 @@ const whyTop7Spots = [
 ];
 
 export default async function Home() {
-  const cities = await getPublishedCities();
+  const [cities, destinations, guides] = await Promise.all([
+    getPublishedCities(),
+    getPublishedDestinations(),
+    getPublishedGuides(),
+  ]);
   const featuredCities = cities.filter((city) => city.isFeatured);
   const visibleCities = featuredCities.length > 0 ? featuredCities : cities;
+  const homepageDestinations = destinations.filter((destination) => destination.citySlug).slice(0, 4);
+  const homepageGuides = guides.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
@@ -237,6 +243,35 @@ export default async function Home() {
           )}
         </section>
 
+        {(homepageDestinations.length > 0 || homepageGuides.length > 0) ? (
+          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="grid gap-5 lg:grid-cols-2">
+              {homepageDestinations.length > 0 ? (
+                <InternalLinkPanel
+                  eyebrow="Popular destination paths"
+                  title="Continue into curated destination pages"
+                  text="Open a destination page when you want concise highlights, best-season notes, route context, and links back into its parent city hub."
+                  links={homepageDestinations.map((destination) => ({
+                    href: `/${destination.citySlug}/destinations/${destination.slug}`,
+                    label: `${destination.name}${destination.city ? `, ${destination.city}` : ""}`,
+                  }))}
+                />
+              ) : null}
+              {homepageGuides.length > 0 ? (
+                <InternalLinkPanel
+                  eyebrow="Travel guide links"
+                  title="Read planning guides before choosing a route"
+                  text="Guide pages connect inspiration with city and destination research, helping travelers move naturally through the Top7Spots library."
+                  links={homepageGuides.map((guide) => ({
+                    href: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+                    label: guide.title,
+                  }))}
+                />
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
         <section id="categories" className="border-y border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Explore By Category" title="Choose the mood of your next trip">
@@ -353,6 +388,33 @@ function CityCard({ city }: { city: City }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function InternalLinkPanel({
+  eyebrow,
+  title,
+  text,
+  links,
+}: {
+  eyebrow: string;
+  title: string;
+  text: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{eyebrow}</p>
+      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">{title}</h2>
+      <p className="mt-3 text-sm leading-7 text-slate-600">{text}</p>
+      <div className="mt-5 grid gap-2">
+        {links.map((link) => (
+          <Link key={link.href} href={link.href} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

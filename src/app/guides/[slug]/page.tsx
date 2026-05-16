@@ -3,12 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, Clock, Sparkles } from "lucide-react";
+import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getGuide } from "@/lib/data";
+import { getDestinations, getGuide } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { slug } = await params;
-  const guide = await getGuide(slug);
+  const [guide, destinations] = await Promise.all([getGuide(slug), getDestinations()]);
 
   if (!guide) {
     notFound();
@@ -46,6 +47,9 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   const image = resolveImagePath(guide.coverImage || guide.image);
   const canonicalPath = guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
+  const relatedDestinations = destinations
+    .filter((destination) => guide.citySlug && destination.citySlug === guide.citySlug)
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -72,6 +76,13 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
+            <BreadcrumbTrail
+              items={[
+                { label: "Guides", href: "/guides" },
+                ...(guide.citySlug ? [{ label: "City hub", href: `/${guide.citySlug}` }] : []),
+                { label: guide.title },
+              ]}
+            />
             <Link
               href="/guides"
               className={buttonVariants({
@@ -141,6 +152,22 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
               Top7Spots is built for discovery and inspiration, keeping travel planning fast,
               visual, and easy to revisit.
             </p>
+            <div className="mt-5 grid gap-2 border-t border-white/10 pt-5">
+              {guide.citySlug ? (
+                <Link href={`/${guide.citySlug}`} className="text-sm font-semibold text-white transition hover:text-orange-200">
+                  Open city hub
+                </Link>
+              ) : null}
+              {relatedDestinations.map((destination) => (
+                <Link
+                  key={destination.id}
+                  href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                  className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
+                >
+                  {destination.name}
+                </Link>
+              ))}
+            </div>
           </aside>
         </article>
       </main>

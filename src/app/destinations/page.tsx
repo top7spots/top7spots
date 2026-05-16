@@ -47,6 +47,13 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
     ? destinations.filter((destination) => destination.city.toLowerCase() === city.toLowerCase())
     : destinations;
   const featuredDestinations = filtered.slice(0, 8);
+  const cityDestinationSections = cities
+    .map((item) => ({
+      city: item,
+      destinations: destinations.filter((destination) => destination.citySlug === item.slug).slice(0, 4),
+    }))
+    .filter((section) => section.destinations.length > 0)
+    .slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -156,6 +163,52 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
             ))}
           </div>
         </section>
+
+        {cityDestinationSections.length > 0 ? (
+          <section className="border-t border-slate-200 bg-white py-14">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <SectionHeading eyebrow="Destination hubs" title="Browse destinations by city">
+                City-based destination hubs help search engines and travelers understand how each
+                place connects to nearby travel ideas, local guides, and parent city pages.
+              </SectionHeading>
+              <div className="grid gap-5 lg:grid-cols-2">
+                {cityDestinationSections.map((section) => (
+                  <div key={section.city.id} className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+                          {section.city.name} destinations
+                        </h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          Explore curated places to visit in {section.city.name}, with links into
+                          detailed destination pages and the full city hub.
+                        </p>
+                      </div>
+                      <Link
+                        href={`/${section.city.slug}`}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-[#0A2A66] transition hover:bg-blue-50"
+                      >
+                        City hub
+                      </Link>
+                    </div>
+                    <div className="mt-5 grid gap-2">
+                      {section.destinations.map((destination) => (
+                        <Link
+                          key={destination.id}
+                          href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                          className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                        >
+                          {destination.name}
+                          {destination.category ? ` - ${destination.category}` : ""}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
       <SiteFooter />
     </div>

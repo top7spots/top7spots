@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
   const imageAlt = `${attraction.name}${attraction.city ? ` in ${attraction.city}` : ""}${
     attraction.type ? ` ${attraction.type.toLowerCase()}` : " attraction"
   }`;
+  const href = attraction.citySlug ? `/${attraction.citySlug}/attractions/${attraction.slug}` : undefined;
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
@@ -35,7 +37,15 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
         <Badge variant="outline" className="w-fit rounded-full border-orange-200 text-[#FF6B00]">
           {attraction.type || "Attraction"}
         </Badge>
-        <h3 className="text-lg font-semibold leading-tight text-[#111827]">{attraction.name}</h3>
+        <h3 className="text-lg font-semibold leading-tight text-[#111827]">
+          {href ? (
+            <Link href={href} className="transition hover:text-[#1D4ED8]">
+              {attraction.name}
+            </Link>
+          ) : (
+            attraction.name
+          )}
+        </h3>
         <p className="line-clamp-3 text-sm leading-6 text-slate-600">
           {attraction.summary || "A recommended place to add to a future travel route."}
         </p>

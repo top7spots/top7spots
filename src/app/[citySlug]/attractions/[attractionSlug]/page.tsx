@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, MapPin, Sparkles } from "lucide-react";
+import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -83,6 +84,13 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
+            <BreadcrumbTrail
+              items={[
+                { label: city.name, href: `/${city.slug}` },
+                { label: "Attractions", href: `/${city.slug}` },
+                { label: attraction.name },
+              ]}
+            />
             <Link
               href={`/${city.slug}`}
               className={buttonVariants({

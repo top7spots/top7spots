@@ -276,6 +276,41 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
 
+          {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
+            <div className="mb-10 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-3">
+              {destinations.length > 0 ? (
+                <RelatedLinkGroup
+                  title={`Related destinations in ${city.name}`}
+                  text="Compare nearby places from this city before opening a detail page."
+                  links={destinations.slice(0, 5).map((destination) => ({
+                    href: `/${city.slug}/destinations/${destination.slug}`,
+                    label: destination.name,
+                  }))}
+                />
+              ) : null}
+              {guides.length > 0 ? (
+                <RelatedLinkGroup
+                  title={`Travel guides for ${city.name}`}
+                  text="Use city-specific guides to add planning context to your route."
+                  links={guides.slice(0, 5).map((guide) => ({
+                    href: `/${city.slug}/guides/${guide.slug}`,
+                    label: guide.title,
+                  }))}
+                />
+              ) : null}
+              {attractions.length > 0 ? (
+                <RelatedLinkGroup
+                  title={`Attractions around ${city.name}`}
+                  text="Open existing attraction pages for extra stops near your route."
+                  links={attractions.slice(0, 5).map((attraction) => ({
+                    href: `/${city.slug}/attractions/${attraction.slug}`,
+                    label: attraction.name,
+                  }))}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="mb-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">City spots</p>
@@ -483,6 +518,30 @@ function EmptyState({ title, text }: { title: string; text: string }) {
       <Sparkles className="mx-auto size-8 text-[#FF6B00]" aria-hidden="true" />
       <h3 className="mt-4 text-xl font-semibold text-[#111827]">{title}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{text}</p>
+    </div>
+  );
+}
+
+function RelatedLinkGroup({
+  title,
+  text,
+  links,
+}: {
+  title: string;
+  text: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div>
+      <h2 className="text-xl font-semibold tracking-tight text-[#111827]">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+      <div className="mt-4 grid gap-2">
+        {links.map((link) => (
+          <Link key={link.href} href={link.href} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

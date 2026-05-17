@@ -26,6 +26,7 @@ import {
   saveDestinationAction,
   saveGuideAction,
 } from "@/app/admin/actions";
+import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -582,6 +583,7 @@ function CityForm({ title, city, backHref }: { title: string; city?: City; backH
         <input type="hidden" name="id" value={city?.id ?? ""} />
         <input type="hidden" name="existingSlug" value={city?.slug ?? ""} />
         <HiddenTimestamps createdAt={city?.createdAt} />
+        <CityAiContentImport />
         <FormSection title="Basic info">
           <Field label="Name" name="name" defaultValue={city?.name} placeholder="Dubai" />
           <SlugPreview slug={city ? slugify(city.name) || slugify(city.slug) : ""} />

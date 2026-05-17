@@ -279,20 +279,20 @@ export default async function Home() {
         {cityGroups.length > 0 ? (
           <section id="all-cities" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-                <div>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                    Explore all cities
+                    EXPLORE ALL CITIES
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
-                    Expandable city directory by country
+                    City directory by country
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Every published city from the Top7Spots admin library remains available as a
-                    crawlable internal link, with compact country groups that can expand as the
-                    destination library grows.
+                    Browse countries and discover all cities published on Top7Spots.
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     <Link
                       href="/destinations"
                       className="rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
@@ -307,9 +307,7 @@ export default async function Home() {
                     </Link>
                   </div>
                 </div>
-                <div>
-                  <CityDirectory groups={cityDirectoryGroups} />
-                </div>
+                <CityDirectory groups={cityDirectoryGroups} />
               </div>
             </div>
           </section>

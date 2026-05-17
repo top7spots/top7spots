@@ -25,7 +25,7 @@ const visibleCityCount = 4;
 
 export function CityDirectory({ groups }: CityDirectoryProps) {
   return (
-    <div className="grid gap-4">
+    <div className="divide-y divide-slate-200">
       {groups.map((group) => (
         <CountryCityGroup key={group.country} group={group} />
       ))}
@@ -39,19 +39,16 @@ function CountryCityGroup({ group }: { group: CityDirectoryGroup }) {
   const seoLinks = buildSeoLinks(group.cities);
 
   return (
-    <details className="group rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition duration-300 open:border-blue-200 open:shadow-md sm:px-5">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight text-[#111827]">
+    <details className="group py-4 first:pt-0 last:pb-0">
+      <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
             <Link href={group.countryPath} className="transition hover:text-[#1D4ED8]">
               {group.country}
             </Link>
           </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            {group.cities.length} {group.cities.length === 1 ? "city" : "cities"} on Top7Spots
-          </p>
         </div>
-        <span className="mt-1 inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-[#F8FAFC] px-3 text-xs font-semibold text-[#0A2A66] transition duration-300 group-hover:border-blue-200 group-hover:bg-blue-50">
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
           {hasExtraCities ? (
             <>
               <span className="group-open:hidden">Show more</span>
@@ -60,11 +57,11 @@ function CountryCityGroup({ group }: { group: CityDirectoryGroup }) {
           ) : (
             <span>Open</span>
           )}
-          <ChevronDown className="size-4 transition duration-300 group-open:rotate-180" aria-hidden="true" />
+          <ChevronDown className="size-3.5 transition duration-300 group-open:rotate-180" aria-hidden="true" />
         </span>
       </summary>
 
-      <div className="mt-4 flex flex-wrap gap-x-2 gap-y-2 text-sm leading-7 text-slate-500">
+      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1.5 text-sm leading-7 text-slate-500">
         {group.cities.slice(0, visibleCityCount).map((city, index) => (
           <CityTextLink
             key={city.id}
@@ -77,18 +74,10 @@ function CountryCityGroup({ group }: { group: CityDirectoryGroup }) {
       {hasExtraCities ? (
         <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-open:grid-rows-[1fr]">
           <div className="overflow-hidden">
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1.5 text-sm leading-7 text-slate-500">
                 {extraCities.map((city) => (
-                  <Link
-                    key={city.id}
-                    href={`/${city.slug}`}
-                    className="rounded-lg px-3 py-2 text-sm font-semibold text-[#0A2A66] transition hover:bg-blue-50 hover:text-[#1D4ED8]"
-                  >
-                    {city.name}
-                  </Link>
+                  <CityTextLink key={city.id} city={city} showSeparator={false} />
                 ))}
-              </div>
             </div>
           </div>
         </div>
@@ -97,21 +86,16 @@ function CountryCityGroup({ group }: { group: CityDirectoryGroup }) {
       {seoLinks.length > 0 ? (
         <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-open:grid-rows-[1fr]">
           <div className="overflow-hidden">
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Related travel pages
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-100 pt-3">
                 {seoLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="rounded-full border border-slate-200 bg-[#F8FAFC] px-3 py-1.5 text-xs font-semibold text-[#0A2A66] transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1D4ED8]"
+                    className="text-xs font-semibold text-slate-500 underline-offset-4 transition hover:text-[#1D4ED8] hover:underline"
                   >
                     {link.label}
                   </Link>
                 ))}
-              </div>
             </div>
           </div>
         </div>

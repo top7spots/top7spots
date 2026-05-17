@@ -19,7 +19,7 @@ import {
   getPublishedGuides,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
-import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
+import { cityProgrammaticPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -157,7 +157,7 @@ export default async function CountryPage({ params }: CountryPageProps) {
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                  {citySeoPages.map((page) => (
+                  {cityProgrammaticPages.slice(0, 5).map((page) => (
                     <Link
                       key={page.slug}
                       href={citySeoPath(city.slug, page.slug)}

@@ -12,6 +12,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { countryPath } from "@/lib/country-hubs";
 import { getDestinations, getGuide, getPublishedCities } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -172,6 +173,17 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
                   Open city hub
                 </Link>
               ) : null}
+              {parentCity
+                ? cityTopicPages.slice(0, 4).map((topic) => (
+                    <Link
+                      key={topic.slug}
+                      href={citySeoPath(parentCity.slug, topic.slug)}
+                      className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
+                    >
+                      {topic.title(parentCity)}
+                    </Link>
+                  ))
+                : null}
               {relatedDestinations.map((destination) => (
                 <Link
                   key={destination.id}

@@ -19,10 +19,12 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import {
-  citySeoPages,
+  cityProgrammaticPages,
   citySeoPath,
-  getCitySeoPage,
-  hasMeaningfulCitySeoContent,
+  cityTopicPages,
+  getCityProgrammaticContent,
+  getCityProgrammaticPage,
+  hasMeaningfulCityProgrammaticContent,
 } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
   const { citySlug, seoPage } = await params;
   const [city, page, destinations, attractions, guides] = await Promise.all([
     getCityBySlug(citySlug),
-    Promise.resolve(getCitySeoPage(seoPage)),
+    Promise.resolve(getCityProgrammaticPage(seoPage)),
     getDestinationsByCity(citySlug),
     getAttractionsByCity(citySlug),
     getGuidesByCity(citySlug),
@@ -46,11 +48,12 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
   if (!city || !page || city.status !== "published") {
     return {};
   }
-  const hasContent = hasMeaningfulCitySeoContent(page.slug, {
-    destinations: destinations.length,
-    attractions: attractions.length,
-    guides: guides.length,
+  const pageContent = getCityProgrammaticContent(page, {
+    destinations,
+    attractions,
+    guides,
   });
+  const hasContent = hasMeaningfulCityProgrammaticContent(page, pageContent);
 
   return {
     ...seoMetadata({
@@ -65,7 +68,7 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
 
 export default async function CitySeoPage({ params }: CitySeoPageProps) {
   const { citySlug, seoPage } = await params;
-  const page = getCitySeoPage(seoPage);
+  const page = getCityProgrammaticPage(seoPage);
 
   if (!page) {
     notFound();
@@ -84,12 +87,13 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
 
   const pagePath = citySeoPath(city.slug, page.slug);
   const countryHref = city.country ? countryPath(city.country) : "";
-  const relatedPages = citySeoPages.filter((item) => item.slug !== page.slug);
-  const hasContent = hasMeaningfulCitySeoContent(page.slug, {
-    destinations: destinations.length,
-    attractions: attractions.length,
-    guides: guides.length,
+  const pageContent = getCityProgrammaticContent(page, {
+    destinations,
+    attractions,
+    guides,
   });
+  const relatedPages = cityProgrammaticPages.filter((item) => item.slug !== page.slug);
+  const hasContent = hasMeaningfulCityProgrammaticContent(page, pageContent);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
@@ -132,13 +136,13 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#0A2A66] hover:bg-blue-50">
-                    {destinations.length} destinations
+                    {pageContent.destinations.length} destinations
                   </Badge>
                   <Badge className="rounded-full bg-orange-50 px-3 py-1 text-[#FF6B00] hover:bg-orange-50">
-                    {attractions.length} attractions
+                    {pageContent.attractions.length} attractions
                   </Badge>
                   <Badge className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 hover:bg-slate-100">
-                    {guides.length} guides
+                    {pageContent.guides.length} guides
                   </Badge>
                 </div>
               </div>
@@ -168,7 +172,7 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           {hasContent ? (
             <div className="grid gap-5 lg:grid-cols-3">
-              {relatedPages.map((item) => (
+                {relatedPages.slice(0, 6).map((item) => (
                 <Link
                   key={item.slug}
                   href={citySeoPath(city.slug, item.slug)}
@@ -191,36 +195,36 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
               <Compass className="mx-auto size-8 text-[#FF6B00]" aria-hidden="true" />
               <h2 className="mt-4 text-2xl font-semibold text-[#111827]">More {city.name} content is coming</h2>
               <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Publish destinations, attractions, and guides in the admin dashboard to expand this
-                programmatic SEO page automatically.
+                Publish matching destinations, attractions, and guides in the admin dashboard to
+                make this topic page eligible for indexing automatically.
               </p>
             </div>
           )}
         </section>
 
-        {destinations.length > 0 ? (
+        {pageContent.destinations.length > 0 ? (
           <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Destination ideas" title={`Places to visit in ${city.name}`}>
-              Published destination pages connected to {city.name}, with routes back to this city
-              hub and its SEO category pages.
+              Published destination pages connected to {city.name} and this travel topic, with
+              routes back to this city hub and related programmatic pages.
             </SectionHeading>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {destinations.map((destination) => (
+              {pageContent.destinations.map((destination) => (
                 <DestinationCard key={destination.id} destination={destination} />
               ))}
             </div>
           </section>
         ) : null}
 
-        {attractions.length > 0 ? (
+        {pageContent.attractions.length > 0 ? (
           <section className="border-y border-slate-200 bg-white py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <SectionHeading eyebrow="Things to do" title={`Attractions and things to do in ${city.name}`}>
-                Existing attraction pages can support things-to-do discovery without adding any new
-                database fields.
+                Existing attraction pages can support long-tail travel discovery without adding any
+                new database fields.
               </SectionHeading>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-                {attractions.map((attraction) => (
+                {pageContent.attractions.map((attraction) => (
                   <AttractionCard key={attraction.id} attraction={attraction} />
                 ))}
               </div>
@@ -228,14 +232,14 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
           </section>
         ) : null}
 
-        {guides.length > 0 ? (
+        {pageContent.guides.length > 0 ? (
           <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Planning guides" title={`${city.name} travel guides`}>
               Guide pages add route planning, seasonal, and first-time visitor context to this
-              programmatic landing page.
+              topic landing page.
             </SectionHeading>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {guides.map((guide) => (
+              {pageContent.guides.map((guide) => (
                 <GuideCard key={guide.id} guide={guide} />
               ))}
             </div>
@@ -248,6 +252,9 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
               <InternalLink href={`/${city.slug}`} icon={MapPin} label={`${city.name} city hub`} />
               <InternalLink href={citySeoPath(city.slug, "best-places")} icon={Compass} label="Best places page" />
               <InternalLink href={citySeoPath(city.slug, "things-to-do")} icon={BookOpen} label="Things to do page" />
+              {cityTopicPages.slice(0, 3).map((topic) => (
+                <InternalLink key={topic.slug} href={citySeoPath(city.slug, topic.slug)} icon={Sparkles} label={topic.title(city)} />
+              ))}
             </div>
           </div>
         </section>

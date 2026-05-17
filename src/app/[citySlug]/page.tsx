@@ -33,7 +33,7 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
-import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
+import { citySeoPages, citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -303,6 +303,14 @@ export default async function CityPage({ params }: CityPageProps) {
                 title={`${city.name} travel pages`}
                 text="Programmatic city pages for focused travel searches."
                 links={citySeoPages.map((page) => ({
+                  href: citySeoPath(city.slug, page.slug),
+                  label: page.title(city),
+                }))}
+              />
+              <RelatedLinkGroup
+                title={`Popular topics in ${city.name}`}
+                text="Long-tail travel topic pages built from existing published content."
+                links={cityTopicPages.slice(0, 4).map((page) => ({
                   href: citySeoPath(city.slug, page.slug),
                   label: page.title(city),
                 }))}

@@ -19,6 +19,7 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -178,6 +179,15 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
               <Link href={`/${city.slug}`} className="text-sm font-semibold text-white transition hover:text-orange-200">
                 Explore {city.name}
               </Link>
+              {cityTopicPages.slice(0, 4).map((topic) => (
+                <Link
+                  key={topic.slug}
+                  href={citySeoPath(city.slug, topic.slug)}
+                  className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
+                >
+                  {topic.title(city)}
+                </Link>
+              ))}
               {relatedDestinations.map((destination) => (
                 <Link
                   key={destination.id}

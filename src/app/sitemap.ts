@@ -7,7 +7,12 @@ import {
 } from "@/lib/data";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
-import { citySeoPages, citySeoPath, hasMeaningfulCitySeoContent } from "@/lib/programmatic-seo";
+import {
+  cityProgrammaticPages,
+  citySeoPath,
+  getCityProgrammaticContent,
+  hasMeaningfulCityProgrammaticContent,
+} from "@/lib/programmatic-seo";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -26,16 +31,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedAttractions(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
-  const cityContentCounts = new Map<string, { destinations: number; attractions: number; guides: number }>(
+  const cityContent = new Map(
     cities.map((city) => {
       const citySlug = slugify(city.slug);
 
       return [
         citySlug,
         {
-          destinations: destinations.filter((destination) => slugify(destination.citySlug) === citySlug).length,
-          attractions: attractions.filter((attraction) => slugify(attraction.citySlug) === citySlug).length,
-          guides: guides.filter((guide) => slugify(guide.citySlug) === citySlug).length,
+          destinations: destinations.filter((destination) => slugify(destination.citySlug) === citySlug),
+          attractions: attractions.filter((attraction) => slugify(attraction.citySlug) === citySlug),
+          guides: guides.filter((guide) => slugify(guide.citySlug) === citySlug),
         },
       ];
     }),
@@ -65,15 +70,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...cities.flatMap((city) => {
       const citySlug = slugify(city.slug);
-      const counts = cityContentCounts.get(citySlug) || { destinations: 0, attractions: 0, guides: 0 };
+      const content = cityContent.get(citySlug) || { destinations: [], attractions: [], guides: [] };
 
-      return citySeoPages
-        .filter((page) => hasMeaningfulCitySeoContent(page.slug, counts))
+      return cityProgrammaticPages
+        .filter((page) =>
+          hasMeaningfulCityProgrammaticContent(page, getCityProgrammaticContent(page, content)),
+        )
         .map((page) => ({
           url: absoluteUrl(citySeoPath(citySlug, page.slug)),
           lastModified: lastModified(city.updatedAt, city.createdAt),
           changeFrequency: "weekly" as const,
-          priority: page.slug === "travel-guide" ? 0.82 : 0.84,
+          priority: page.pageType === "topic" ? 0.68 : page.slug === "travel-guide" ? 0.82 : 0.84,
         }));
     }),
     ...countries.map((country) => ({

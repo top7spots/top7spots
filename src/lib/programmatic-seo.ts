@@ -13,6 +13,12 @@ export type CitySeoPageConfig = {
   eyebrow: string;
 };
 
+type CitySeoContentCounts = {
+  destinations: number;
+  attractions: number;
+  guides: number;
+};
+
 export const citySeoPages: CitySeoPageConfig[] = [
   {
     slug: "best-places",
@@ -58,4 +64,20 @@ export function citySeoPath(citySlug: string, pageSlug: CitySeoPageSlug | string
 
 export function getCitySeoPage(pageSlug: string) {
   return citySeoPages.find((page) => page.slug === pageSlug);
+}
+
+export function hasMeaningfulCitySeoContent(pageSlug: string, counts: CitySeoContentCounts) {
+  if (pageSlug === "best-places") {
+    return counts.destinations > 0 || counts.attractions > 0;
+  }
+
+  if (pageSlug === "things-to-do") {
+    return counts.attractions > 0 || counts.destinations > 0;
+  }
+
+  if (pageSlug === "travel-guide") {
+    return counts.guides > 0 || counts.destinations > 0 || counts.attractions > 0;
+  }
+
+  return false;
 }

@@ -18,7 +18,12 @@ import {
   getDestinationsByCity,
   getGuidesByCity,
 } from "@/lib/data";
-import { citySeoPages, citySeoPath, getCitySeoPage } from "@/lib/programmatic-seo";
+import {
+  citySeoPages,
+  citySeoPath,
+  getCitySeoPage,
+  hasMeaningfulCitySeoContent,
+} from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -30,18 +35,32 @@ type CitySeoPageProps = {
 
 export async function generateMetadata({ params }: CitySeoPageProps): Promise<Metadata> {
   const { citySlug, seoPage } = await params;
-  const [city, page] = await Promise.all([getCityBySlug(citySlug), Promise.resolve(getCitySeoPage(seoPage))]);
+  const [city, page, destinations, attractions, guides] = await Promise.all([
+    getCityBySlug(citySlug),
+    Promise.resolve(getCitySeoPage(seoPage)),
+    getDestinationsByCity(citySlug),
+    getAttractionsByCity(citySlug),
+    getGuidesByCity(citySlug),
+  ]);
 
   if (!city || !page || city.status !== "published") {
     return {};
   }
-
-  return seoMetadata({
-    title: page.metadataTitle(city),
-    description: page.description(city),
-    path: citySeoPath(city.slug, page.slug),
-    image: city.heroImage || city.featuredImage || city.cardImage,
+  const hasContent = hasMeaningfulCitySeoContent(page.slug, {
+    destinations: destinations.length,
+    attractions: attractions.length,
+    guides: guides.length,
   });
+
+  return {
+    ...seoMetadata({
+      title: page.metadataTitle(city),
+      description: page.description(city),
+      path: citySeoPath(city.slug, page.slug),
+      image: city.heroImage || city.featuredImage || city.cardImage,
+    }),
+    ...(!hasContent ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 export default async function CitySeoPage({ params }: CitySeoPageProps) {
@@ -66,7 +85,11 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
   const pagePath = citySeoPath(city.slug, page.slug);
   const countryHref = city.country ? countryPath(city.country) : "";
   const relatedPages = citySeoPages.filter((item) => item.slug !== page.slug);
-  const hasContent = destinations.length > 0 || attractions.length > 0 || guides.length > 0;
+  const hasContent = hasMeaningfulCitySeoContent(page.slug, {
+    destinations: destinations.length,
+    attractions: attractions.length,
+    guides: guides.length,
+  });
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">

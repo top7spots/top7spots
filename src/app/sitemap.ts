@@ -7,7 +7,7 @@ import {
 } from "@/lib/data";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
-import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
+import { citySeoPages, citySeoPath, hasMeaningfulCitySeoContent } from "@/lib/programmatic-seo";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedAttractions(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
+  const cityContentCounts = new Map<string, { destinations: number; attractions: number; guides: number }>(
+    cities.map((city) => {
+      const citySlug = slugify(city.slug);
+
+      return [
+        citySlug,
+        {
+          destinations: destinations.filter((destination) => slugify(destination.citySlug) === citySlug).length,
+          attractions: attractions.filter((attraction) => slugify(attraction.citySlug) === citySlug).length,
+          guides: guides.filter((guide) => slugify(guide.citySlug) === citySlug).length,
+        },
+      ];
+    }),
+  );
 
   return [
     {
@@ -49,14 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.9,
     })),
-    ...cities.flatMap((city) =>
-      citySeoPages.map((page) => ({
-        url: absoluteUrl(citySeoPath(slugify(city.slug), page.slug)),
-        lastModified: lastModified(city.updatedAt, city.createdAt),
-        changeFrequency: "weekly" as const,
-        priority: page.slug === "travel-guide" ? 0.82 : 0.84,
-      })),
-    ),
+    ...cities.flatMap((city) => {
+      const citySlug = slugify(city.slug);
+      const counts = cityContentCounts.get(citySlug) || { destinations: 0, attractions: 0, guides: 0 };
+
+      return citySeoPages
+        .filter((page) => hasMeaningfulCitySeoContent(page.slug, counts))
+        .map((page) => ({
+          url: absoluteUrl(citySeoPath(citySlug, page.slug)),
+          lastModified: lastModified(city.updatedAt, city.createdAt),
+          changeFrequency: "weekly" as const,
+          priority: page.slug === "travel-guide" ? 0.82 : 0.84,
+        }));
+    }),
     ...countries.map((country) => ({
       url: absoluteUrl(countryPath(country.slug)),
       lastModified: lastModified(country.updatedAt),
@@ -66,8 +85,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...destinations.map((destination) => ({
       url: absoluteUrl(
         destination.citySlug
-          ? `/${slugify(destination.citySlug)}/destinations/${destination.slug}`
-          : `/destinations/${destination.slug}`,
+          ? `/${slugify(destination.citySlug)}/destinations/${slugify(destination.slug)}`
+          : `/destinations/${slugify(destination.slug)}`,
       ),
       lastModified: lastModified(destination.updatedAt, destination.createdAt),
       changeFrequency: "weekly" as const,
@@ -75,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...guides.map((guide) => ({
       url: absoluteUrl(
-        guide.citySlug ? `/${slugify(guide.citySlug)}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+        guide.citySlug ? `/${slugify(guide.citySlug)}/guides/${slugify(guide.slug)}` : `/guides/${slugify(guide.slug)}`,
       ),
       lastModified: lastModified(guide.updatedAt, guide.createdAt),
       changeFrequency: "monthly" as const,
@@ -84,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...attractions
       .filter((attraction) => attraction.citySlug)
       .map((attraction) => ({
-        url: absoluteUrl(`/${slugify(attraction.citySlug)}/attractions/${attraction.slug}`),
+        url: absoluteUrl(`/${slugify(attraction.citySlug)}/attractions/${slugify(attraction.slug)}`),
         changeFrequency: "monthly" as const,
         priority: 0.6,
       })),

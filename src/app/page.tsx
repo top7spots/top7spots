@@ -73,14 +73,29 @@ const whyTop7Spots = [
   "Top7Spots is built for inspiration, not bookings, so every page can stay useful, calm, and easy to revisit.",
 ];
 
+const featuredCityPriority = [
+  "muscat",
+  "salalah",
+  "cairo",
+  "dubai",
+  "doha",
+  "istanbul",
+  "kochi",
+  "nizwa",
+  "sohar",
+  "sur",
+  "khasab",
+  "jebel-akhdar",
+];
+
 export default async function Home() {
   const [cities, destinations, guides] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
   ]);
-  const featuredCities = cities.filter((city) => city.isFeatured);
-  const visibleCities = featuredCities.length > 0 ? featuredCities : cities;
+  const visibleCities = sortHomepageCities(cities).slice(0, 12);
+  const cityGroups = groupCitiesByCountry(cities);
   const homepageDestinations = destinations.filter((destination) => destination.citySlug).slice(0, 4);
   const homepageGuides = guides.slice(0, 4);
   const homepageCountries = buildCountryHubs({
@@ -235,7 +250,7 @@ export default async function Home() {
         </section>
 
         <section id="featured-cities" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Explore destinations by city" title="Start with top cities around the world">
+          <SectionHeading eyebrow="Explore destinations by city" title="Featured city travel hubs">
             City pages bring together the best local places to visit, travel tips, destination
             cards, nearby attractions, and guide links so each trip starts with useful context.
           </SectionHeading>
@@ -249,6 +264,65 @@ export default async function Home() {
             <EmptyState title="No cities published yet" text="Publish a city in the admin dashboard to show it here." />
           )}
         </section>
+
+        {cityGroups.length > 0 ? (
+          <section id="all-cities" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                    Explore all cities
+                  </p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
+                    City directory by country
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Every published city from the Top7Spots admin library appears here as a simple
+                    crawlable link, while the featured section above stays visual and curated.
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Link
+                      href="/destinations"
+                      className="rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                    >
+                      Destination hub
+                    </Link>
+                    <Link
+                      href="/guides"
+                      className="rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                    >
+                      Guide hub
+                    </Link>
+                  </div>
+                </div>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {cityGroups.map((group) => (
+                    <div key={group.country} className="border-b border-slate-100 pb-4 last:border-b-0 sm:border-b">
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <Link href={countryPath(group.country)} className="transition hover:text-[#1D4ED8]">
+                          {group.country}
+                        </Link>
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm leading-7 text-slate-500">
+                        {group.cities.map((city, index) => (
+                          <span key={city.id} className="inline-flex items-center gap-2">
+                            <Link
+                              href={`/${city.slug}`}
+                              className="font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                            >
+                              {city.name}
+                            </Link>
+                            {index < group.cities.length - 1 ? <span aria-hidden="true">·</span> : null}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {homepageCountries.length > 0 ? (
           <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
@@ -379,6 +453,48 @@ export default async function Home() {
       <SiteFooter />
     </div>
   );
+}
+
+function sortHomepageCities(cities: City[]) {
+  return [...cities].sort((a, b) => {
+    const priorityA = featuredCityPriority.indexOf(a.slug);
+    const priorityB = featuredCityPriority.indexOf(b.slug);
+    const scoreA = priorityA === -1 ? 999 : priorityA;
+    const scoreB = priorityB === -1 ? 999 : priorityB;
+
+    if (scoreA !== scoreB) {
+      return scoreA - scoreB;
+    }
+
+    if (a.isFeatured !== b.isFeatured) {
+      return a.isFeatured ? -1 : 1;
+    }
+
+    const orderA = a.displayOrder || 999;
+    const orderB = b.displayOrder || 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function groupCitiesByCountry(cities: City[]) {
+  const groups = new Map<string, City[]>();
+
+  for (const city of cities) {
+    const country = city.country || "Global";
+    groups.set(country, [...(groups.get(country) || []), city]);
+  }
+
+  return Array.from(groups.entries())
+    .map(([country, groupCities]) => ({
+      country,
+      cities: sortHomepageCities(groupCities),
+    }))
+    .sort((a, b) => a.country.localeCompare(b.country));
 }
 
 function CityCard({ city }: { city: City }) {

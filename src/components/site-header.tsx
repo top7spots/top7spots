@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Globe2, Menu, Search } from "lucide-react";
+import { Globe2, Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { SearchBox } from "@/components/search-box";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -23,13 +24,10 @@ export function SiteHeader() {
         <BrandLogo priority imageClassName="h-9 w-auto sm:h-10 lg:h-11" />
 
         <div className="hidden flex-1 justify-center px-3 md:flex lg:px-5">
-          <div className="relative w-full max-w-xl">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
-              placeholder="Search beaches, mountains, hidden gems..."
-            />
-          </div>
+          <SearchBox
+            containerClassName="relative w-full max-w-xl"
+            placeholder="Search cities, spots, guides..."
+          />
         </div>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">

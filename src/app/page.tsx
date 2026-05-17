@@ -9,7 +9,6 @@ import {
   Gem,
   Globe2,
   Mountain,
-  Search,
   ShieldCheck,
   Sparkles,
   Star,
@@ -17,6 +16,7 @@ import {
   Waves,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -158,13 +158,13 @@ export default async function Home() {
               </p>
 
               <div className="mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/15 bg-white/95 p-2 shadow-2xl shadow-blue-950/30 backdrop-blur sm:flex-row">
-                <label className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
-                  <input
-                    className="h-12 w-full rounded-xl border border-transparent bg-slate-50 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    placeholder="Search cities, countries, beaches, mountains..."
-                  />
-                </label>
+                <SearchBox
+                  containerClassName="relative min-w-0 flex-1"
+                  inputClassName="h-12 w-full rounded-xl border border-transparent bg-slate-50 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  dropdownClassName="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-blue-950/20"
+                  iconClassName="text-slate-400"
+                  placeholder="Search cities, countries, beaches, mountains..."
+                />
                 <Link
                   href="#featured-cities"
                   className="inline-flex h-12 items-center justify-center rounded-xl bg-[#FF6B00] px-6 text-sm font-semibold text-white shadow-lg shadow-orange-950/15 transition duration-300 hover:-translate-y-0.5 hover:bg-orange-600"

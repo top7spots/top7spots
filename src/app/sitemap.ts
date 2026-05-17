@@ -10,6 +10,7 @@ import { slugify } from "@/lib/format";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function lastModified(...dates: Array<string | undefined>) {
   const date = dates.find(Boolean);

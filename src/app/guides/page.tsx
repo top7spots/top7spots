@@ -11,6 +11,7 @@ import { getGuides, getPublishedCities } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = seoMetadata({
   title: "Travel Guides and Inspiration | Top7Spots",

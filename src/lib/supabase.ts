@@ -131,15 +131,24 @@ function logUrlNormalization() {
 
 async function loggingFetch(input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) {
   const requestUrl = requestUrlFromFetchInput(input);
+  const noStoreInit = {
+    ...init,
+    cache: "no-store",
+    next: {
+      ...(init as (RequestInit & { next?: Record<string, unknown> }) | undefined)?.next,
+      revalidate: 0,
+    },
+  } as RequestInit;
 
   if (requestUrl) {
     console.info("[Top7Spots Supabase] Request URL generated.", {
-      method: init?.method || requestMethodFromFetchInput(input) || "GET",
+      method: noStoreInit.method || requestMethodFromFetchInput(input) || "GET",
       url: requestUrl,
+      cache: noStoreInit.cache,
     });
   }
 
-  return fetch(input, init);
+  return fetch(input, noStoreInit);
 }
 
 function requestUrlFromFetchInput(input: Parameters<typeof fetch>[0]) {

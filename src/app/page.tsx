@@ -282,15 +282,15 @@ export default async function Home() {
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                    EXPLORE ALL CITIES
-                  </p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
-                    City directory by country
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Browse countries and discover all cities published on Top7Spots.
-                  </p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                      EXPLORE ALL CITIES
+                    </p>
+                    <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
+                      City directory by country
+                    </h2>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">
+                      Browse countries and discover all cities published on Top7Spots.
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link

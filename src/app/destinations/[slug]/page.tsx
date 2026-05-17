@@ -26,6 +26,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { countryPath } from "@/lib/country-hubs";
 import { getAttractions, getDestination, getDestinations, getGuides, getPublishedCities } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -348,6 +349,19 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                   >
                     Explore {destination.city}
                   </Link>
+                  {parentCity ? (
+                    <div className="mt-3 grid gap-2">
+                      {citySeoPages.map((page) => (
+                        <Link
+                          key={page.slug}
+                          href={citySeoPath(parentCity.slug, page.slug)}
+                          className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                        >
+                          {page.title(parentCity)}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <Link

@@ -19,6 +19,7 @@ import {
   getPublishedGuides,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -132,26 +133,41 @@ export default async function CountryPage({ params }: CountryPageProps) {
           </SectionHeading>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {country.cities.map((city) => (
-              <Link
+              <article
                 key={city.id}
-                href={`/${city.slug}`}
                 className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#2563EB] hover:shadow-xl"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
                   {city.region || country.name}
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
-                  {city.name}
+                  <Link href={`/${city.slug}`} className="transition hover:text-[#1D4ED8]">
+                    {city.name}
+                  </Link>
                 </h2>
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                   {city.shortDescription ||
                     `Explore destination ideas, attractions, and travel guides for ${city.name}.`}
                 </p>
-                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0A2A66] transition group-hover:text-[#1D4ED8]">
+                <Link
+                  href={`/${city.slug}`}
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0A2A66] transition group-hover:text-[#1D4ED8]"
+                >
                   Open city hub
                   <ArrowRight className="size-4" aria-hidden="true" />
-                </span>
-              </Link>
+                </Link>
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                  {citySeoPages.map((page) => (
+                    <Link
+                      key={page.slug}
+                      href={citySeoPath(city.slug, page.slug)}
+                      className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-[#1D4ED8]"
+                    >
+                      {page.shortLabel}
+                    </Link>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
         </section>

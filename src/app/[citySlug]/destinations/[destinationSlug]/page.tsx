@@ -32,6 +32,7 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -337,6 +338,17 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                 >
                   Explore {city.name}
                 </Link>
+                <div className="mt-3 grid gap-2">
+                  {citySeoPages.map((page) => (
+                    <Link
+                      key={page.slug}
+                      href={citySeoPath(city.slug, page.slug)}
+                      className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                    >
+                      {page.title(city)}
+                    </Link>
+                  ))}
+                </div>
               </div>
               <Link
                 href={`/${city.slug}`}

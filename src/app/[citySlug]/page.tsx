@@ -33,6 +33,7 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
+import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -297,7 +298,15 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
 
           {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
-            <div className="mb-10 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-3">
+            <div className="mb-10 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-4">
+              <RelatedLinkGroup
+                title={`${city.name} travel pages`}
+                text="Programmatic city pages for focused travel searches."
+                links={citySeoPages.map((page) => ({
+                  href: citySeoPath(city.slug, page.slug),
+                  label: page.title(city),
+                }))}
+              />
               {destinations.length > 0 ? (
                 <RelatedLinkGroup
                   title={`Related destinations in ${city.name}`}

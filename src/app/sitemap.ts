@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
+import { citySeoPages, citySeoPath } from "@/lib/programmatic-seo";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.9,
     })),
+    ...cities.flatMap((city) =>
+      citySeoPages.map((page) => ({
+        url: absoluteUrl(citySeoPath(slugify(city.slug), page.slug)),
+        lastModified: lastModified(city.updatedAt, city.createdAt),
+        changeFrequency: "weekly" as const,
+        priority: page.slug === "travel-guide" ? 0.82 : 0.84,
+      })),
+    ),
     ...countries.map((country) => ({
       url: absoluteUrl(countryPath(country.slug)),
       lastModified: lastModified(country.updatedAt),

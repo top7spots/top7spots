@@ -135,15 +135,21 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
                   {page.intro(city)}
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#0A2A66] hover:bg-blue-50">
-                    {pageContent.destinations.length} destinations
-                  </Badge>
-                  <Badge className="rounded-full bg-orange-50 px-3 py-1 text-[#FF6B00] hover:bg-orange-50">
-                    {pageContent.attractions.length} attractions
-                  </Badge>
-                  <Badge className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 hover:bg-slate-100">
-                    {pageContent.guides.length} guides
-                  </Badge>
+                  {pageContent.destinations.length > 0 ? (
+                    <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#0A2A66] hover:bg-blue-50">
+                      Curated places
+                    </Badge>
+                  ) : null}
+                  {pageContent.attractions.length > 0 ? (
+                    <Badge className="rounded-full bg-orange-50 px-3 py-1 text-[#FF6B00] hover:bg-orange-50">
+                      Local experiences
+                    </Badge>
+                  ) : null}
+                  {pageContent.guides.length > 0 ? (
+                    <Badge className="rounded-full bg-slate-100 px-3 py-1 text-slate-700 hover:bg-slate-100">
+                      Travel notes
+                    </Badge>
+                  ) : null}
                 </div>
               </div>
               <aside className="rounded-2xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm">
@@ -172,7 +178,7 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           {hasContent ? (
             <div className="grid gap-5 lg:grid-cols-3">
-                {relatedPages.slice(0, 6).map((item) => (
+              {relatedPages.slice(0, 6).map((item) => (
                 <Link
                   key={item.slug}
                   href={citySeoPath(city.slug, item.slug)}
@@ -193,10 +199,10 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
               <Compass className="mx-auto size-8 text-[#FF6B00]" aria-hidden="true" />
-              <h2 className="mt-4 text-2xl font-semibold text-[#111827]">More {city.name} content is coming</h2>
+              <h2 className="mt-4 text-2xl font-semibold text-[#111827]">More {city.name} ideas are on the way</h2>
               <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Publish matching destinations, attractions, and guides in the admin dashboard to
-                make this topic page eligible for indexing automatically.
+                We need a little more depth before recommending this theme. In the meantime, start
+                with the city guide and nearby travel ideas.
               </p>
             </div>
           )}
@@ -205,8 +211,8 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
         {pageContent.destinations.length > 0 ? (
           <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Destination ideas" title={`Places to visit in ${city.name}`}>
-              Published destination pages connected to {city.name} and this travel topic, with
-              routes back to this city hub and related programmatic pages.
+              A focused mix of places that fit this theme, with nearby ideas to help shape a
+              smoother route through {city.name}.
             </SectionHeading>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {pageContent.destinations.map((destination) => (
@@ -220,8 +226,8 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
           <section className="border-y border-slate-200 bg-white py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <SectionHeading eyebrow="Things to do" title={`Attractions and things to do in ${city.name}`}>
-                Existing attraction pages can support long-tail travel discovery without adding any
-                new database fields.
+                Easy-to-compare sights, local stops, and places that add texture to a day in
+                {city.name}.
               </SectionHeading>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                 {pageContent.attractions.map((attraction) => (
@@ -235,8 +241,7 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
         {pageContent.guides.length > 0 ? (
           <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Planning guides" title={`${city.name} travel guides`}>
-              Guide pages add route planning, seasonal, and first-time visitor context to this
-              topic landing page.
+              Read a little deeper before choosing your route, timing, and neighborhood stops.
             </SectionHeading>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {pageContent.guides.map((guide) => (
@@ -250,8 +255,8 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-4 rounded-xl border border-slate-200 bg-[#F8FAFC] p-6 shadow-sm md:grid-cols-3">
               <InternalLink href={`/${city.slug}`} icon={MapPin} label={`${city.name} city hub`} />
-              <InternalLink href={citySeoPath(city.slug, "best-places")} icon={Compass} label="Best places page" />
-              <InternalLink href={citySeoPath(city.slug, "things-to-do")} icon={BookOpen} label="Things to do page" />
+              <InternalLink href={citySeoPath(city.slug, "best-places")} icon={Compass} label="Best places" />
+              <InternalLink href={citySeoPath(city.slug, "things-to-do")} icon={BookOpen} label="Things to do" />
               {cityTopicPages.slice(0, 3).map((topic) => (
                 <InternalLink key={topic.slug} href={citySeoPath(city.slug, topic.slug)} icon={Sparkles} label={topic.title(city)} />
               ))}

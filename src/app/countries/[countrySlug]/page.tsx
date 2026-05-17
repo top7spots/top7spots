@@ -94,21 +94,21 @@ export default async function CountryPage({ params }: CountryPageProps) {
                 </h1>
                 <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
                   Explore Top7Spots city hubs, destination ideas, travel guides, and attractions
-                  across {country.name}. This country page connects existing published content so
-                  travelers can move from national inspiration into city and destination details.
+                  across {country.name}. Follow city hubs into destination details, local guides,
+                  and easy planning ideas for a more focused route.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-600">
                   <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-[#0A2A66]">
                     <Building2 className="size-4" aria-hidden="true" />
-                    {country.cities.length} cit{country.cities.length === 1 ? "y" : "ies"}
+                    City hubs
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-[#FF6B00]">
                     <MapPin className="size-4" aria-hidden="true" />
-                    {country.destinations.length} destinations
+                    Destination ideas
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-slate-700">
                     <BookOpen className="size-4" aria-hidden="true" />
-                    {country.guides.length} guides
+                    Travel guides
                   </span>
                 </div>
               </div>
@@ -224,9 +224,8 @@ export default async function CountryPage({ params }: CountryPageProps) {
                 Plan your {country.name} route through city hubs
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Country pages are generated from existing Top7Spots content. Add or publish more
-                cities, destinations, guides, and attractions in the admin dashboard to expand this
-                hub automatically.
+                Start with a city, then move into nearby places, guides, and attractions that help
+                turn country-level inspiration into a clearer travel route.
               </p>
             </div>
           </div>

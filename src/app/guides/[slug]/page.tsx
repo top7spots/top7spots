@@ -147,7 +147,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
             <div className="mt-6 grid gap-7">
               {(guide.content.length > 0
                 ? guide.content
-                : ["This guide is ready for richer editorial content from the admin dashboard."]
+                : ["More travel notes are being shaped for this guide."]
               ).map((paragraph) => (
                 <p key={paragraph} className="text-base leading-8 text-slate-600 md:text-lg">
                   {paragraph}

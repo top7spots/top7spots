@@ -39,9 +39,9 @@ export const citySeoPages: CitySeoPageConfig[] = [
     title: (city) => `Best Places to Visit in ${city.name}`,
     metadataTitle: (city) => `Best Places to Visit in ${city.name} | Top7Spots`,
     description: (city) =>
-      `Explore the best places to visit in ${city.name}, ${city.country}, including curated destinations, attractions, guides, and city travel ideas from Top7Spots.`,
+      `Discover the best places to visit in ${city.name}, ${city.country}, from signature sights and local favorites to scenic stops worth adding to your trip.`,
     intro: (city) =>
-      `Use this page as a focused starting point for the best places to visit in ${city.name}. It brings together existing Top7Spots destinations, attractions, and guides so travelers can compare highlights, practical notes, and nearby ideas without leaving the city hub.`,
+      `Start with the places that give ${city.name} its character: memorable viewpoints, atmospheric neighborhoods, cultural stops, and easy-to-love local highlights. Compare the city's standout ideas before opening a deeper destination or guide page.`,
   },
   {
     slug: "things-to-do",
@@ -53,7 +53,7 @@ export const citySeoPages: CitySeoPageConfig[] = [
     description: (city) =>
       `Find things to do in ${city.name}, ${city.country}, from attractions and destination ideas to travel guides and local planning notes.`,
     intro: (city) =>
-      `This things-to-do guide is generated from published Top7Spots content for ${city.name}. Browse attractions, destination ideas, and guides that can help shape a simple route, weekend plan, or first-time city itinerary.`,
+      `Whether you are planning a first visit, a relaxed weekend, or a few open hours between stops, ${city.name} has plenty to shape a memorable route. Browse sights, local areas, scenic places, and practical guide ideas.`,
   },
   {
     slug: "travel-guide",
@@ -65,7 +65,7 @@ export const citySeoPages: CitySeoPageConfig[] = [
     description: (city) =>
       `Plan a ${city.name} travel guide with curated places to visit, things to do, attractions, destination pages, and practical Top7Spots guide links.`,
     intro: (city) =>
-      `The ${city.name} travel guide connects the city's published destinations, attractions, and planning articles into one scalable SEO page. It is designed to grow automatically as new admin-managed content is published.`,
+      `${city.name} rewards travelers who leave room for both landmarks and slower local moments. This guide brings together the city's most useful travel ideas, from standout places to visit to simple route inspiration for a smoother trip.`,
   },
 ];
 
@@ -81,9 +81,9 @@ export const cityTopicPages: CitySeoPageConfig[] = [
     title: (city) => `Best Cafes in ${city.name}`,
     metadataTitle: (city) => `Best Cafes in ${city.name} | Top7Spots`,
     description: (city) =>
-      `Explore cafes and coffee-friendly travel ideas in ${city.name}, ${city.country}, using existing Top7Spots destinations, attractions, and guides.`,
+      `Discover the best cafes in ${city.name}, ${city.country}, from stylish coffee stops and cozy brunch places to relaxed corners for a slower city break.`,
     intro: (city) =>
-      `This cafe-focused page gathers existing Top7Spots content for ${city.name} that mentions cafes, coffee stops, brunch, bakeries, and relaxed neighborhood places. It updates automatically as more admin-managed content is published.`,
+      `A good cafe can turn a city walk into a proper pause. Explore coffee-friendly corners of ${city.name}, from easy brunch ideas and bakery stops to relaxed neighborhoods where the day can slow down for a while.`,
   },
   {
     slug: "best-restaurants",
@@ -96,9 +96,9 @@ export const cityTopicPages: CitySeoPageConfig[] = [
     title: (city) => `Best Restaurants in ${city.name}`,
     metadataTitle: (city) => `Best Restaurants in ${city.name} | Top7Spots`,
     description: (city) =>
-      `Find restaurant and dining-related travel ideas in ${city.name}, ${city.country}, from published Top7Spots city content.`,
+      `Find restaurants and dining-friendly places in ${city.name}, ${city.country}, with city food areas, local flavors, markets, and relaxed meal stops.`,
     intro: (city) =>
-      `Use this page to find dining-related Top7Spots content for ${city.name}. It highlights existing destinations, attractions, and guides that reference restaurants, local food areas, markets, and places useful for planning a food-led route.`,
+      `Food is one of the easiest ways to understand ${city.name}. Use this guide to find dining areas, market stops, seafood spots, local flavors, and places that make sense around a day of sightseeing.`,
   },
   {
     slug: "best-beaches",
@@ -111,9 +111,9 @@ export const cityTopicPages: CitySeoPageConfig[] = [
     title: (city) => `Best Beaches in ${city.name}`,
     metadataTitle: (city) => `Best Beaches in ${city.name} | Top7Spots`,
     description: (city) =>
-      `Browse beach, coastal, island, and waterfront places connected to ${city.name}, ${city.country}, from Top7Spots content.`,
+      `Explore the best beaches and waterfront places near ${city.name}, ${city.country}, from coastal walks and bays to scenic places by the water.`,
     intro: (city) =>
-      `This beach topic page filters the ${city.name} library for coastal places, waterfront walks, islands, bays, and beach-friendly destination ideas. It stays data-driven and grows as new Top7Spots content is published.`,
+      `${city.name} is at its best when the route opens toward the water. Browse beaches, bays, corniche walks, islands, and coastal places that bring a softer pace to the city.`,
   },
   {
     slug: "family-attractions",
@@ -126,9 +126,9 @@ export const cityTopicPages: CitySeoPageConfig[] = [
     title: (city) => `Family Attractions in ${city.name}`,
     metadataTitle: (city) => `Family Attractions in ${city.name} | Top7Spots`,
     description: (city) =>
-      `Explore family-friendly attractions and destination ideas in ${city.name}, ${city.country}, using existing Top7Spots content.`,
+      `Explore family-friendly attractions in ${city.name}, ${city.country}, including easy sightseeing stops, parks, museums, beaches, and relaxed city ideas.`,
     intro: (city) =>
-      `This family travel page brings together existing Top7Spots content for ${city.name} that may suit relaxed sightseeing, parks, museums, waterfront walks, beaches, and other easy-to-plan city stops.`,
+      `For a family trip, the best stops are often simple, flexible, and easy to enjoy at your own pace. Explore relaxed attractions around ${city.name}, from waterfront walks and museums to open-air places that work well between bigger plans.`,
   },
 ];
 

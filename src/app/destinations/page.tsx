@@ -159,8 +159,8 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
             eyebrow={city ? `City: ${city}` : "All travel ideas"}
             title={city ? `Places near ${city}` : "Top destinations and hidden gems"}
           >
-            {filtered.length} destination{filtered.length === 1 ? "" : "s"} available. New admin
-            entries appear here automatically.
+            Browse the current destination collection, then follow city links for nearby places,
+            attractions, and travel guides.
           </SectionHeading>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             {filtered.map((destination) => (
@@ -173,8 +173,8 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
           <section className="border-t border-slate-200 bg-white py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <SectionHeading eyebrow="Destination hubs" title="Browse destinations by city">
-                City-based destination hubs help search engines and travelers understand how each
-                place connects to nearby travel ideas, local guides, and parent city pages.
+                City-based hubs make it easier to compare nearby places, local guides, and routes
+                that naturally belong together.
               </SectionHeading>
               <div className="grid gap-5 lg:grid-cols-2">
                 {cityDestinationSections.map((section) => (

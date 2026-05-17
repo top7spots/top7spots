@@ -270,7 +270,7 @@ export default async function CityPage({ params }: CityPageProps) {
                   `${city.name} is a Top7Spots city hub where destination ideas, local attractions, and travel guides are grouped together for easier trip research.`}
               </p>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Use this page to compare the best places to visit in {city.name}, scan practical
+                Use this guide to compare the best places to visit in {city.name}, scan practical
                 travel notes, and follow links into detailed destination pages when a place fits
                 your route.
               </p>
@@ -309,7 +309,7 @@ export default async function CityPage({ params }: CityPageProps) {
               />
               <RelatedLinkGroup
                 title={`Popular topics in ${city.name}`}
-                text="Long-tail travel topic pages built from existing published content."
+                text="Focused city themes for travelers planning around food, beaches, family stops, and local mood."
                 links={cityTopicPages.slice(0, 4).map((page) => ({
                   href: citySeoPath(city.slug, page.slug),
                   label: page.title(city),
@@ -367,7 +367,7 @@ export default async function CityPage({ params }: CityPageProps) {
               ))}
             </div>
           ) : (
-            <EmptyState title={`No ${city.name} destinations yet`} text="Add published destinations in the admin dashboard to populate this city page." />
+            <EmptyState title={`More ${city.name} places are coming`} text="Check back for new city ideas, nearby stops, and local travel inspiration." />
           )}
         </section>
 
@@ -383,7 +383,7 @@ export default async function CityPage({ params }: CityPageProps) {
               ))}
             </div>
           ) : (
-            <EmptyState title="Recommended spots will appear here" text="Published destinations will appear here automatically." />
+            <EmptyState title="Recommended spots will appear here" text="New city highlights will appear here as the guide grows." />
           )}
         </section>
 

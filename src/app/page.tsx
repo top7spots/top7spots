@@ -272,7 +272,7 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No cities published yet" text="Publish a city in the admin dashboard to show it here." />
+            <EmptyState title="More city guides are coming" text="New Top7Spots city hubs will appear here as the collection grows." />
           )}
         </section>
 

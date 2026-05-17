@@ -16,6 +16,7 @@ import {
   Waves,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { CityDirectory } from "@/components/city-directory";
 import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
@@ -96,6 +97,16 @@ export default async function Home() {
   ]);
   const visibleCities = sortHomepageCities(cities).slice(0, 12);
   const cityGroups = groupCitiesByCountry(cities);
+  const cityDirectoryGroups = cityGroups.map((group) => ({
+    country: group.country,
+    countryPath: countryPath(group.country),
+    cities: group.cities.map((city) => ({
+      id: city.id,
+      name: city.name,
+      slug: city.slug,
+      country: city.country,
+    })),
+  }));
   const homepageDestinations = destinations.filter((destination) => destination.citySlug).slice(0, 4);
   const homepageGuides = guides.slice(0, 4);
   const homepageCountries = buildCountryHubs({
@@ -274,11 +285,12 @@ export default async function Home() {
                     Explore all cities
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
-                    City directory by country
+                    Expandable city directory by country
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Every published city from the Top7Spots admin library appears here as a simple
-                    crawlable link, while the featured section above stays visual and curated.
+                    Every published city from the Top7Spots admin library remains available as a
+                    crawlable internal link, with compact country groups that can expand as the
+                    destination library grows.
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     <Link
@@ -295,29 +307,8 @@ export default async function Home() {
                     </Link>
                   </div>
                 </div>
-                <div className="grid gap-5 sm:grid-cols-2">
-                  {cityGroups.map((group) => (
-                    <div key={group.country} className="border-b border-slate-100 pb-4 last:border-b-0 sm:border-b">
-                      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        <Link href={countryPath(group.country)} className="transition hover:text-[#1D4ED8]">
-                          {group.country}
-                        </Link>
-                      </h3>
-                      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm leading-7 text-slate-500">
-                        {group.cities.map((city, index) => (
-                          <span key={city.id} className="inline-flex items-center gap-2">
-                            <Link
-                              href={`/${city.slug}`}
-                              className="font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                            >
-                              {city.name}
-                            </Link>
-                            {index < group.cities.length - 1 ? <span aria-hidden="true">·</span> : null}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <CityDirectory groups={cityDirectoryGroups} />
                 </div>
               </div>
             </div>

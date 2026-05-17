@@ -35,6 +35,7 @@ import {
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPages, citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
+import type { City, Destination } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -113,6 +114,24 @@ export default async function CityPage({ params }: CityPageProps) {
         .filter(Boolean),
     ),
   ).slice(0, 6);
+  const bestSeasonNotes = Array.from(
+    new Set(destinations.map((destination) => destination.bestSeason).filter(Boolean)),
+  ).slice(0, 3);
+  const durationNotes = Array.from(
+    new Set(destinations.map((destination) => destination.duration).filter(Boolean)),
+  ).slice(0, 3);
+  const guideCategories = Array.from(
+    new Set(guides.map((guide) => guide.category).filter(Boolean)),
+  ).slice(0, 3);
+  const planningHighlights = buildCityPlanningHighlights({
+    city,
+    cityAreas,
+    cityTravelTips,
+    bestSeasonNotes,
+    durationNotes,
+    guideCategories,
+    destinations,
+  });
   const countryHref = city.country ? countryPath(city.country) : "";
   const pillButtonClass =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]";
@@ -265,35 +284,28 @@ export default async function CityPage({ params }: CityPageProps) {
                 Plan your visit with local context
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                {city.longDescription ||
-                  city.shortDescription ||
-                  `${city.name} is a Top7Spots city hub where destination ideas, local attractions, and travel guides are grouped together for easier trip research.`}
+                Treat {city.name} as a city to explore in layers: choose one or two anchor sights,
+                then add nearby neighborhoods, waterfront walks, markets, scenic viewpoints, or
+                slower local stops around them.
               </p>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Use this guide to compare the best places to visit in {city.name}, scan practical
-                travel notes, and follow links into detailed destination pages when a place fits
-                your route.
+                {cityAreas.length > 0
+                  ? `Start by grouping places around ${formatList(cityAreas.slice(0, 3))}, then leave enough room for meals, transfers, and the kind of unplanned detours that make a trip feel personal.`
+                  : `Start with the places that matter most to your route, then leave enough room for meals, transfers, and the kind of unplanned detours that make a trip feel personal.`}
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5">
               <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
-                Travel tips for {city.name}
+                Practical guide to {city.name}
               </h2>
-              <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
-                {(cityTravelTips.length > 0
-                  ? cityTravelTips
-                  : [
-                      "Check opening hours and seasonal conditions before adding a place to your route.",
-                      "Group nearby destinations together to reduce travel time between stops.",
-                      "Use city guides and destination summaries together for a more balanced itinerary.",
-                    ]
-                ).map((tip) => (
-                  <li key={tip} className="flex gap-3">
-                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FF6B00]" />
-                    {tip}
-                  </li>
+              <div className="mt-4 grid gap-4">
+                {planningHighlights.map((item) => (
+                  <div key={item.title} className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
+                    <h3 className="text-sm font-semibold text-[#111827]">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{item.text}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
 
@@ -301,7 +313,7 @@ export default async function CityPage({ params }: CityPageProps) {
             <div className="mb-10 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-4">
               <RelatedLinkGroup
                 title={`${city.name} travel pages`}
-                text="Programmatic city pages for focused travel searches."
+                text="Focused planning pages for best places, things to do, and city guide ideas."
                 links={citySeoPages.map((page) => ({
                   href: citySeoPath(city.slug, page.slug),
                   label: page.title(city),
@@ -581,4 +593,83 @@ function RelatedLinkGroup({
       </div>
     </div>
   );
+}
+
+function buildCityPlanningHighlights({
+  city,
+  cityAreas,
+  cityTravelTips,
+  bestSeasonNotes,
+  durationNotes,
+  guideCategories,
+  destinations,
+}: {
+  city: City;
+  cityAreas: string[];
+  cityTravelTips: string[];
+  bestSeasonNotes: string[];
+  durationNotes: string[];
+  guideCategories: string[];
+  destinations: Destination[];
+}) {
+  const strongestCategories = Array.from(
+    new Set(destinations.map((destination) => destination.category).filter(Boolean)),
+  ).slice(0, 3);
+
+  return [
+    {
+      title: "Best time to visit",
+      text:
+        bestSeasonNotes.length > 0
+          ? `Plan around ${formatList(bestSeasonNotes)} when those seasons fit your route, and check local weather before locking in outdoor plans.`
+          : "Milder months and early starts usually make sightseeing more comfortable, especially when your route includes outdoor viewpoints or long walks.",
+    },
+    {
+      title: "How long to stay",
+      text:
+        durationNotes.length > 0
+          ? `Many highlighted stops work well as ${formatList(durationNotes)} visits, so even a short stay can feel focused when you group nearby places together.`
+          : `Two or three well-planned days in ${city.name} gives most travelers room for headline sights, relaxed meals, and one slower neighborhood walk.`,
+    },
+    {
+      title: "Getting around",
+      text:
+        cityAreas.length > 0
+          ? `Build each day around nearby areas such as ${formatList(cityAreas.slice(0, 3))} so you spend less time crossing the city and more time exploring.`
+          : "Group nearby places into the same day, leave buffer time between stops, and check transport options before heading across town.",
+    },
+    {
+      title: "Where to stay",
+      text:
+        strongestCategories.length > 0
+          ? `Choose a base near the experiences you care about most, whether that means ${formatList(strongestCategories).toLowerCase()} or quick access to day-trip routes.`
+          : "Choose a base close to the places you care about most, with easy access to meals, evening walks, and any day trips on your list.",
+    },
+    {
+      title: "Travel style",
+      text:
+        guideCategories.length > 0
+          ? `Use ${formatList(guideCategories).toLowerCase()} guide themes to shape the trip around your pace instead of trying to see everything at once.`
+          : "Families may prefer flexible outdoor stops and shorter transfers, while couples can leave more room for sunset views, quiet cafes, and slower evenings.",
+    },
+    {
+      title: "Local rhythm",
+      text:
+        cityTravelTips.length > 0
+          ? cityTravelTips[0]
+          : "Check opening hours, seasonal conditions, and local customs before finalizing each day, especially for cultural sites and outdoor routes.",
+    },
+  ];
+}
+
+function formatList(items: string[]) {
+  if (items.length <= 1) {
+    return items[0] || "";
+  }
+
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }

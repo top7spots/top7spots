@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveImagePath } from "@/lib/images";
@@ -8,12 +8,14 @@ import type { Guide } from "@/lib/types";
 
 type GuideCardProps = {
   guide: Guide;
+  cityName?: string;
+  href?: string;
 };
 
-export function GuideCard({ guide }: GuideCardProps) {
+export function GuideCard({ guide, cityName, href: hrefOverride }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
-  const href = guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
-  const imageAlt = `${guide.title} travel guide${guide.citySlug ? ` for ${guide.citySlug}` : ""}`;
+  const href = hrefOverride || (guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`);
+  const imageAlt = guide.coverImageAlt || `${guide.title} travel guide${cityName ? ` for ${cityName}` : ""}`;
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
@@ -35,6 +37,12 @@ export function GuideCard({ guide }: GuideCardProps) {
         <Badge variant="secondary" className="w-fit rounded-full bg-blue-50 text-[#1D4ED8]">
           {guide.category || "Guide"}
         </Badge>
+        {cityName ? (
+          <span className="inline-flex w-fit items-center gap-1 text-xs font-semibold text-slate-500">
+            <MapPin className="size-3.5 text-[#1D4ED8]" aria-hidden="true" />
+            {cityName}
+          </span>
+        ) : null}
         <div>
           <h3 className="text-lg font-semibold leading-tight text-[#111827] sm:text-xl">{guide.title}</h3>
           <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">

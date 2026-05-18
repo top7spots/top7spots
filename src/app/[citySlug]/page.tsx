@@ -35,7 +35,7 @@ import {
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPages, citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
-import type { City, Destination } from "@/lib/types";
+import type { City, Destination, Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -100,6 +100,7 @@ export default async function CityPage({ params }: CityPageProps) {
     notFound();
   }
 
+  const sortedGuides = sortGuides(guides);
   const cityAreas = Array.from(
     new Set(
       destinations
@@ -121,7 +122,7 @@ export default async function CityPage({ params }: CityPageProps) {
     new Set(destinations.map((destination) => destination.duration).filter(Boolean)),
   ).slice(0, 3);
   const guideCategories = Array.from(
-    new Set(guides.map((guide) => guide.category).filter(Boolean)),
+    new Set(sortedGuides.map((guide) => guide.category).filter(Boolean)),
   ).slice(0, 3);
   const planningHighlights = buildCityPlanningHighlights({
     city,
@@ -341,10 +342,13 @@ export default async function CityPage({ params }: CityPageProps) {
                 <RelatedLinkGroup
                   title={`Travel guides for ${city.name}`}
                   text="Use city-specific guides to add planning context to your route."
-                  links={guides.slice(0, 5).map((guide) => ({
-                    href: `/${city.slug}/guides/${guide.slug}`,
-                    label: guide.title,
-                  }))}
+                  links={[
+                    { href: `/${city.slug}/guides`, label: `All ${city.name} travel guides` },
+                    ...sortedGuides.slice(0, 4).map((guide) => ({
+                      href: `/${city.slug}/guides/${guide.slug}`,
+                      label: guide.title,
+                    })),
+                  ]}
                 />
               ) : null}
               {attractions.length > 0 ? (
@@ -467,15 +471,30 @@ export default async function CityPage({ params }: CityPageProps) {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Essential Travel Guides" title={`Plan ${city.name} smarter`}>
-            Clear advice for seasons, routing, culture, road trips, and travel style.
-          </SectionHeading>
-          {guides.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {guides.map((guide) => (
-                <GuideCard key={guide.id} guide={guide} />
-              ))}
-            </div>
+          {sortedGuides.length > 0 ? (
+            <>
+              <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <SectionHeading eyebrow="Travel Guides" title={`Plan ${city.name} smarter`}>
+                  Clear advice for seasons, routing, culture, road trips, and travel style.
+                </SectionHeading>
+                <Link
+                  href={`/${city.slug}/guides`}
+                  className="w-fit rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                >
+                  View all {city.name} guides
+                </Link>
+              </div>
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {sortedGuides.slice(0, 4).map((guide) => (
+                  <GuideCard
+                    key={guide.id}
+                    guide={guide}
+                    cityName={city.name}
+                    href={`/${city.slug}/guides/${guide.slug}`}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
             <EmptyState title="Guides will appear here" text="Published city guides will appear in this section." />
           )}
@@ -660,6 +679,23 @@ function buildCityPlanningHighlights({
           : "Check opening hours, seasonal conditions, and local customs before finalizing each day, especially for cultural sites and outdoor routes.",
     },
   ];
+}
+
+function sortGuides(guides: Guide[]) {
+  return [...guides].sort((a, b) => {
+    if (a.isFeatured !== b.isFeatured) {
+      return a.isFeatured ? -1 : 1;
+    }
+
+    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : 999;
+    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
 }
 
 function formatList(items: string[]) {

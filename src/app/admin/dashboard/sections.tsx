@@ -707,14 +707,61 @@ function GuideForm({
         </FormSection>
         <FormSection title="Cover image" columns={1}>
           <ImageUploadField fieldName="image" label="Cover image" currentImage={guide?.image || guide?.coverImage} />
+          <Field
+            label="Cover image alt text"
+            name="coverImageAlt"
+            defaultValue={guide?.coverImageAlt}
+            placeholder="Rental car parked near Muscat International Airport"
+          />
         </FormSection>
         <FormSection title="Content" columns={1}>
           <Area label="Excerpt" name="excerpt" defaultValue={guide?.excerpt} />
           <Area label="Content paragraphs, one per line" name="content" defaultValue={lines(guide?.content)} rows={6} />
         </FormSection>
+        <FormSection title="FAQs" columns={1}>
+          <Area
+            label="FAQ blocks"
+            name="faqs"
+            defaultValue={formatFaqText(guide?.faqs)}
+            placeholder={
+              "Question: Can tourists rent a car in Oman?\nAnswer: Yes, tourists can rent a car in Oman with a valid driving license, passport, and required documents.\n\nQuestion: Is a deposit required?\nAnswer: Most rental companies require a refundable security deposit."
+            }
+            rows={8}
+          />
+        </FormSection>
+        <FormSection title="Table of contents" columns={1}>
+          <Area
+            label="Table of contents"
+            name="tableOfContents"
+            defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
+            placeholder={
+              "Why rent a car in Muscat | why-rent-a-car-in-muscat\nDocuments needed | documents-needed\nDeposit and insurance | deposit-and-insurance"
+            }
+            rows={5}
+          />
+        </FormSection>
         <FormSection title="SEO" columns={1}>
           <Field label="SEO title" name="seoTitle" defaultValue={guide?.seoTitle} />
           <Field label="SEO description" name="seoDescription" defaultValue={guide?.seoDescription} />
+          <Field
+            label="SEO keywords"
+            name="seoKeywords"
+            defaultValue={commaList(guide?.seoKeywords)}
+            placeholder="rent a car muscat, muscat airport car rental, self drive oman"
+            helperText="Comma-separated keywords for search targeting."
+          />
+          <Field
+            label="Related guide slugs"
+            name="relatedGuideSlugs"
+            defaultValue={commaList(guide?.relatedGuideSlugs)}
+            helperText="Comma-separated guide slugs."
+          />
+          <Field
+            label="Related place slugs"
+            name="relatedPlaceSlugs"
+            defaultValue={commaList(guide?.relatedPlaceSlugs)}
+            helperText="Comma-separated place slugs."
+          />
         </FormSection>
         <FormActions backHref={backHref} label="Save guide" />
       </form>
@@ -1076,18 +1123,21 @@ function Field({
   name,
   defaultValue,
   placeholder,
+  helperText,
   type = "text",
 }: {
   label: string;
   name: string;
   defaultValue?: string | number;
   placeholder?: string;
+  helperText?: string;
   type?: string;
 }) {
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{label}</Label>
       <Input id={name} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} />
+      {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
     </div>
   );
 }
@@ -1111,18 +1161,21 @@ function Area({
   name,
   defaultValue,
   placeholder,
+  helperText,
   rows = 4,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   placeholder?: string;
+  helperText?: string;
   rows?: number;
 }) {
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{label}</Label>
       <Textarea id={name} name={name} defaultValue={defaultValue} placeholder={placeholder} rows={rows} />
+      {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
     </div>
   );
 }
@@ -1317,4 +1370,20 @@ function isDraft(item: { status: string }) {
 
 function lines(value?: string[]) {
   return Array.isArray(value) ? value.join("\n") : "";
+}
+
+function commaList(value?: string[]) {
+  return Array.isArray(value) ? value.join(", ") : "";
+}
+
+function formatFaqText(faqs?: Guide["faqs"]) {
+  return Array.isArray(faqs)
+    ? faqs.map((faq) => `Question: ${faq.question}\nAnswer: ${faq.answer}`).join("\n\n")
+    : "";
+}
+
+function formatTableOfContentsText(tableOfContents?: Guide["tableOfContents"]) {
+  return Array.isArray(tableOfContents)
+    ? tableOfContents.map((item) => `${item.label} | ${item.anchor}`).join("\n")
+    : "";
 }

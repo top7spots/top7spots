@@ -67,6 +67,49 @@ async function uploadImageList(images = []) {
   return Promise.all((images || []).map(uploadLocalImage));
 }
 
+function stringListValue(value, { splitString = false } = {}) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+
+  if (splitString && typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function faqValue(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+    .map((item) => ({
+      question: String(item.question || "").trim(),
+      answer: String(item.answer || "").trim(),
+    }))
+    .filter((item) => item.question && item.answer);
+}
+
+function tableOfContentsValue(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+    .map((item) => ({
+      label: String(item.label || "").trim(),
+      anchor: String(item.anchor || "").trim(),
+    }))
+    .filter((item) => item.label && item.anchor);
+}
+
 async function migrate() {
   const cities = await readJson("cities.json");
   const destinations = await readJson("destinations.json");
@@ -152,6 +195,12 @@ async function migrate() {
         display_order: guide.displayOrder,
         seo_title: guide.seoTitle,
         seo_description: guide.seoDescription,
+        seo_keywords: stringListValue(guide.seoKeywords, { splitString: true }),
+        cover_image_alt: guide.coverImageAlt || "",
+        faqs: faqValue(guide.faqs),
+        related_guide_slugs: stringListValue(guide.relatedGuideSlugs),
+        related_place_slugs: stringListValue(guide.relatedPlaceSlugs),
+        table_of_contents: tableOfContentsValue(guide.tableOfContents),
         created_at: guide.createdAt,
         updated_at: guide.updatedAt,
       };

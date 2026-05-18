@@ -7,6 +7,7 @@ import {
   siteBaseUrl,
   siteName,
 } from "@/lib/seo";
+import type { City, Guide } from "@/lib/types";
 
 type BreadcrumbItem = {
   name: string;
@@ -44,7 +45,7 @@ type FAQItem = {
   answer: string;
 };
 
-function JsonLd({ data }: JsonLdProps) {
+export function JsonLd({ data }: JsonLdProps) {
   return (
     <script
       type="application/ld+json"
@@ -228,6 +229,98 @@ export function FAQPageJsonLd({ faqs }: { faqs: FAQItem[] }) {
       }}
     />
   );
+}
+
+type GuideBreadcrumbInput = {
+  guide: Guide;
+  canonicalPath: string;
+  city?: City;
+  includeCity?: boolean;
+};
+
+export function buildGuideArticleJsonLd({
+  guide,
+  canonicalPath,
+}: {
+  guide: Guide;
+  canonicalPath: string;
+}) {
+  const url = absoluteUrl(cleanPath(canonicalPath));
+  const image = guide.coverImage || guide.image;
+
+  if (!guide.title) {
+    return null;
+  }
+
+  return compactObject({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: guide.title,
+    description: guide.seoDescription || guide.excerpt || undefined,
+    image: image ? absoluteImageUrl(image) : undefined,
+    author: {
+      "@type": guide.author ? "Person" : "Organization",
+      name: guide.author || siteName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      logo: imageObject("/brand/top7spots-light.png"),
+    },
+    datePublished: guide.createdAt || undefined,
+    dateModified: guide.updatedAt || guide.createdAt || undefined,
+    mainEntityOfPage: url,
+  });
+}
+
+export function buildGuideBreadcrumbJsonLd({
+  guide,
+  canonicalPath,
+  city,
+  includeCity = false,
+}: GuideBreadcrumbInput) {
+  if (!guide.title) {
+    return null;
+  }
+
+  const items = [
+    { name: "Home", path: "/" },
+    ...(includeCity && city ? [{ name: city.name, path: `/${city.slug}` }] : []),
+    { name: "Guides", path: "/guides" },
+    { name: guide.title, path: canonicalPath },
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absoluteUrl(cleanPath(item.path)),
+    })),
+  };
+}
+
+export function buildGuideFaqJsonLd(guide: Pick<Guide, "faqs">) {
+  const validFaqs = guide.faqs.filter((faq) => faq.question && faq.answer);
+
+  if (validFaqs.length === 0) {
+    return null;
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: validFaqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
 }
 
 export function imageObject(image?: string) {

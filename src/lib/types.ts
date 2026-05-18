@@ -1,5 +1,15 @@
 export type ContentStatus = "draft" | "published";
 
+export type GuideFaq = {
+  question: string;
+  answer: string;
+};
+
+export type GuideTableOfContentsItem = {
+  label: string;
+  anchor: string;
+};
+
 export type City = {
   id: string;
   name: string;
@@ -70,6 +80,12 @@ export type Guide = {
   displayOrder: number;
   seoTitle: string;
   seoDescription: string;
+  seoKeywords: string[];
+  coverImageAlt: string;
+  faqs: GuideFaq[];
+  relatedGuideSlugs: string[];
+  relatedPlaceSlugs: string[];
+  tableOfContents: GuideTableOfContentsItem[];
   createdAt: string;
   updatedAt: string;
 };

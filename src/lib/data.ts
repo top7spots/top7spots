@@ -30,6 +30,15 @@ const tableNames: Record<AdminCollection, string> = {
   attractions: "attractions",
 };
 
+const structuredGuideRowKeys = [
+  "seo_keywords",
+  "cover_image_alt",
+  "faqs",
+  "related_guide_slugs",
+  "related_place_slugs",
+  "table_of_contents",
+] as const;
+
 function byDisplayOrder<T extends { displayOrder?: number; name?: string; title?: string }>(a: T, b: T) {
   const orderA = a.displayOrder ?? 999;
   const orderB = b.displayOrder ?? 999;
@@ -87,6 +96,55 @@ function arrayValue(value: unknown) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function stringListValue(value: unknown, { splitString = false } = {}) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item.trim() : String(item ?? "").trim()))
+      .filter(Boolean);
+  }
+
+  if (splitString && typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function faqValue(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(isRecord)
+    .map((item) => ({
+      question: stringField(item, "question"),
+      answer: stringField(item, "answer"),
+    }))
+    .filter((item) => item.question && item.answer);
+}
+
+function tableOfContentsValue(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(isRecord)
+    .map((item) => ({
+      label: stringField(item, "label"),
+      anchor: stringField(item, "anchor"),
+    }))
+    .filter((item) => item.label && item.anchor);
 }
 
 function mapCity(row: CityRow): City {
@@ -171,6 +229,12 @@ function mapGuide(row: GuideRow): Guide {
     displayOrder: numberField(row, "display_order", "displayOrder"),
     seoTitle: stringField(row, "seo_title", "seoTitle"),
     seoDescription: stringField(row, "seo_description", "seoDescription"),
+    seoKeywords: stringListValue(getField(row, "seo_keywords", "seoKeywords"), { splitString: true }),
+    coverImageAlt: stringField(row, "cover_image_alt", "coverImageAlt"),
+    faqs: faqValue(getField(row, "faqs")),
+    relatedGuideSlugs: stringListValue(getField(row, "related_guide_slugs", "relatedGuideSlugs")),
+    relatedPlaceSlugs: stringListValue(getField(row, "related_place_slugs", "relatedPlaceSlugs")),
+    tableOfContents: tableOfContentsValue(getField(row, "table_of_contents", "tableOfContents")),
     createdAt: stringField(row, "created_at", "createdAt"),
     updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
@@ -275,9 +339,30 @@ function toGuideRow(item: Guide): GuideRow {
     display_order: item.displayOrder,
     seo_title: item.seoTitle,
     seo_description: item.seoDescription,
+    seo_keywords: item.seoKeywords || [],
+    cover_image_alt: item.coverImageAlt || "",
+    faqs: item.faqs || [],
+    related_guide_slugs: item.relatedGuideSlugs || [],
+    related_place_slugs: item.relatedPlaceSlugs || [],
+    table_of_contents: item.tableOfContents || [],
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   };
+}
+
+function legacyGuideRow(row: GuideRow): GuideRow {
+  const copy = { ...row };
+
+  for (const key of structuredGuideRowKeys) {
+    delete copy[key];
+  }
+
+  return copy;
+}
+
+function isMissingStructuredGuideColumn(error: { message?: string }) {
+  const message = String(error.message || "").toLowerCase();
+  return structuredGuideRowKeys.some((key) => message.includes(key));
 }
 
 function toAttractionRow(item: Attraction): AttractionRow {
@@ -490,9 +575,18 @@ export async function upsertItem<T extends AdminCollection>(
   item: CollectionMap[T],
 ) {
   const supabase = getSupabaseAdminClient();
-  const { error } = await supabase
-    .from(tableNames[collection])
-    .upsert(itemToRow(collection, item), { onConflict: "id" });
+  const row = itemToRow(collection, item);
+  const { error } = await supabase.from(tableNames[collection]).upsert(row, { onConflict: "id" });
+
+  if (error && collection === "guides" && isMissingStructuredGuideColumn(error)) {
+    const { error: legacyError } = await supabase
+      .from(tableNames[collection])
+      .upsert(legacyGuideRow(row as GuideRow), { onConflict: "id" });
+
+    if (!legacyError) {
+      return;
+    }
+  }
 
   if (error) {
     throw new Error(`Failed to save ${collection}: ${error.message}`);

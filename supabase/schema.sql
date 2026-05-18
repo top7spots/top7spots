@@ -69,10 +69,23 @@ create table if not exists public.guides (
   display_order integer not null default 0,
   seo_title text,
   seo_description text,
+  seo_keywords text[] not null default '{}',
+  cover_image_alt text not null default '',
+  faqs jsonb not null default '[]'::jsonb,
+  related_guide_slugs text[] not null default '{}',
+  related_place_slugs text[] not null default '{}',
+  table_of_contents jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (city_slug, slug)
 );
+
+alter table public.guides add column if not exists seo_keywords text[] not null default '{}';
+alter table public.guides add column if not exists cover_image_alt text not null default '';
+alter table public.guides add column if not exists faqs jsonb not null default '[]'::jsonb;
+alter table public.guides add column if not exists related_guide_slugs text[] not null default '{}';
+alter table public.guides add column if not exists related_place_slugs text[] not null default '{}';
+alter table public.guides add column if not exists table_of_contents jsonb not null default '[]'::jsonb;
 
 create table if not exists public.attractions (
   id text primary key,

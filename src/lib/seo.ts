@@ -12,6 +12,7 @@ type SeoMetadataInput = {
   description: string;
   path: string;
   image?: string;
+  keywords?: string[];
   type?: "website" | "article";
 };
 
@@ -37,6 +38,7 @@ export function seoMetadata({
   description,
   path,
   image,
+  keywords,
   type = "website",
 }: SeoMetadataInput): Metadata {
   const url = absoluteUrl(cleanPath(path));
@@ -45,6 +47,7 @@ export function seoMetadata({
   return {
     title,
     description,
+    keywords: keywords?.length ? keywords : undefined,
     alternates: {
       canonical: url,
     },

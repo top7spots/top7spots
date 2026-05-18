@@ -68,6 +68,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.9,
     })),
+    ...cities
+      .filter((city) => {
+        const content = cityContent.get(slugify(city.slug));
+        return content ? content.guides.length > 0 : false;
+      })
+      .map((city) => ({
+        url: absoluteUrl(`/${slugify(city.slug)}/guides`),
+        lastModified: lastModified(city.updatedAt, city.createdAt),
+        changeFrequency: "weekly" as const,
+        priority: 0.74,
+      })),
     ...cities.flatMap((city) => {
       const citySlug = slugify(city.slug);
       const content = cityContent.get(citySlug) || { destinations: [], attractions: [], guides: [] };

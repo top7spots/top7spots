@@ -4,9 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
 import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
-import { deleteItem, getCityBySlug, upsertItem } from "@/lib/data";
+import { deleteItem, getCityBySlug, getGuides, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
-import type { AdminCollection, Attraction, ContentStatus, Destination, Guide } from "@/lib/types";
+import type {
+  AdminCollection,
+  Attraction,
+  ContentStatus,
+  Destination,
+  Guide,
+  GuideFaq,
+  GuideTableOfContentsItem,
+} from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
 function value(formData: FormData, key: string) {
@@ -24,6 +32,54 @@ function checkboxValue(formData: FormData, key: string) {
 function numberValue(formData: FormData, key: string) {
   const parsed = Number(value(formData, key));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function uniqueValues(values: string[]) {
+  return Array.from(new Set(values));
+}
+
+function parseCommaSeparatedList(value: FormDataEntryValue | null) {
+  return uniqueValues(
+    String(value ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+}
+
+function optionalCommaSeparatedListValue(formData: FormData, key: string, fallback: string[]) {
+  return formData.has(key) ? parseCommaSeparatedList(formData.get(key)) : fallback;
+}
+
+function parseFaqText(value: FormDataEntryValue | null): GuideFaq[] {
+  const text = String(value ?? "").trim();
+
+  if (!text) {
+    return [];
+  }
+
+  return text
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const questionMatch = block.match(/(?:^|\n)\s*Question:\s*(.+)/i);
+      const answerMatch = block.match(/(?:^|\n)\s*Answer:\s*([\s\S]+)/i);
+
+      return {
+        question: questionMatch?.[1]?.trim() ?? "",
+        answer: answerMatch?.[1]?.trim() ?? "",
+      };
+    })
+    .filter((faq) => faq.question && faq.answer);
+}
+
+function parseTableOfContentsText(value: FormDataEntryValue | null): GuideTableOfContentsItem[] {
+  return String(value ?? "")
+    .split("\n")
+    .map((line) => {
+      const [label, anchor] = line.split("|").map((item) => item.trim());
+      return { label: label || "", anchor: anchor || "" };
+    })
+    .filter((item) => item.label && item.anchor);
 }
 
 function timestamp(formData: FormData, key = "createdAt") {
@@ -205,6 +261,9 @@ export async function saveGuideAction(formData: FormData) {
   }
 
   const slug = value(formData, "slug") || slugify(title);
+  const existingGuide = value(formData, "id")
+    ? (await getGuides()).find((guide) => guide.id === value(formData, "id"))
+    : undefined;
   const item: Guide = {
     id: value(formData, "id") || idFrom("guide", title),
     cityId,
@@ -223,6 +282,28 @@ export async function saveGuideAction(formData: FormData) {
     displayOrder: numberValue(formData, "displayOrder"),
     seoTitle: value(formData, "seoTitle"),
     seoDescription: value(formData, "seoDescription"),
+    seoKeywords: optionalCommaSeparatedListValue(
+      formData,
+      "seoKeywords",
+      existingGuide?.seoKeywords ?? [],
+    ),
+    coverImageAlt: formData.has("coverImageAlt")
+      ? value(formData, "coverImageAlt")
+      : existingGuide?.coverImageAlt ?? "",
+    faqs: formData.has("faqs") ? parseFaqText(formData.get("faqs")) : existingGuide?.faqs ?? [],
+    relatedGuideSlugs: optionalCommaSeparatedListValue(
+      formData,
+      "relatedGuideSlugs",
+      existingGuide?.relatedGuideSlugs ?? [],
+    ),
+    relatedPlaceSlugs: optionalCommaSeparatedListValue(
+      formData,
+      "relatedPlaceSlugs",
+      existingGuide?.relatedPlaceSlugs ?? [],
+    ),
+    tableOfContents: formData.has("tableOfContents")
+      ? parseTableOfContentsText(formData.get("tableOfContents"))
+      : existingGuide?.tableOfContents ?? [],
     createdAt: timestamp(formData),
     updatedAt: new Date().toISOString(),
   };

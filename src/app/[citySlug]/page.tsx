@@ -123,7 +123,7 @@ export default async function CityPage({ params }: CityPageProps) {
     guideCategories,
     destinations,
   });
-  const topPicks = destinations.slice(0, 7);
+  const topPicks = destinations.slice(0, 6);
   const interestLinks = buildInterestLinks({ city, destinations, guides: sortedGuides, attractions });
   const nearbyRoutes = destinations.filter((destination) => isRouteExtension(destination, city)).slice(0, 4);
   const heroDescription = buildCityHeroDescription(city);
@@ -153,7 +153,7 @@ export default async function CityPage({ params }: CityPageProps) {
         region={city.region}
       />
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-        <header className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <header className="mx-auto flex max-w-[88rem] flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <BrandLogo priority imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
 
@@ -198,7 +198,7 @@ export default async function CityPage({ params }: CityPageProps) {
             />
           </label>
         </header>
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[88rem] gap-2 overflow-x-auto px-4 pb-3 sm:px-6 lg:px-8">
           <button type="button" className={pillButtonClass}>
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             Filters
@@ -213,8 +213,8 @@ export default async function CityPage({ params }: CityPageProps) {
       </div>
 
       <main>
-        <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_rgb(15_23_42_/_9%)]">
+        <section className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_rgb(15_23_42_/_9%)]">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_460px]">
               <div className="p-6 sm:p-8 lg:p-9">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
@@ -265,7 +265,7 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
 
-          <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="mb-7 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Top picks</p>
               <h2 className="mt-2 max-w-4xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
@@ -273,7 +273,7 @@ export default async function CityPage({ params }: CityPageProps) {
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
                 Start with the strongest curated places first. The supporting sections below help
-                you shape the route without turning the page into a directory.
+                shape the route without turning the page into a directory.
               </p>
             </div>
             <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm">
@@ -282,7 +282,7 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
 
           {topPicks.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {topPicks.map((destination) => (
                 <DestinationCard key={destination.id} destination={destination} />
               ))}
@@ -293,7 +293,7 @@ export default async function CityPage({ params }: CityPageProps) {
         </section>
 
         {interestLinks.length > 0 ? (
-          <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <section className="mx-auto max-w-[88rem] px-4 py-7 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="grid gap-4 lg:grid-cols-[0.6fr_1fr] lg:items-center">
                 <div>
@@ -324,8 +324,8 @@ export default async function CityPage({ params }: CityPageProps) {
           </section>
         ) : null}
 
-        <section className="border-y border-slate-200 bg-white py-10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="border-y border-slate-200 bg-white py-9">
+          <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
             <div className="grid gap-6 rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm lg:grid-cols-[0.65fr_1.35fr]">
               <div className="max-w-xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
@@ -336,15 +336,15 @@ export default async function CityPage({ params }: CityPageProps) {
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   {cityAreas.length > 0
-                    ? `Group stops around ${formatList(cityAreas.slice(0, 3))}, then leave room for meals, transfers, and slower detours.`
-                    : `Group nearby places into simple days, then leave room for meals, transfers, and slower detours.`}
+                    ? `Group stops around ${formatList(cityAreas.slice(0, 3))}, then leave room for transfers and slower detours.`
+                    : `Group nearby places into simple days, then leave room for transfers and slower detours.`}
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {planningHighlights.map((item) => (
                   <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
                     <h3 className="text-sm font-semibold text-[#111827]">{item.title}</h3>
-                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.text}</p>
+                    <p className="mt-1.5 text-sm leading-6 text-slate-600">{shortenText(item.text, 115)}</p>
                   </div>
                 ))}
               </div>
@@ -353,17 +353,16 @@ export default async function CityPage({ params }: CityPageProps) {
         </section>
 
         {nearbyRoutes.length > 0 ? (
-          <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Nearby routes" title={`Day trips and route extensions from ${city.name}`}>
-              Connected journeys for extending a {city.name} stay without treating every route as a
-              primary city pick.
+              Connected journeys for extending a {city.name} stay after the main city picks.
             </SectionHeading>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {nearbyRoutes.map((destination) => (
                 <Link
                   key={destination.id}
                   href={`/${destination.citySlug || city.slug}/destinations/${destination.slug}`}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-xl"
+                  className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -377,7 +376,7 @@ export default async function CityPage({ params }: CityPageProps) {
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     {shortenText(
                       destination.summary || destination.location || `Extend your ${city.name} route with this connected stop.`,
-                      120,
+                      95,
                     )}
                   </p>
                 </Link>
@@ -386,12 +385,12 @@ export default async function CityPage({ params }: CityPageProps) {
           </section>
         ) : null}
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
           {sortedGuides.length > 0 ? (
             <>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <SectionHeading eyebrow="Travel Guides" title={`Plan ${city.name} smarter`}>
-                  Short planning reads for adding context after the main route starts to take shape.
+                  Short planning reads for adding context after the route starts to take shape.
                 </SectionHeading>
                 <Link
                   href={`/${city.slug}/guides`}
@@ -405,7 +404,7 @@ export default async function CityPage({ params }: CityPageProps) {
                   <Link
                     key={guide.id}
                     href={`/${city.slug}/guides/${guide.slug}`}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-xl"
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-lg"
                   >
                     <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
                       <span>{guide.category || "Guide"}</span>
@@ -413,7 +412,7 @@ export default async function CityPage({ params }: CityPageProps) {
                     </div>
                     <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#111827]">{guide.title}</h3>
                     {guide.excerpt ? (
-                      <p className="mt-1.5 text-sm leading-6 text-slate-600">{shortenText(guide.excerpt, 135)}</p>
+                      <p className="mt-1.5 text-sm leading-6 text-slate-600">{shortenText(guide.excerpt, 110)}</p>
                     ) : null}
                   </Link>
                 ))}
@@ -424,8 +423,8 @@ export default async function CityPage({ params }: CityPageProps) {
           )}
         </section>
 
-        <section className="border-y border-slate-200 bg-white py-10">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="border-y border-slate-200 bg-white py-9">
+          <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Attraction highlights" title={`More places to compare in ${city.name}`}>
               Secondary comparison points once the main city picks are clear.
             </SectionHeading>
@@ -435,14 +434,14 @@ export default async function CityPage({ params }: CityPageProps) {
                   <Link
                     key={attraction.id}
                     href={`/${city.slug}/attractions/${attraction.slug}`}
-                    className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-xl"
+                    className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-lg"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
                       {attraction.category || attraction.type || "Attraction"}
                     </p>
                     <h3 className="mt-1.5 text-base font-semibold text-[#111827]">{attraction.name}</h3>
                     <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                      {shortenText(attraction.summary || attraction.description, 115)}
+                      {shortenText(attraction.summary || attraction.description, 95)}
                     </p>
                   </Link>
                 ))}
@@ -454,11 +453,10 @@ export default async function CityPage({ params }: CityPageProps) {
         </section>
 
         {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
-          <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <SectionHeading eyebrow="More ways to explore" title={`Keep planning ${city.name}`}>
-                Supporting links kept lower on the page so discovery stays calm while crawl paths
-                remain clear.
+                Supporting links kept quiet while crawl paths remain clear.
               </SectionHeading>
               <div className="grid gap-x-7 gap-y-6 md:grid-cols-2 lg:grid-cols-4">
                 <RelatedLinkGroup
@@ -767,7 +765,8 @@ function shortenText(text: string, maxLength: number) {
 
   const trimmed = normalized.slice(0, maxLength).trim();
   const lastSpace = trimmed.lastIndexOf(" ");
-  const safeTrimmed = lastSpace > 80 ? trimmed.slice(0, lastSpace) : trimmed;
+  const safeTrimmed = lastSpace > Math.floor(maxLength * 0.6) ? trimmed.slice(0, lastSpace) : trimmed;
 
   return `${safeTrimmed.replace(/[.,;:!?-]+$/, "")}...`;
 }
+

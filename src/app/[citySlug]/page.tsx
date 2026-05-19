@@ -14,14 +14,11 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Star,
   TentTree,
   Waves,
 } from "lucide-react";
-import { AttractionCard } from "@/components/attraction-card";
 import { BrandLogo } from "@/components/brand-logo";
 import { DestinationCard } from "@/components/destination-card";
-import { GuideCard } from "@/components/guide-card";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -35,7 +32,7 @@ import {
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPages, citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
-import type { City, Destination, Guide } from "@/lib/types";
+import type { Attraction, City, Destination, Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -53,13 +50,6 @@ const categoryPills = [
   { label: "Hidden Gems", icon: Gem },
   { label: "Family", icon: ShieldCheck },
   { label: "Road Trips", icon: Car },
-];
-
-const inspiration = [
-  "Secret beaches and coastal drives",
-  "Mountain stays with sunrise views",
-  "Luxury escapes and boutique routes",
-  "Historic forts, souqs, and old towns",
 ];
 
 export async function generateMetadata({ params }: CityPageProps): Promise<Metadata> {
@@ -133,6 +123,9 @@ export default async function CityPage({ params }: CityPageProps) {
     guideCategories,
     destinations,
   });
+  const topPicks = destinations.slice(0, 7);
+  const interestLinks = buildInterestLinks({ city, destinations, guides: sortedGuides, attractions });
+  const nearbyRoutes = destinations.filter((destination) => isRouteExtension(destination, city)).slice(0, 4);
   const countryHref = city.country ? countryPath(city.country) : "";
   const pillButtonClass =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]";
@@ -276,109 +269,25 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
 
-          <div className="mb-10 grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[1fr_0.85fr]">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                {city.name} travel guide
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">
-                Plan your visit with local context
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                Treat {city.name} as a city to explore in layers: choose one or two anchor sights,
-                then add nearby neighborhoods, waterfront walks, markets, scenic viewpoints, or
-                slower local stops around them.
-              </p>
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                {cityAreas.length > 0
-                  ? `Start by grouping places around ${formatList(cityAreas.slice(0, 3))}, then leave enough room for meals, transfers, and the kind of unplanned detours that make a trip feel personal.`
-                  : `Start with the places that matter most to your route, then leave enough room for meals, transfers, and the kind of unplanned detours that make a trip feel personal.`}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5">
-              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
-                Practical guide to {city.name}
-              </h2>
-              <div className="mt-4 grid gap-4">
-                {planningHighlights.map((item) => (
-                  <div key={item.title} className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
-                    <h3 className="text-sm font-semibold text-[#111827]">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{item.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
-            <div className="mb-10 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-4">
-              <RelatedLinkGroup
-                title={`${city.name} travel pages`}
-                text="Focused planning pages for best places, things to do, and city guide ideas."
-                links={citySeoPages.map((page) => ({
-                  href: citySeoPath(city.slug, page.slug),
-                  label: page.title(city),
-                }))}
-              />
-              <RelatedLinkGroup
-                title={`Popular topics in ${city.name}`}
-                text="Focused city themes for travelers planning around food, beaches, family stops, and local mood."
-                links={cityTopicPages.slice(0, 4).map((page) => ({
-                  href: citySeoPath(city.slug, page.slug),
-                  label: page.title(city),
-                }))}
-              />
-              {destinations.length > 0 ? (
-                <RelatedLinkGroup
-                  title={`Related destinations in ${city.name}`}
-                  text="Compare nearby places from this city before opening a detail page."
-                  links={destinations.slice(0, 5).map((destination) => ({
-                    href: `/${city.slug}/destinations/${destination.slug}`,
-                    label: destination.name,
-                  }))}
-                />
-              ) : null}
-              {guides.length > 0 ? (
-                <RelatedLinkGroup
-                  title={`Travel guides for ${city.name}`}
-                  text="Use city-specific guides to add planning context to your route."
-                  links={[
-                    { href: `/${city.slug}/guides`, label: `All ${city.name} travel guides` },
-                    ...sortedGuides.slice(0, 4).map((guide) => ({
-                      href: `/${city.slug}/guides/${guide.slug}`,
-                      label: guide.title,
-                    })),
-                  ]}
-                />
-              ) : null}
-              {attractions.length > 0 ? (
-                <RelatedLinkGroup
-                  title={`Attractions around ${city.name}`}
-                  text="Open existing attraction pages for extra stops near your route."
-                  links={attractions.slice(0, 5).map((attraction) => ({
-                    href: `/${city.slug}/attractions/${attraction.slug}`,
-                    label: attraction.name,
-                  }))}
-                />
-              ) : null}
-            </div>
-          ) : null}
-
           <div className="mb-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">City spots</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Top picks</p>
               <h2 className="mt-2 max-w-4xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
-                Explore {city.name} destinations
+                Best experiences in {city.name}
               </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Start with the most useful curated places first, then use lighter planning sections
+                below to shape the rest of the trip.
+              </p>
             </div>
             <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm">
-              {destinations.length} curated spots live
+              {topPicks.length} primary picks
             </div>
           </div>
 
-          {destinations.length > 0 ? (
+          {topPicks.length > 0 ? (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {destinations.map((destination) => (
+              {topPicks.map((destination) => (
                 <DestinationCard key={destination.id} destination={destination} />
               ))}
             </div>
@@ -387,95 +296,110 @@ export default async function CityPage({ params }: CityPageProps) {
           )}
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Top Rated Spots" title={`Highly recommended places in ${city.name}`}>
-            Compare recommended places from the {city.name} library, then open a destination
-            page for highlights, timing notes, travel tips, and related nearby ideas.
-          </SectionHeading>
-          {destinations.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {destinations.map((destination) => (
-                <DestinationCard key={`rated-${destination.id}`} destination={destination} />
-              ))}
+        {interestLinks.length > 0 ? (
+          <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="grid gap-5 lg:grid-cols-[0.7fr_1fr] lg:items-center">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                    Explore by interest
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
+                    Choose a travel style
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Use these lighter topic links after the main picks when you want a more focused
+                    route through {city.name}.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {interestLinks.map((item) => (
+                    <Link
+                      key={`${item.label}-${item.href}`}
+                      href={item.href}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
+                    >
+                      <item.icon className="size-4 text-[#1D4ED8]" aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
-          ) : (
-            <EmptyState title="Recommended spots will appear here" text="New city highlights will appear here as the guide grows." />
-          )}
-        </section>
+          </section>
+        ) : null}
 
         <section className="border-y border-slate-200 bg-white py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow={`Explore ${city.name}`} title={`Nearby destinations and areas around ${city.name}`}>
-              Use local areas and destination clusters to connect nearby experiences into a more
-              efficient route.
-            </SectionHeading>
-            {cityAreas.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {cityAreas.map((area) => (
-                  <Link
-                    key={area}
-                    href={`/${city.slug}`}
-                    className="group flex items-center justify-between rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-xl"
-                  >
-                    <span>
-                      <span className="block text-lg font-semibold text-[#111827]">{area}</span>
-                      <span className="text-sm text-slate-500">Explore nearby destination ideas</span>
-                    </span>
-                    <Map className="size-5 text-[#1D4ED8] transition group-hover:translate-x-1" />
-                  </Link>
+            <div className="grid gap-8 rounded-xl border border-slate-200 bg-[#F8FAFC] p-6 shadow-sm lg:grid-cols-[0.75fr_1.25fr]">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                  Planning summary
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">
+                  Plan {city.name} with local context
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-slate-600">
+                  Treat {city.name} as a city to explore in layers: choose one or two anchor sights,
+                  then add nearby neighborhoods, waterfront walks, markets, scenic viewpoints, or
+                  slower local stops around them.
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-600">
+                  {cityAreas.length > 0
+                    ? `Start by grouping places around ${formatList(cityAreas.slice(0, 3))}, then leave enough room for meals, transfers, and unplanned detours.`
+                    : `Start with the places that matter most to your route, then leave enough room for meals, transfers, and unplanned detours.`}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {planningHighlights.map((item) => (
+                  <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <h3 className="text-sm font-semibold text-[#111827]">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                  </div>
                 ))}
               </div>
-            ) : (
-              <EmptyState title="Nearby areas will appear here" text="Add destination locations to build neighborhood and route links for this city." />
-            )}
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Hidden Gems" title={`Curated finds across ${city.name}`}>
-            Discover quieter places, scenic routes, and distinctive stops selected for travelers who
-            want more than a checklist.
-          </SectionHeading>
-          {destinations.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {destinations.map((destination) => (
-                <DestinationCard key={`hidden-${destination.id}`} destination={destination} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="Hidden gems will appear here" text="Add city destinations to unlock this collection." />
-          )}
-        </section>
-
-        <section className="bg-[#0A2A66] py-14 text-white">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Weekend Escapes" title={`Short trips from ${city.name}`} tone="dark">
-              <span className="text-blue-100">
-                Turn two or three days into beaches, mountain roads, desert light, and memorable
-                local stops.
-              </span>
+        {nearbyRoutes.length > 0 ? (
+          <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="Nearby routes" title={`Day trips and route extensions from ${city.name}`}>
+              Use these as connected journeys rather than nearby neighborhoods. They work best when
+              you want to extend a {city.name} stay into a wider route.
             </SectionHeading>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {inspiration.map((item) => (
-                <div key={item} className="rounded-xl border border-white/10 bg-white/10 p-6 shadow-xl">
-                  <Sparkles className="mb-5 size-7 text-[#FF6B00]" aria-hidden="true" />
-                  <h3 className="text-lg font-semibold">{item}</h3>
-                  <p className="mt-3 text-sm leading-6 text-blue-100">
-                    Use this idea as a starting point when comparing routes, terrain, and travel
-                    style around {city.name}.
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {nearbyRoutes.map((destination) => (
+                <Link
+                  key={destination.id}
+                  href={`/${destination.citySlug || city.slug}/destinations/${destination.slug}`}
+                  className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-xl"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                        {destination.category || "Route idea"}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-[#111827]">{destination.name}</h3>
+                    </div>
+                    <Map className="mt-1 size-5 shrink-0 text-[#1D4ED8] transition group-hover:translate-x-1" />
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {destination.summary || destination.location || `Extend your ${city.name} route with this connected stop.`}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           {sortedGuides.length > 0 ? (
             <>
               <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <SectionHeading eyebrow="Travel Guides" title={`Plan ${city.name} smarter`}>
-                  Clear advice for seasons, routing, culture, road trips, and travel style.
+                  Clear advice for seasons, routing, culture, road trips, and travel style after
+                  you have chosen the places that matter most.
                 </SectionHeading>
                 <Link
                   href={`/${city.slug}/guides`}
@@ -484,14 +408,22 @@ export default async function CityPage({ params }: CityPageProps) {
                   View all {city.name} guides
                 </Link>
               </div>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 {sortedGuides.slice(0, 4).map((guide) => (
-                  <GuideCard
+                  <Link
                     key={guide.id}
-                    guide={guide}
-                    cityName={city.name}
                     href={`/${city.slug}/guides/${guide.slug}`}
-                  />
+                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-xl"
+                  >
+                    <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                      <span>{guide.category || "Guide"}</span>
+                      {guide.readTime ? <span className="text-slate-400">{guide.readTime}</span> : null}
+                    </div>
+                    <h3 className="mt-3 text-xl font-semibold tracking-tight text-[#111827]">{guide.title}</h3>
+                    {guide.excerpt ? (
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{guide.excerpt}</p>
+                    ) : null}
+                  </Link>
                 ))}
               </div>
             </>
@@ -502,13 +434,26 @@ export default async function CityPage({ params }: CityPageProps) {
 
         <section className="border-y border-slate-200 bg-white py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Most Loved Places" title={`Top attractions in ${city.name}`}>
-              Attractions can expand into global top lists, city pages, and guide collections.
+            <SectionHeading eyebrow="Attraction highlights" title={`More places to compare in ${city.name}`}>
+              Use attractions as secondary context once the main city picks and planning route are
+              clear.
             </SectionHeading>
             {attractions.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                {attractions.map((attraction) => (
-                  <AttractionCard key={attraction.id} attraction={attraction} />
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {attractions.slice(0, 8).map((attraction) => (
+                  <Link
+                    key={attraction.id}
+                    href={`/${city.slug}/attractions/${attraction.slug}`}
+                    className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-xl"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                      {attraction.category || attraction.type || "Attraction"}
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-[#111827]">{attraction.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {attraction.summary || attraction.description}
+                    </p>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -517,63 +462,67 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Travel Inspiration" title={`Ideas for your ${city.name} route`}>
-            Explore by mood, terrain, travel style, and trip length.
-          </SectionHeading>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: Waves, title: "Beach days", text: "Soft sand, coastal roads, and clear water." },
-              { icon: Mountain, title: "Mountain air", text: "High viewpoints, villages, and cool nights." },
-              { icon: Car, title: "Road trips", text: "Flexible routes for travelers who like the journey." },
-              { icon: Crown, title: "Luxury stays", text: "Premium escapes with a more polished pace." },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <item.icon className="mb-5 size-7 text-[#1D4ED8]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold text-[#111827]">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
+        {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
+          <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <SectionHeading eyebrow="More ways to explore" title={`Keep planning ${city.name}`}>
+                Supporting links for travelers and search engines, kept lower on the page so they
+                help without interrupting discovery.
+              </SectionHeading>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <RelatedLinkGroup
+                  title={`${city.name} travel pages`}
+                  text="Focused planning pages for best places, things to do, and city guide ideas."
+                  links={citySeoPages.map((page) => ({
+                    href: citySeoPath(city.slug, page.slug),
+                    label: page.title(city),
+                  }))}
+                />
+                <RelatedLinkGroup
+                  title={`Popular topics in ${city.name}`}
+                  text="Focused city themes for food, beaches, family stops, and local mood."
+                  links={cityTopicPages.slice(0, 4).map((page) => ({
+                    href: citySeoPath(city.slug, page.slug),
+                    label: page.title(city),
+                  }))}
+                />
+                {destinations.length > 0 ? (
+                  <RelatedLinkGroup
+                    title={`Related destinations`}
+                    text="Compare nearby places before opening a destination detail page."
+                    links={destinations.slice(0, 5).map((destination) => ({
+                      href: `/${city.slug}/destinations/${destination.slug}`,
+                      label: destination.name,
+                    }))}
+                  />
+                ) : null}
+                {guides.length > 0 ? (
+                  <RelatedLinkGroup
+                    title={`Travel guides`}
+                    text="Use city-specific guides to add planning context to your route."
+                    links={[
+                      { href: `/${city.slug}/guides`, label: `All ${city.name} travel guides` },
+                      ...sortedGuides.slice(0, 4).map((guide) => ({
+                        href: `/${city.slug}/guides/${guide.slug}`,
+                        label: guide.title,
+                      })),
+                    ]}
+                  />
+                ) : null}
+                {attractions.length > 0 ? (
+                  <RelatedLinkGroup
+                    title={`Attractions`}
+                    text="Open attraction pages for extra stops near your route."
+                    links={attractions.slice(0, 5).map((attraction) => ({
+                      href: `/${city.slug}/attractions/${attraction.slug}`,
+                      label: attraction.name,
+                    }))}
+                  />
+                ) : null}
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Featured Experiences" title={`Signature ways to discover ${city.name}`}>
-            These route ideas help connect the city page with destination details, attractions,
-            and guide content without turning Top7Spots into a booking platform.
-          </SectionHeading>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                icon: Binoculars,
-                title: "Sunrise desert route",
-                text: "Wake early for dune light, quiet roads, and wide open skies.",
-              },
-              {
-                icon: ShieldCheck,
-                title: "Heritage trail",
-                text: "Connect forts, old markets, architecture, and culture-rich towns.",
-              },
-              {
-                icon: Star,
-                title: "Premium escape",
-                text: "Blend scenic places with elegant stays and slow travel moments.",
-              },
-            ].map((experience) => (
-              <div
-                key={experience.title}
-                className="rounded-xl border border-slate-200 bg-white p-6 travel-card-shadow transition hover:-translate-y-1 hover:shadow-2xl"
-              >
-                <experience.icon className="mb-5 size-7 text-[#FF6B00]" aria-hidden="true" />
-                <h3 className="text-xl font-semibold text-[#111827]">{experience.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{experience.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </section>
+        ) : null}
       </main>
       <SiteFooter />
     </div>
@@ -601,7 +550,7 @@ function RelatedLinkGroup({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-semibold tracking-tight text-[#111827]">{title}</h2>
+      <h3 className="text-xl font-semibold tracking-tight text-[#111827]">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
       <div className="mt-4 grid gap-2">
         {links.map((link) => (
@@ -612,6 +561,105 @@ function RelatedLinkGroup({
       </div>
     </div>
   );
+}
+
+function buildInterestLinks({
+  city,
+  destinations,
+  guides,
+  attractions,
+}: {
+  city: City;
+  destinations: Destination[];
+  guides: Guide[];
+  attractions: Attraction[];
+}) {
+  const searchableText = [
+    city.name,
+    city.shortDescription,
+    city.longDescription,
+    ...destinations.flatMap((destination) => [
+      destination.name,
+      destination.category,
+      destination.location,
+      destination.summary,
+      destination.description,
+      ...destination.highlights,
+      ...destination.travelTips,
+    ]),
+    ...guides.flatMap((guide) => [guide.title, guide.category, guide.excerpt]),
+    ...attractions.flatMap((attraction) => [
+      attraction.name,
+      attraction.category,
+      attraction.type,
+      attraction.summary,
+      attraction.description,
+    ]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const links = [
+    {
+      label: "Beaches",
+      href: citySeoPath(city.slug, "best-beaches"),
+      icon: Waves,
+      keywords: ["beach", "coast", "corniche", "sea", "waterfront"],
+    },
+    {
+      label: "Culture",
+      href: citySeoPath(city.slug, "things-to-do"),
+      icon: ShieldCheck,
+      keywords: ["culture", "heritage", "mosque", "fort", "museum", "souq", "old town"],
+    },
+    {
+      label: "Food",
+      href: citySeoPath(city.slug, "best-restaurants"),
+      icon: Sparkles,
+      keywords: ["food", "restaurant", "dining", "market", "local"],
+    },
+    {
+      label: "Family",
+      href: citySeoPath(city.slug, "family-attractions"),
+      icon: ShieldCheck,
+      keywords: ["family", "kids", "park", "museum", "beach"],
+    },
+    {
+      label: "Luxury",
+      href: citySeoPath(city.slug, "best-places"),
+      icon: Crown,
+      keywords: ["luxury", "premium", "resort", "boutique"],
+    },
+    {
+      label: "Nature",
+      href: citySeoPath(city.slug, "best-places"),
+      icon: Mountain,
+      keywords: ["wadi", "mountain", "nature", "desert", "viewpoint", "trail"],
+    },
+    {
+      label: "Road trips",
+      href: citySeoPath(city.slug, "travel-guide"),
+      icon: Car,
+      keywords: ["road", "drive", "route", "car", "trip"],
+    },
+    {
+      label: "Cafes",
+      href: citySeoPath(city.slug, "best-cafes"),
+      icon: Sparkles,
+      keywords: ["cafe", "coffee", "brunch"],
+    },
+  ];
+
+  return links.filter((link) => link.keywords.some((keyword) => searchableText.includes(keyword))).slice(0, 8);
+}
+
+function isRouteExtension(destination: Destination, city: City) {
+  const cityName = city.name.toLowerCase();
+  const destinationCity = destination.city?.toLowerCase() || "";
+  const location = destination.location?.toLowerCase() || "";
+
+  return Boolean(destinationCity && destinationCity !== cityName) || Boolean(location && !location.includes(cityName));
 }
 
 function buildCityPlanningHighlights({

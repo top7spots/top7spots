@@ -22,6 +22,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City } from "@/lib/types";
@@ -350,7 +351,7 @@ export default async function Home() {
                   title="Continue into curated destination pages"
                   text="Open a destination page when you want concise highlights, best-season notes, route context, and links back into its parent city hub."
                   links={homepageDestinations.map((destination) => ({
-                    href: `/${destination.citySlug}/destinations/${destination.slug}`,
+                    href: getCanonicalDestinationPath(destination),
                     label: `${destination.name}${destination.city ? `, ${destination.city}` : ""}`,
                   }))}
                 />

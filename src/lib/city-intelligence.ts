@@ -1,6 +1,7 @@
 import type { Attraction, City, Destination, Guide } from "@/lib/types";
 
 export type CityMaturity = "sparse" | "growing" | "mature" | "flagship";
+export type DestinationOwnership = "city-owned" | "standalone-destination" | "route-extension";
 
 export type CityContentSet = {
   destinations: Destination[];
@@ -28,6 +29,39 @@ const routeKeywords = [
   "mountain",
   "fort",
   "sands",
+];
+
+const standaloneDestinationKeywords = [
+  "mountain",
+  "jebel",
+  "wadi",
+  "desert",
+  "sands",
+  "reserve",
+  "turtle",
+  "island",
+  "fort",
+  "canyon",
+  "valley",
+  "oasis",
+];
+
+const localCityPlaceKeywords = [
+  "corniche",
+  "neighborhood",
+  "neighbourhood",
+  "district",
+  "quarter",
+  "market",
+  "souq",
+  "mall",
+  "marina",
+  "beach",
+  "mosque",
+  "opera",
+  "museum",
+  "park",
+  "waterfront",
 ];
 
 export function getCityMaturity(content: CityContentSet): CityMaturity {
@@ -58,6 +92,15 @@ export function getEligibleTopPicks(destinations: Destination[], limit = 6) {
     .slice(0, limit);
 }
 
+export function getLocalCityDestinations(city: City, destinations: Destination[], limit?: number) {
+  const localDestinations = [...destinations]
+    .filter((destination) => getDestinationOwnership(city, destination) === "city-owned")
+    .filter(isMeaningfulDestination)
+    .sort(sortCuratedItems);
+
+  return typeof limit === "number" ? localDestinations.slice(0, limit) : localDestinations;
+}
+
 export function getEligibleGuides(guides: Guide[], limit?: number) {
   const eligibleGuides = [...guides].filter(isMeaningfulGuide).sort(sortCuratedItems);
   return typeof limit === "number" ? eligibleGuides.slice(0, limit) : eligibleGuides;
@@ -70,9 +113,85 @@ export function getEligibleAttractions(attractions: Attraction[], limit?: number
 
 export function getRouteExtensions(city: City, destinations: Destination[], limit = 4) {
   return [...destinations]
-    .filter((destination) => isValidRouteExtension(city, destination))
+    .filter((destination) => getDestinationOwnership(city, destination) !== "city-owned")
     .sort(sortCuratedItems)
     .slice(0, limit);
+}
+
+export function getDestinationOwnership(city: City | undefined, destination: Destination): DestinationOwnership {
+  if (!city) {
+    return isStandaloneDestinationEligible(destination) ? "standalone-destination" : "city-owned";
+  }
+
+  if (isStandaloneDestinationEligible(destination)) {
+    return "standalone-destination";
+  }
+
+  if (isValidRouteExtension(city, destination)) {
+    return "route-extension";
+  }
+
+  return "city-owned";
+}
+
+export function getCanonicalDestinationPath(destination: Destination, city?: City) {
+  const ownership = getDestinationOwnership(city, destination);
+
+  if (ownership === "standalone-destination") {
+    return `/destinations/${destination.slug}`;
+  }
+
+  return destination.citySlug
+    ? `/${destination.citySlug}/destinations/${destination.slug}`
+    : `/destinations/${destination.slug}`;
+}
+
+export function isStandaloneDestinationEligible(destination: Destination) {
+  if (!isMeaningfulDestination(destination)) {
+    return false;
+  }
+
+  const category = normalizeText(destination.category);
+  const location = normalizeText(destination.location);
+  const region = normalizeText(destination.region);
+  const name = normalizeText(destination.name);
+  const searchText = normalizeText(destinationSearchText(destination));
+  const hasIndependentDestinationSignal = standaloneDestinationKeywords.some((keyword) =>
+    [category, location, region, name, searchText].some((value) => value.includes(keyword)),
+  );
+  const hasLocalCitySignal = localCityPlaceKeywords.some((keyword) =>
+    [category, location, name].some((value) => value.includes(keyword)),
+  );
+
+  return hasIndependentDestinationSignal && !hasLocalCitySignal;
+}
+
+export function isLocalCityDestination(city: City, destination: Destination) {
+  return getDestinationOwnership(city, destination) === "city-owned";
+}
+
+export function isAttractionOwnedByCity(city: City, attraction: Attraction) {
+  const citySlugMatches = Boolean(attraction.citySlug && attraction.citySlug === city.slug);
+  const cityNameMatches = Boolean(
+    attraction.city && normalizeText(attraction.city) === normalizeText(city.name),
+  );
+
+  return citySlugMatches || cityNameMatches;
+}
+
+export function findDestinationAttractionOverlaps(destinations: Destination[], attractions: Attraction[]) {
+  const destinationKeys = new Set(
+    destinations.flatMap((destination) => [
+      normalizeEntityKey(destination.slug),
+      normalizeEntityKey(destination.name),
+    ]),
+  );
+
+  return attractions.filter((attraction) =>
+    [normalizeEntityKey(attraction.slug), normalizeEntityKey(attraction.name)].some((key) =>
+      destinationKeys.has(key),
+    ),
+  );
 }
 
 export function getMatchingContentForKeywords(content: CityContentSet, keywords: string[]) {
@@ -234,4 +353,8 @@ function hasText(value: string, minimumLength: number) {
 
 function normalizeText(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function normalizeEntityKey(value: string) {
+  return normalizeText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }

@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type { Attraction, City, Destination, Guide } from "@/lib/types";
@@ -68,7 +69,7 @@ export function GuideDetailArticle({
   const image = resolveImagePath(guide.coverImage || guide.image);
   const imageAlt = guide.coverImageAlt || guide.title;
   const relatedGuides = resolveRelatedGuides(guide.relatedGuideSlugs, guides, guide.id);
-  const relatedPlaces = resolveRelatedPlaces(guide.relatedPlaceSlugs, destinations, attractions);
+  const relatedPlaces = resolveRelatedPlaces(guide.relatedPlaceSlugs, destinations, attractions, city);
   const sidebarDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
@@ -233,7 +234,7 @@ export function GuideDetailArticle({
               {sidebarDestinations.map((destination) => (
                 <Link
                   key={destination.id}
-                  href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                  href={getCanonicalDestinationPath(destination, city)}
                   className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
                 >
                   {destination.name}
@@ -382,6 +383,7 @@ function resolveRelatedPlaces(
   slugs: string[],
   destinations: Destination[],
   attractions: Attraction[],
+  city?: City,
 ): RelatedPlace[] {
   if (!slugs.length) {
     return [];
@@ -394,7 +396,7 @@ function resolveRelatedPlaces(
       if (destination) {
         return {
           key: `destination-${destination.id}`,
-          href: `/${destination.citySlug}/destinations/${destination.slug}`,
+          href: getCanonicalDestinationPath(destination, city),
           name: destination.name,
           description: destination.summary || destination.description,
           label: destination.category || "Destination",

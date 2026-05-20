@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getDestinations, getPublishedCities } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
@@ -142,11 +143,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
                 {featuredDestinations.slice(0, 5).map((destination) => (
                   <Link
                     key={destination.id}
-                    href={
-                      destination.citySlug
-                        ? `/${destination.citySlug}/destinations/${destination.slug}`
-                        : `/destinations/${destination.slug}`
-                    }
+                    href={getCanonicalDestinationPath(destination)}
                     className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                   >
                     {destination.name} in {destination.city}
@@ -200,7 +197,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
                       {section.destinations.map((destination) => (
                         <Link
                           key={destination.id}
-                          href={`/${destination.citySlug}/destinations/${destination.slug}`}
+                          href={getCanonicalDestinationPath(destination, section.city)}
                           className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                         >
                           {destination.name}

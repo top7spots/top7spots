@@ -23,6 +23,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import {
   getAttractionsByCity,
@@ -55,13 +56,15 @@ export async function generateMetadata({
     return {};
   }
 
+  const canonicalPath = getCanonicalDestinationPath(destination, city);
+
   return seoMetadata({
     title: destination.seoTitle || `${destination.name}, ${city.name} | Top7Spots`,
     description:
       destination.seoDescription ||
       destination.summary ||
       `Explore ${destination.name} in ${city.name} with Top7Spots.`,
-    path: `/${city.slug}/destinations/${destination.slug}`,
+    path: canonicalPath,
     image: destination.image,
   });
 }
@@ -90,6 +93,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const attractionIdeas = attractions;
   const relatedGuides = guides.slice(0, 4);
   const countryHref = city.country ? countryPath(city.country) : "";
+  const canonicalPath = getCanonicalDestinationPath(destination, city);
   const galleryImages = Array.from(
     new Set(
       [image, ...destination.galleryImages, ...relatedDestinations.map((item) => resolveImagePath(item.image))]
@@ -104,7 +108,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         items={[
           ...(countryHref ? [{ name: city.country, path: countryHref }] : []),
           { name: city.name, path: `/${city.slug}` },
-          { name: destination.name, path: `/${city.slug}/destinations/${destination.slug}` },
+          { name: destination.name, path: canonicalPath },
         ]}
       />
       <TouristDestinationJsonLd
@@ -116,7 +120,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           `Explore ${destination.name} in ${city.name} with Top7Spots.`
         }
         image={destination.image}
-        path={`/${city.slug}/destinations/${destination.slug}`}
+        path={canonicalPath}
         city={city.name}
         country={city.country}
         region={destination.region || city.region}

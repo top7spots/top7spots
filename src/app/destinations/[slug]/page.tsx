@@ -23,6 +23,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import { getAttractions, getDestination, getDestinations, getGuides, getPublishedCities } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
@@ -52,9 +53,7 @@ export async function generateMetadata({
       destination.seoDescription ||
       destination.summary ||
       `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`,
-    path: destination.citySlug
-      ? `/${destination.citySlug}/destinations/${destination.slug}`
-      : `/destinations/${destination.slug}`,
+    path: getCanonicalDestinationPath(destination),
     image: destination.image,
   });
 }
@@ -76,12 +75,10 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const image = resolveImagePath(destination.image);
   const category = destination.category || "Travel spot";
   const location = [destination.city, destination.region].filter(Boolean).join(", ") || "Global";
-  const canonicalPath = destination.citySlug
-    ? `/${destination.citySlug}/destinations/${destination.slug}`
-    : `/destinations/${destination.slug}`;
   const parentCity = destination.citySlug
     ? cities.find((city) => city.slug === destination.citySlug)
     : undefined;
+  const canonicalPath = getCanonicalDestinationPath(destination, parentCity);
   const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const relatedGuides = guides

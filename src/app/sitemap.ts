@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
+import { getCanonicalDestinationPath, getLocalCityDestinations } from "@/lib/city-intelligence";
 import {
   cityProgrammaticPages,
   citySeoPath,
@@ -35,10 +36,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     cities.map((city) => {
       const citySlug = slugify(city.slug);
 
+      const cityDestinations = destinations.filter((destination) => slugify(destination.citySlug) === citySlug);
+
       return [
         citySlug,
         {
-          destinations: destinations.filter((destination) => slugify(destination.citySlug) === citySlug),
+          destinations: getLocalCityDestinations(city, cityDestinations),
           attractions: attractions.filter((attraction) => slugify(attraction.citySlug) === citySlug),
           guides: guides.filter((guide) => slugify(guide.citySlug) === citySlug),
         },
@@ -101,11 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.86,
     })),
     ...destinations.map((destination) => ({
-      url: absoluteUrl(
-        destination.citySlug
-          ? `/${slugify(destination.citySlug)}/destinations/${slugify(destination.slug)}`
-          : `/destinations/${slugify(destination.slug)}`,
-      ),
+      url: absoluteUrl(getCanonicalDestinationPath(destination)),
       lastModified: lastModified(destination.updatedAt, destination.createdAt),
       changeFrequency: "weekly" as const,
       priority: 0.8,

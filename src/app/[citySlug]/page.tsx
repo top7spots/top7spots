@@ -24,9 +24,11 @@ import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { countryPath } from "@/lib/country-hubs";
 import {
+  findDestinationAttractionOverlaps,
   getEligibleAttractions,
   getEligibleGuides,
-  getEligibleTopPicks,
+  getCanonicalDestinationPath,
+  getLocalCityDestinations,
   getRouteExtensions,
   hasMeaningfulInterestContent,
   type CityContentSet,
@@ -104,9 +106,15 @@ export default async function CityPage({ params }: CityPageProps) {
     notFound();
   }
 
-  const contentSet = { destinations, attractions, guides };
+  const localDestinations = getLocalCityDestinations(city, destinations);
+  const contentSet = { destinations: localDestinations, attractions, guides };
+  const overlappingAttractionIds = new Set(
+    findDestinationAttractionOverlaps(destinations, attractions).map((attraction) => attraction.id),
+  );
   const sortedGuides = getEligibleGuides(guides, 4);
-  const eligibleAttractions = getEligibleAttractions(attractions, 8);
+  const eligibleAttractions = getEligibleAttractions(attractions)
+    .filter((attraction) => !overlappingAttractionIds.has(attraction.id))
+    .slice(0, 8);
   const cityAreas = Array.from(
     new Set(
       destinations
@@ -139,7 +147,7 @@ export default async function CityPage({ params }: CityPageProps) {
     guideCategories,
     destinations,
   });
-  const topPicks = getEligibleTopPicks(destinations, 6);
+  const topPicks = localDestinations.slice(0, 6);
   const interestLinks = buildInterestLinks(city, contentSet);
   const nearbyRoutes = getRouteExtensions(city, destinations, 4);
   const meaningfulSeoPages = citySeoPages.filter((page) =>
@@ -380,7 +388,7 @@ export default async function CityPage({ params }: CityPageProps) {
               {nearbyRoutes.map((destination) => (
                 <Link
                   key={destination.id}
-                  href={`/${destination.citySlug || city.slug}/destinations/${destination.slug}`}
+                  href={getCanonicalDestinationPath(destination, city)}
                   className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -503,7 +511,7 @@ export default async function CityPage({ params }: CityPageProps) {
                     title={`Related destinations`}
                     text="Compare nearby places before opening a destination detail page."
                     links={topPicks.slice(0, 5).map((destination) => ({
-                      href: `/${city.slug}/destinations/${destination.slug}`,
+                      href: getCanonicalDestinationPath(destination, city),
                       label: destination.name,
                     }))}
                   />

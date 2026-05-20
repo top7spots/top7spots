@@ -11,6 +11,7 @@ import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
+import { getLocalCityDestinations } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import {
   getAttractionsByCity,
@@ -47,8 +48,9 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
   if (!city || !page || city.status !== "published") {
     return {};
   }
+  const localDestinations = getLocalCityDestinations(city, destinations);
   const pageContent = getCityProgrammaticContent(page, {
-    destinations,
+    destinations: localDestinations,
     attractions,
     guides,
   });
@@ -86,8 +88,9 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
 
   const pagePath = citySeoPath(city.slug, page.slug);
   const countryHref = city.country ? countryPath(city.country) : "";
+  const localDestinations = getLocalCityDestinations(city, destinations);
   const pageContent = getCityProgrammaticContent(page, {
-    destinations,
+    destinations: localDestinations,
     attractions,
     guides,
   });
@@ -97,7 +100,7 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
     }
 
     return hasMeaningfulCityProgrammaticContent(item, getCityProgrammaticContent(item, {
-      destinations,
+      destinations: localDestinations,
       attractions,
       guides,
     }));

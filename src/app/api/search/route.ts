@@ -5,6 +5,7 @@ import {
   getPublishedDestinations,
   getPublishedGuides,
 } from "@/lib/data";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -70,9 +71,7 @@ export async function GET(request: Request) {
         id: `destination-${destination.id}`,
         title: destination.name,
         type: "Destination" as const,
-        href: destination.citySlug
-          ? `/${destination.citySlug}/destinations/${destination.slug}`
-          : `/destinations/${destination.slug}`,
+        href: getCanonicalDestinationPath(destination, city),
         context: [destination.city || city?.name, city?.country || destination.region].filter(Boolean).join(" · "),
         description: destination.summary || destination.seoDescription || destination.description,
         searchable: [

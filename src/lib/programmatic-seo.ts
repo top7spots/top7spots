@@ -1,4 +1,10 @@
 import type { Attraction, City, Destination, Guide } from "@/lib/types";
+import {
+  getEligibleAttractions,
+  getEligibleGuides,
+  getEligibleTopPicks,
+  getMatchingContentForKeywords,
+} from "@/lib/city-intelligence";
 
 export type CitySeoPageSlug = "best-places" | "things-to-do" | "travel-guide";
 export type CityTopicPageSlug = "best-cafes" | "best-restaurants" | "best-beaches" | "family-attractions";
@@ -148,15 +154,15 @@ export function getCityProgrammaticPage(pageSlug: string) {
 
 export function hasMeaningfulCitySeoContent(pageSlug: string, counts: CitySeoContentCounts) {
   if (pageSlug === "best-places") {
-    return counts.destinations > 0 || counts.attractions > 0;
+    return counts.destinations + counts.attractions >= 3;
   }
 
   if (pageSlug === "things-to-do") {
-    return counts.attractions > 0 || counts.destinations > 0;
+    return counts.attractions + counts.destinations >= 3;
   }
 
   if (pageSlug === "travel-guide") {
-    return counts.guides > 0 || counts.destinations > 0 || counts.attractions > 0;
+    return counts.guides >= 1 || counts.destinations + counts.attractions >= 4;
   }
 
   return false;
@@ -167,16 +173,15 @@ export function getCityProgrammaticContent(
   content: CityProgrammaticContent,
 ): CityProgrammaticContent {
   if (page.pageType !== "topic") {
-    return content;
+    return {
+      destinations: getEligibleTopPicks(content.destinations, 24),
+      attractions: getEligibleAttractions(content.attractions, 24),
+      guides: getEligibleGuides(content.guides, 24),
+    };
   }
 
   const keywords = page.keywords || [];
-
-  return {
-    destinations: content.destinations.filter((item) => matchesKeywords(destinationSearchText(item), keywords)),
-    attractions: content.attractions.filter((item) => matchesKeywords(attractionSearchText(item), keywords)),
-    guides: content.guides.filter((item) => matchesKeywords(guideSearchText(item), keywords)),
-  };
+  return getMatchingContentForKeywords(content, keywords);
 }
 
 export function hasMeaningfulCityProgrammaticContent(page: CitySeoPageConfig, content: CityProgrammaticContent) {
@@ -191,62 +196,4 @@ export function hasMeaningfulCityProgrammaticContent(page: CitySeoPageConfig, co
   const minimumItems = page.minimumItems || 2;
 
   return content.destinations.length + content.attractions.length + content.guides.length >= minimumItems;
-}
-
-function matchesKeywords(text: string, keywords: string[]) {
-  const normalizedText = text.toLowerCase();
-
-  return keywords.some((keyword) => normalizedText.includes(keyword.toLowerCase()));
-}
-
-function destinationSearchText(destination: Destination) {
-  return [
-    destination.name,
-    destination.slug,
-    destination.category,
-    destination.location,
-    destination.region,
-    destination.summary,
-    destination.description,
-    destination.bestSeason,
-    destination.howToGo,
-    destination.seoTitle,
-    destination.seoDescription,
-    ...destination.highlights,
-    ...destination.practicalInfo,
-    ...destination.travelTips,
-    ...destination.nearbyAttractions,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function attractionSearchText(attraction: Attraction) {
-  return [
-    attraction.name,
-    attraction.slug,
-    attraction.category,
-    attraction.type,
-    attraction.description,
-    attraction.summary,
-    attraction.recommendedTime,
-    attraction.seoTitle,
-    attraction.seoDescription,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function guideSearchText(guide: Guide) {
-  return [
-    guide.title,
-    guide.slug,
-    guide.excerpt,
-    guide.category,
-    guide.seoTitle,
-    guide.seoDescription,
-    ...guide.content,
-  ]
-    .filter(Boolean)
-    .join(" ");
 }

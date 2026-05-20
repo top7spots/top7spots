@@ -24,15 +24,29 @@ import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { countryPath } from "@/lib/country-hubs";
 import {
+  getEligibleAttractions,
+  getEligibleGuides,
+  getEligibleTopPicks,
+  getRouteExtensions,
+  hasMeaningfulInterestContent,
+  type CityContentSet,
+} from "@/lib/city-intelligence";
+import {
   getAttractionsByCity,
   getCityBySlug,
   getDestinationsByCity,
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
-import { citySeoPages, citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
+import {
+  citySeoPages,
+  citySeoPath,
+  cityTopicPages,
+  getCityProgrammaticContent,
+  hasMeaningfulCityProgrammaticContent,
+} from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
-import type { Attraction, City, Destination, Guide } from "@/lib/types";
+import type { City, Destination } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -90,7 +104,9 @@ export default async function CityPage({ params }: CityPageProps) {
     notFound();
   }
 
-  const sortedGuides = sortGuides(guides);
+  const contentSet = { destinations, attractions, guides };
+  const sortedGuides = getEligibleGuides(guides, 4);
+  const eligibleAttractions = getEligibleAttractions(attractions, 8);
   const cityAreas = Array.from(
     new Set(
       destinations
@@ -123,9 +139,12 @@ export default async function CityPage({ params }: CityPageProps) {
     guideCategories,
     destinations,
   });
-  const topPicks = destinations.slice(0, 6);
-  const interestLinks = buildInterestLinks({ city, destinations, guides: sortedGuides, attractions });
-  const nearbyRoutes = destinations.filter((destination) => isRouteExtension(destination, city)).slice(0, 4);
+  const topPicks = getEligibleTopPicks(destinations, 6);
+  const interestLinks = buildInterestLinks(city, contentSet);
+  const nearbyRoutes = getRouteExtensions(city, destinations, 4);
+  const meaningfulSeoPages = citySeoPages.filter((page) =>
+    hasMeaningfulCityProgrammaticContent(page, getCityProgrammaticContent(page, contentSet)),
+  );
   const heroDescription = buildCityHeroDescription(city);
   const countryHref = city.country ? countryPath(city.country) : "";
   const pillButtonClass =
@@ -228,10 +247,10 @@ export default async function CityPage({ params }: CityPageProps) {
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
                   <span className="rounded-full bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-[#0A2A66]">
-                    {destinations.length} curated spots
+                    {topPicks.length} curated spots
                   </span>
                   <span className="rounded-full bg-orange-50 px-3.5 py-1.5 text-sm font-semibold text-[#FF6B00]">
-                    {guides.length} guides
+                    {sortedGuides.length} guides
                   </span>
                   {countryHref ? (
                     <Link
@@ -428,9 +447,9 @@ export default async function CityPage({ params }: CityPageProps) {
             <SectionHeading eyebrow="Attraction highlights" title={`More places to compare in ${city.name}`}>
               Secondary comparison points once the main city picks are clear.
             </SectionHeading>
-            {attractions.length > 0 ? (
+            {eligibleAttractions.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {attractions.slice(0, 8).map((attraction) => (
+                {eligibleAttractions.map((attraction) => (
                   <Link
                     key={attraction.id}
                     href={`/${city.slug}/attractions/${attraction.slug}`}
@@ -452,57 +471,61 @@ export default async function CityPage({ params }: CityPageProps) {
           </div>
         </section>
 
-        {(destinations.length > 0 || guides.length > 0 || attractions.length > 0) ? (
+        {(topPicks.length > 0 || sortedGuides.length > 0 || eligibleAttractions.length > 0) ? (
           <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <SectionHeading eyebrow="More ways to explore" title={`Keep planning ${city.name}`}>
                 Supporting links kept quiet while crawl paths remain clear.
               </SectionHeading>
               <div className="grid gap-x-7 gap-y-6 md:grid-cols-2 lg:grid-cols-4">
-                <RelatedLinkGroup
-                  title={`${city.name} travel pages`}
-                  text="Focused planning pages for best places, things to do, and city guide ideas."
-                  links={citySeoPages.map((page) => ({
-                    href: citySeoPath(city.slug, page.slug),
-                    label: page.title(city),
-                  }))}
-                />
-                <RelatedLinkGroup
-                  title={`Popular topics in ${city.name}`}
-                  text="Focused city themes for food, beaches, family stops, and local mood."
-                  links={cityTopicPages.slice(0, 4).map((page) => ({
-                    href: citySeoPath(city.slug, page.slug),
-                    label: page.title(city),
-                  }))}
-                />
-                {destinations.length > 0 ? (
+                {meaningfulSeoPages.length > 0 ? (
+                  <RelatedLinkGroup
+                    title={`${city.name} travel pages`}
+                    text="Focused planning pages for best places, things to do, and city guide ideas."
+                    links={meaningfulSeoPages.map((page) => ({
+                      href: citySeoPath(city.slug, page.slug),
+                      label: page.title(city),
+                    }))}
+                  />
+                ) : null}
+                {interestLinks.length > 0 ? (
+                  <RelatedLinkGroup
+                    title={`Popular topics in ${city.name}`}
+                    text="Focused city themes with enough matching content to support a useful page."
+                    links={interestLinks.slice(0, 4).map((page) => ({
+                      href: page.href,
+                      label: page.title,
+                    }))}
+                  />
+                ) : null}
+                {topPicks.length > 0 ? (
                   <RelatedLinkGroup
                     title={`Related destinations`}
                     text="Compare nearby places before opening a destination detail page."
-                    links={destinations.slice(0, 5).map((destination) => ({
+                    links={topPicks.slice(0, 5).map((destination) => ({
                       href: `/${city.slug}/destinations/${destination.slug}`,
                       label: destination.name,
                     }))}
                   />
                 ) : null}
-                {guides.length > 0 ? (
+                {sortedGuides.length > 0 ? (
                   <RelatedLinkGroup
                     title={`Travel guides`}
                     text="Use city-specific guides to add planning context to your route."
                     links={[
                       { href: `/${city.slug}/guides`, label: `All ${city.name} travel guides` },
-                      ...sortedGuides.slice(0, 4).map((guide) => ({
+                      ...sortedGuides.map((guide) => ({
                         href: `/${city.slug}/guides/${guide.slug}`,
                         label: guide.title,
                       })),
                     ]}
                   />
                 ) : null}
-                {attractions.length > 0 ? (
+                {eligibleAttractions.length > 0 ? (
                   <RelatedLinkGroup
                     title={`Attractions`}
                     text="Open attraction pages for extra stops near your route."
-                    links={attractions.slice(0, 5).map((attraction) => ({
+                    links={eligibleAttractions.slice(0, 5).map((attraction) => ({
                       href: `/${city.slug}/attractions/${attraction.slug}`,
                       label: attraction.name,
                     }))}
@@ -561,103 +584,58 @@ function buildCityHeroDescription(city: City) {
   return shortenText(source, 220);
 }
 
-function buildInterestLinks({
-  city,
-  destinations,
-  guides,
-  attractions,
-}: {
-  city: City;
-  destinations: Destination[];
-  guides: Guide[];
-  attractions: Attraction[];
-}) {
-  const searchableText = [
-    city.name,
-    city.shortDescription,
-    city.longDescription,
-    ...destinations.flatMap((destination) => [
-      destination.name,
-      destination.category,
-      destination.location,
-      destination.summary,
-      destination.description,
-      ...destination.highlights,
-      ...destination.travelTips,
-    ]),
-    ...guides.flatMap((guide) => [guide.title, guide.category, guide.excerpt]),
-    ...attractions.flatMap((attraction) => [
-      attraction.name,
-      attraction.category,
-      attraction.type,
-      attraction.summary,
-      attraction.description,
-    ]),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  const links = [
+function buildInterestLinks(city: City, content: CityContentSet) {
+  const topicLinks = cityTopicPages.map((page) => ({
+    slug: page.slug,
+    label: page.shortLabel,
+    title: page.title(city),
+    href: citySeoPath(city.slug, page.slug),
+    icon: page.slug === "best-beaches" ? Waves : page.slug === "family-attractions" ? ShieldCheck : Sparkles,
+    keywords: page.keywords || [],
+    minimumItems: page.minimumItems,
+  }));
+  const broadLinks = [
     {
-      label: "Beaches",
-      href: citySeoPath(city.slug, "best-beaches"),
-      icon: Waves,
-      keywords: ["beach", "coast", "corniche", "sea", "waterfront"],
-    },
-    {
+      slug: "culture",
       label: "Culture",
+      title: `Things to Do in ${city.name}`,
       href: citySeoPath(city.slug, "things-to-do"),
       icon: ShieldCheck,
       keywords: ["culture", "heritage", "mosque", "fort", "museum", "souq", "old town"],
+      minimumItems: 2,
     },
     {
-      label: "Food",
-      href: citySeoPath(city.slug, "best-restaurants"),
-      icon: Sparkles,
-      keywords: ["food", "restaurant", "dining", "market", "local"],
-    },
-    {
-      label: "Family",
-      href: citySeoPath(city.slug, "family-attractions"),
-      icon: ShieldCheck,
-      keywords: ["family", "kids", "park", "museum", "beach"],
-    },
-    {
+      slug: "luxury",
       label: "Luxury",
+      title: `Best Places to Visit in ${city.name}`,
       href: citySeoPath(city.slug, "best-places"),
       icon: Crown,
       keywords: ["luxury", "premium", "resort", "boutique"],
+      minimumItems: 2,
     },
     {
+      slug: "nature",
       label: "Nature",
+      title: `Best Places to Visit in ${city.name}`,
       href: citySeoPath(city.slug, "best-places"),
       icon: Mountain,
       keywords: ["wadi", "mountain", "nature", "desert", "viewpoint", "trail"],
+      minimumItems: 2,
     },
     {
+      slug: "road-trips",
       label: "Road trips",
+      title: `${city.name} Travel Guide`,
       href: citySeoPath(city.slug, "travel-guide"),
       icon: Car,
       keywords: ["road", "drive", "route", "car", "trip"],
-    },
-    {
-      label: "Cafes",
-      href: citySeoPath(city.slug, "best-cafes"),
-      icon: Sparkles,
-      keywords: ["cafe", "coffee", "brunch"],
+      minimumItems: 2,
     },
   ];
 
-  return links.filter((link) => link.keywords.some((keyword) => searchableText.includes(keyword))).slice(0, 8);
-}
-
-function isRouteExtension(destination: Destination, city: City) {
-  const cityName = city.name.toLowerCase();
-  const destinationCity = destination.city?.toLowerCase() || "";
-  const location = destination.location?.toLowerCase() || "";
-
-  return Boolean(destinationCity && destinationCity !== cityName) || Boolean(location && !location.includes(cityName));
+  return [...topicLinks, ...broadLinks]
+    .filter((link) => hasMeaningfulInterestContent(content, link))
+    .slice(0, 8);
 }
 
 function buildCityPlanningHighlights({
@@ -725,23 +703,6 @@ function buildCityPlanningHighlights({
           : "Check opening hours, seasonal conditions, and local customs before finalizing each day, especially for cultural sites and outdoor routes.",
     },
   ];
-}
-
-function sortGuides(guides: Guide[]) {
-  return [...guides].sort((a, b) => {
-    if (a.isFeatured !== b.isFeatured) {
-      return a.isFeatured ? -1 : 1;
-    }
-
-    const orderA = Number.isFinite(a.displayOrder) ? a.displayOrder : 999;
-    const orderB = Number.isFinite(b.displayOrder) ? b.displayOrder : 999;
-
-    if (orderA !== orderB) {
-      return orderA - orderB;
-    }
-
-    return a.title.localeCompare(b.title);
-  });
 }
 
 function formatList(items: string[]) {

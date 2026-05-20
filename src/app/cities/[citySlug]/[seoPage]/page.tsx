@@ -21,7 +21,6 @@ import {
 import {
   cityProgrammaticPages,
   citySeoPath,
-  cityTopicPages,
   getCityProgrammaticContent,
   getCityProgrammaticPage,
   hasMeaningfulCityProgrammaticContent,
@@ -92,7 +91,17 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
     attractions,
     guides,
   });
-  const relatedPages = cityProgrammaticPages.filter((item) => item.slug !== page.slug);
+  const relatedPages = cityProgrammaticPages.filter((item) => {
+    if (item.slug === page.slug) {
+      return false;
+    }
+
+    return hasMeaningfulCityProgrammaticContent(item, getCityProgrammaticContent(item, {
+      destinations,
+      attractions,
+      guides,
+    }));
+  });
   const hasContent = hasMeaningfulCityProgrammaticContent(page, pageContent);
 
   return (
@@ -257,7 +266,10 @@ export default async function CitySeoPage({ params }: CitySeoPageProps) {
               <InternalLink href={`/${city.slug}`} icon={MapPin} label={`${city.name} city hub`} />
               <InternalLink href={citySeoPath(city.slug, "best-places")} icon={Compass} label="Best places" />
               <InternalLink href={citySeoPath(city.slug, "things-to-do")} icon={BookOpen} label="Things to do" />
-              {cityTopicPages.slice(0, 3).map((topic) => (
+              {relatedPages
+                .filter((item) => item.pageType === "topic")
+                .slice(0, 3)
+                .map((topic) => (
                 <InternalLink key={topic.slug} href={citySeoPath(city.slug, topic.slug)} icon={Sparkles} label={topic.title(city)} />
               ))}
             </div>

@@ -4,7 +4,14 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { deleteItem } from "@/lib/data";
 import type { AdminCollection } from "@/lib/types";
 
-const adminCollections: AdminCollection[] = ["cities", "destinations", "guides", "attractions"];
+const adminCollections: AdminCollection[] = [
+  "cities",
+  "destinations",
+  "guides",
+  "attractions",
+  "homepage_reviews",
+  "homepage_faqs",
+];
 
 export async function POST(request: Request) {
   const requestUrl = new URL(request.url);

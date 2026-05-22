@@ -16,6 +16,7 @@ import {
   MapPin,
   PenLine,
   Plus,
+  Quote,
   Search,
   Settings,
   SlidersHorizontal,
@@ -25,6 +26,8 @@ import {
   saveAttractionAction,
   saveDestinationAction,
   saveGuideAction,
+  saveHomepageFaqAction,
+  saveHomepageReviewAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
@@ -35,7 +38,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/format";
-import type { AdminCollection, Attraction, City, Destination, Guide } from "@/lib/types";
+import type {
+  AdminCollection,
+  Attraction,
+  City,
+  Destination,
+  Guide,
+  HomepageFaq,
+  HomepageReview,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type AdminSection =
@@ -44,6 +55,8 @@ type AdminSection =
   | "destinations"
   | "guides"
   | "attractions"
+  | "homepage_reviews"
+  | "homepage_faqs"
   | "categories"
   | "media"
   | "settings";
@@ -56,6 +69,8 @@ type AdminCrudProps = {
     destinations: Destination[];
     guides: Guide[];
     attractions: Attraction[];
+    homepageReviews: HomepageReview[];
+    homepageFaqs: HomepageFaq[];
   };
   searchParams: SearchParams;
 };
@@ -66,6 +81,8 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
   { section: "destinations", label: "Destinations / Spots", icon: <Compass className="size-4" /> },
   { section: "guides", label: "Travel Guides", icon: <BookOpen className="size-4" /> },
   { section: "attractions", label: "Attractions", icon: <MapPin className="size-4" /> },
+  { section: "homepage_reviews", label: "Homepage Reviews", icon: <Quote className="size-4" /> },
+  { section: "homepage_faqs", label: "Homepage FAQs", icon: <FileText className="size-4" /> },
   { section: "categories", label: "Categories / Filters", icon: <SlidersHorizontal className="size-4" /> },
   { section: "media", label: "Media Library", icon: <Library className="size-4" /> },
   { section: "settings", label: "Settings", icon: <Settings className="size-4" /> },
@@ -147,6 +164,12 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
         {activeSection === "attractions" ? (
           <AttractionsSection data={data} searchParams={searchParams} />
         ) : null}
+        {activeSection === "homepage_reviews" ? (
+          <HomepageReviewsSection data={data} searchParams={searchParams} />
+        ) : null}
+        {activeSection === "homepage_faqs" ? (
+          <HomepageFaqsSection data={data} searchParams={searchParams} />
+        ) : null}
         {activeSection === "categories" ? <CategoriesSection /> : null}
         {activeSection === "media" ? <MediaSection /> : null}
         {activeSection === "settings" ? <SettingsSection data={data} /> : null}
@@ -167,6 +190,8 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     { label: "Total destinations", value: data.destinations.length, icon: <Compass className="size-5" /> },
     { label: "Total guides", value: data.guides.length, icon: <BookOpen className="size-5" /> },
     { label: "Total attractions", value: data.attractions.length, icon: <MapPin className="size-5" /> },
+    { label: "Homepage reviews", value: data.homepageReviews.length, icon: <Quote className="size-5" /> },
+    { label: "Homepage FAQs", value: data.homepageFaqs.length, icon: <FileText className="size-5" /> },
     { label: "Draft content", value: draftCount, icon: <FileText className="size-5" /> },
   ];
 
@@ -195,6 +220,8 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
           <QuickAction href={adminHref("destinations", { mode: "add" })} label="Add destination" />
           <QuickAction href={adminHref("guides", { mode: "add" })} label="Add guide" />
           <QuickAction href={adminHref("attractions", { mode: "add" })} label="Add attraction" />
+          <QuickAction href={adminHref("homepage_reviews", { mode: "add" })} label="Add homepage review" />
+          <QuickAction href={adminHref("homepage_faqs", { mode: "add" })} label="Add homepage FAQ" />
         </CardContent>
       </Card>
     </div>
@@ -494,6 +521,138 @@ function AttractionsSection({ data, searchParams }: AdminCrudProps) {
         />
       ) : (
         <EmptyState title="No attractions found" text="Adjust filters or add a city-assigned attraction." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function HomepageReviewsSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getParam(searchParams.mode);
+  const id = getParam(searchParams.id);
+  const review = data.homepageReviews.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && review);
+  const q = getParam(searchParams.q).toLowerCase();
+  const status = getParam(searchParams.status);
+  const filtered = data.homepageReviews.filter((item) => {
+    const matchesQuery = searchBlob(item.name, item.reviewText).includes(q);
+    return matchesQuery && matchesPublication(item.isPublished, status);
+  });
+
+  if (isForm) {
+    return (
+      <HomepageReviewForm
+        title={review ? `Edit ${review.name}` : "Add homepage review"}
+        review={review}
+        backHref={adminHref("homepage_reviews")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Homepage Reviews"
+      description="Manage the traveler review cards shown on the homepage."
+      addHref={adminHref("homepage_reviews", { mode: "add" })}
+      addLabel="Add Review"
+      filters={
+        <CommonFilters
+          section="homepage_reviews"
+          searchLabel="Search review"
+          status={status}
+          q={getParam(searchParams.q)}
+          draftLabel="Unpublished"
+        />
+      }
+    >
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Review", "Status", "Order", "Updated", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <TextEntityCell key="entity" title={item.name} text={item.reviewText} />,
+              <PublishBadge key="status" published={item.isPublished} />,
+              item.sortOrder,
+              formatDate(item.updatedAt),
+              <RowActions
+                key="actions"
+                collection="homepage_reviews"
+                viewHref="/#traveler-reviews"
+                editHref={adminHref("homepage_reviews", { mode: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=homepage_reviews&deleted=homepage_reviews"
+                hidden={{ id: item.id }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No homepage reviews found" text="Add a review to replace the homepage fallback cards." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function HomepageFaqsSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getParam(searchParams.mode);
+  const id = getParam(searchParams.id);
+  const faq = data.homepageFaqs.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && faq);
+  const q = getParam(searchParams.q).toLowerCase();
+  const status = getParam(searchParams.status);
+  const filtered = data.homepageFaqs.filter((item) => {
+    const matchesQuery = searchBlob(item.question, item.answer).includes(q);
+    return matchesQuery && matchesPublication(item.isPublished, status);
+  });
+
+  if (isForm) {
+    return (
+      <HomepageFaqForm
+        title={faq ? `Edit FAQ` : "Add homepage FAQ"}
+        faq={faq}
+        backHref={adminHref("homepage_faqs")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Homepage FAQs"
+      description="Manage the accordion questions shown near the bottom of the homepage."
+      addHref={adminHref("homepage_faqs", { mode: "add" })}
+      addLabel="Add FAQ"
+      filters={
+        <CommonFilters
+          section="homepage_faqs"
+          searchLabel="Search FAQ"
+          status={status}
+          q={getParam(searchParams.q)}
+          draftLabel="Unpublished"
+        />
+      }
+    >
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Question", "Status", "Order", "Updated", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <TextEntityCell key="entity" title={item.question} text={item.answer} />,
+              <PublishBadge key="status" published={item.isPublished} />,
+              item.sortOrder,
+              formatDate(item.updatedAt),
+              <RowActions
+                key="actions"
+                collection="homepage_faqs"
+                viewHref="/#faq"
+                editHref={adminHref("homepage_faqs", { mode: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=homepage_faqs&deleted=homepage_faqs"
+                hidden={{ id: item.id }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No homepage FAQs found" text="Add FAQs to replace the homepage fallback accordion." />
       )}
     </ManagementShell>
   );
@@ -812,6 +971,74 @@ function AttractionForm({
   );
 }
 
+function HomepageReviewForm({
+  title,
+  review,
+  backHref,
+}: {
+  title: string;
+  review?: HomepageReview;
+  backHref: string;
+}) {
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveHomepageReviewAction} className="grid gap-6">
+        <input type="hidden" name="id" value={review?.id ?? ""} />
+        <HiddenTimestamps createdAt={review?.createdAt} />
+        <FormSection title="Review" columns={1}>
+          <Field label="Person name" name="name" defaultValue={review?.name} placeholder="Maya R." />
+          <Area
+            label="Review text"
+            name="reviewText"
+            defaultValue={review?.reviewText}
+            placeholder="Top7Spots makes trip research feel calm..."
+            rows={5}
+          />
+        </FormSection>
+        <FormSection title="Publishing">
+          <Toggle label="Published" name="isPublished" defaultChecked={review?.isPublished ?? true} />
+          <Field label="Sort order" name="sortOrder" type="number" defaultValue={review?.sortOrder ?? 0} />
+        </FormSection>
+        <FormActions backHref={backHref} label="Save review" />
+      </form>
+    </EditShell>
+  );
+}
+
+function HomepageFaqForm({
+  title,
+  faq,
+  backHref,
+}: {
+  title: string;
+  faq?: HomepageFaq;
+  backHref: string;
+}) {
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveHomepageFaqAction} className="grid gap-6">
+        <input type="hidden" name="id" value={faq?.id ?? ""} />
+        <HiddenTimestamps createdAt={faq?.createdAt} />
+        <FormSection title="FAQ" columns={1}>
+          <Field label="Question" name="question" defaultValue={faq?.question} placeholder="What is Top7Spots?" />
+          <Area
+            label="Answer"
+            name="answer"
+            defaultValue={faq?.answer}
+            placeholder="Top7Spots is a curated travel discovery site..."
+            rows={6}
+          />
+        </FormSection>
+        <FormSection title="Publishing">
+          <Toggle label="Published" name="isPublished" defaultChecked={faq?.isPublished ?? true} />
+          <Field label="Sort order" name="sortOrder" type="number" defaultValue={faq?.sortOrder ?? 0} />
+        </FormSection>
+        <FormActions backHref={backHref} label="Save FAQ" />
+      </form>
+    </EditShell>
+  );
+}
+
 function ManagementShell({
   title,
   description,
@@ -855,11 +1082,13 @@ function CommonFilters({
   searchLabel,
   q,
   status,
+  draftLabel = "Draft",
 }: {
   section: AdminSection;
   searchLabel: string;
   q: string;
   status: string;
+  draftLabel?: string;
 }) {
   const formId = `${section}-filters`;
 
@@ -870,7 +1099,7 @@ function CommonFilters({
       <SelectField formId={formId} label="Status" name="status" defaultValue={status || "all"}>
         <option value="all">All statuses</option>
         <option value="published">Published</option>
-        <option value="draft">Draft</option>
+        <option value="draft">{draftLabel}</option>
       </SelectField>
       <FilterButtons formId={formId} section={section} />
     </FilterCard>
@@ -1016,6 +1245,15 @@ function EntityCell({ image, title, subtitle }: { image?: string; title: string;
         <p className="font-semibold text-[#111827]">{title}</p>
         {subtitle ? <p className="mt-1 text-xs text-slate-500">{subtitle}</p> : null}
       </div>
+    </div>
+  );
+}
+
+function TextEntityCell({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="min-w-72 max-w-xl">
+      <p className="font-semibold text-[#111827]">{title}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{text}</p>
     </div>
   );
 }
@@ -1262,6 +1500,19 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function PublishBadge({ published }: { published: boolean }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-semibold",
+        published ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700",
+      )}
+    >
+      {published ? "Published" : "Unpublished"}
+    </span>
+  );
+}
+
 function Alert({ tone, children }: { tone: "danger" | "success"; children: ReactNode }) {
   return (
     <div
@@ -1347,6 +1598,10 @@ function matchesStatus(status: string, filterValue: string) {
   return !filterValue || filterValue === "all" || status === filterValue;
 }
 
+function matchesPublication(isPublished: boolean, filterValue: string) {
+  return !filterValue || filterValue === "all" || (filterValue === "published" ? isPublished : !isPublished);
+}
+
 function matchesValue(value: string, filterValue?: string) {
   return !filterValue || filterValue === "all" || value === filterValue;
 }
@@ -1386,4 +1641,15 @@ function formatTableOfContentsText(tableOfContents?: Guide["tableOfContents"]) {
   return Array.isArray(tableOfContents)
     ? tableOfContents.map((item) => `${item.label} | ${item.anchor}`).join("\n")
     : "";
+}
+
+function formatDate(value: string) {
+  if (!value) {
+    return "Not saved";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Not saved"
+    : new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date);
 }

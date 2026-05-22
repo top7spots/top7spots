@@ -14,6 +14,8 @@ import type {
   Guide,
   GuideFaq,
   GuideTableOfContentsItem,
+  HomepageFaq,
+  HomepageReview,
 } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
@@ -385,4 +387,70 @@ export async function deleteAttractionAction(formData: FormData) {
   }
   revalidateCoreRoutes(citySlug);
   redirect("/admin/dashboard?section=attractions&deleted=attractions");
+}
+
+export async function saveHomepageReviewAction(formData: FormData) {
+  const name = value(formData, "name");
+  const reviewText = value(formData, "reviewText");
+
+  if (!name || !reviewText) {
+    redirectWithSaveError(
+      "homepage_reviews",
+      new Error("A reviewer name and review text are required."),
+      value(formData, "id"),
+    );
+  }
+
+  const item: HomepageReview = {
+    id: value(formData, "id") || idFrom("review", name),
+    name,
+    reviewText,
+    isPublished: checkboxValue(formData, "isPublished"),
+    sortOrder: numberValue(formData, "sortOrder"),
+    createdAt: timestamp(formData),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertItem("homepage_reviews", item);
+  } catch (error) {
+    redirectWithSaveError("homepage_reviews", error, item.id);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/dashboard");
+  redirect("/admin/dashboard?section=homepage_reviews&updated=homepage_reviews");
+}
+
+export async function saveHomepageFaqAction(formData: FormData) {
+  const question = value(formData, "question");
+  const answer = value(formData, "answer");
+
+  if (!question || !answer) {
+    redirectWithSaveError(
+      "homepage_faqs",
+      new Error("A FAQ question and answer are required."),
+      value(formData, "id"),
+    );
+  }
+
+  const item: HomepageFaq = {
+    id: value(formData, "id") || idFrom("faq", question),
+    question,
+    answer,
+    isPublished: checkboxValue(formData, "isPublished"),
+    sortOrder: numberValue(formData, "sortOrder"),
+    createdAt: timestamp(formData),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertItem("homepage_faqs", item);
+  } catch (error) {
+    redirectWithSaveError("homepage_faqs", error, item.id);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/dashboard");
+  redirect("/admin/dashboard?section=homepage_faqs&updated=homepage_faqs");
 }

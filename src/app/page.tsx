@@ -35,7 +35,13 @@ import {
 } from "@/components/ui/sheet";
 import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
-import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
+import {
+  getPublishedCities,
+  getPublishedDestinations,
+  getPublishedGuides,
+  getPublishedHomepageFaqs,
+  getPublishedHomepageReviews,
+} from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import type { City, Destination, Guide } from "@/lib/types";
@@ -78,7 +84,7 @@ const featuredCityPriority = [
   "jebel-akhdar",
 ];
 
-const travelerReviews = [
+const fallbackTravelerReviews = [
   {
     name: "Maya R.",
     text: "Top7Spots makes trip research feel calm. I can start with a city, compare the highlights, and save the deeper reading for later.",
@@ -97,7 +103,7 @@ const travelerReviews = [
   },
 ];
 
-const homepageFaqs = [
+const fallbackHomepageFaqs = [
   {
     question: "What is Top7Spots?",
     answer:
@@ -131,10 +137,12 @@ const homepageFaqs = [
 ];
 
 export default async function Home() {
-  const [cities, destinations, guides] = await Promise.all([
+  const [cities, destinations, guides, publishedReviews, publishedFaqs] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
+    getPublishedHomepageReviews(),
+    getPublishedHomepageFaqs(),
   ]);
   const visibleCities = sortHomepageCities(cities).slice(0, 12);
   const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
@@ -153,6 +161,14 @@ export default async function Home() {
   }));
   const weeklyDestinations = selectWeeklyDestinations(destinations).slice(0, 7);
   const homepageGuides = selectHomepageGuides(guides, cityBySlug, visibleCities).slice(0, 6);
+  const travelerReviews =
+    publishedReviews.length > 0
+      ? publishedReviews.map((review) => ({ name: review.name, text: review.reviewText }))
+      : fallbackTravelerReviews;
+  const homepageFaqs =
+    publishedFaqs.length > 0
+      ? publishedFaqs.map((faq) => ({ question: faq.question, answer: faq.answer }))
+      : fallbackHomepageFaqs;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
@@ -353,7 +369,7 @@ export default async function Home() {
           )}
         </section>
 
-        <section className="border-y border-slate-200 bg-white py-16">
+        <section id="traveler-reviews" className="border-y border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Traveler perspective" title="What Travelers Say">
               Notes from travelers who use Top7Spots as a calmer starting point for comparing city
@@ -411,7 +427,7 @@ export default async function Home() {
           </section>
         ) : null}
 
-        <FaqSection />
+        <FaqSection faqs={homepageFaqs} />
       </main>
       <SiteFooter />
     </div>
@@ -937,15 +953,15 @@ function GuideTextCard({ guide, city }: { guide: Guide; city?: City }) {
   );
 }
 
-function FaqSection() {
+function FaqSection({ faqs }: { faqs: Array<{ question: string; answer: string }> }) {
   return (
-    <section className="border-t border-slate-200 bg-white py-16">
+    <section id="faq" className="border-t border-slate-200 bg-white py-16">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <SectionHeading eyebrow="Helpful answers" title="Frequently Asked Questions">
           Quick context for using Top7Spots as a city-first travel discovery and planning resource.
         </SectionHeading>
         <div className="grid gap-3">
-          {homepageFaqs.map((faq) => (
+          {faqs.map((faq) => (
             <details
               key={faq.question}
               className="group rounded-xl border border-slate-200 bg-[#F8FAFC] shadow-sm transition open:border-blue-200 open:bg-white open:shadow-lg open:shadow-slate-950/5"

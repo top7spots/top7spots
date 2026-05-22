@@ -109,4 +109,30 @@ export type Attraction = {
   seoDescription: string;
 };
 
-export type AdminCollection = "cities" | "destinations" | "guides" | "attractions";
+export type HomepageReview = {
+  id: string;
+  name: string;
+  reviewText: string;
+  isPublished: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HomepageFaq = {
+  id: string;
+  question: string;
+  answer: string;
+  isPublished: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminCollection =
+  | "cities"
+  | "destinations"
+  | "guides"
+  | "attractions"
+  | "homepage_reviews"
+  | "homepage_faqs";

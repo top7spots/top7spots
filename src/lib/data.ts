@@ -1,6 +1,15 @@
 import "server-only";
 
-import type { AdminCollection, Attraction, City, ContentStatus, Destination, Guide } from "@/lib/types";
+import type {
+  AdminCollection,
+  Attraction,
+  City,
+  ContentStatus,
+  Destination,
+  Guide,
+  HomepageFaq,
+  HomepageReview,
+} from "@/lib/types";
 import { slugify } from "@/lib/format";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
@@ -9,18 +18,24 @@ type CollectionMap = {
   destinations: Destination;
   guides: Guide;
   attractions: Attraction;
+  homepage_reviews: HomepageReview;
+  homepage_faqs: HomepageFaq;
 };
 
 type CityRow = Record<string, unknown>;
 type DestinationRow = Record<string, unknown>;
 type GuideRow = Record<string, unknown>;
 type AttractionRow = Record<string, unknown>;
+type HomepageReviewRow = Record<string, unknown>;
+type HomepageFaqRow = Record<string, unknown>;
 
 type RowMap = {
   cities: CityRow;
   destinations: DestinationRow;
   guides: GuideRow;
   attractions: AttractionRow;
+  homepage_reviews: HomepageReviewRow;
+  homepage_faqs: HomepageFaqRow;
 };
 
 const tableNames: Record<AdminCollection, string> = {
@@ -28,6 +43,8 @@ const tableNames: Record<AdminCollection, string> = {
   destinations: "destinations",
   guides: "guides",
   attractions: "attractions",
+  homepage_reviews: "homepage_reviews",
+  homepage_faqs: "homepage_faqs",
 };
 
 const structuredGuideRowKeys = [
@@ -48,6 +65,17 @@ function byDisplayOrder<T extends { displayOrder?: number; name?: string; title?
   }
 
   return String(a.name ?? a.title ?? "").localeCompare(String(b.name ?? b.title ?? ""));
+}
+
+function bySortOrder<T extends { sortOrder?: number; name?: string; question?: string }>(a: T, b: T) {
+  const orderA = a.sortOrder ?? 999;
+  const orderB = b.sortOrder ?? 999;
+
+  if (orderA !== orderB) {
+    return orderA - orderB;
+  }
+
+  return String(a.name ?? a.question ?? "").localeCompare(String(b.name ?? b.question ?? ""));
 }
 
 function getField(row: Record<string, unknown>, ...keys: string[]) {
@@ -264,6 +292,32 @@ function mapAttraction(row: AttractionRow): Attraction {
   };
 }
 
+function mapHomepageReview(row: HomepageReviewRow): HomepageReview {
+  const name = stringField(row, "name");
+
+  return {
+    id: stringField(row, "id"),
+    name,
+    reviewText: stringField(row, "review_text", "reviewText"),
+    isPublished: booleanField(row, "is_published", "isPublished"),
+    sortOrder: numberField(row, "sort_order", "sortOrder"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  };
+}
+
+function mapHomepageFaq(row: HomepageFaqRow): HomepageFaq {
+  return {
+    id: stringField(row, "id"),
+    question: stringField(row, "question"),
+    answer: stringField(row, "answer"),
+    isPublished: booleanField(row, "is_published", "isPublished"),
+    sortOrder: numberField(row, "sort_order", "sortOrder"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  };
+}
+
 function toCityRow(item: City): CityRow {
   return {
     id: item.id,
@@ -386,6 +440,30 @@ function toAttractionRow(item: Attraction): AttractionRow {
   };
 }
 
+function toHomepageReviewRow(item: HomepageReview): HomepageReviewRow {
+  return {
+    id: item.id,
+    name: item.name,
+    review_text: item.reviewText,
+    is_published: item.isPublished,
+    sort_order: item.sortOrder,
+    created_at: item.createdAt,
+    updated_at: item.updatedAt,
+  };
+}
+
+function toHomepageFaqRow(item: HomepageFaq): HomepageFaqRow {
+  return {
+    id: item.id,
+    question: item.question,
+    answer: item.answer,
+    is_published: item.isPublished,
+    sort_order: item.sortOrder,
+    created_at: item.createdAt,
+    updated_at: item.updatedAt,
+  };
+}
+
 async function readRows<T extends AdminCollection>(collection: T): Promise<RowMap[T][]> {
   if (!hasSupabaseConfig()) {
     console.error(
@@ -398,6 +476,10 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
   const { data, error } = await supabase.from(tableNames[collection]).select("*");
 
   if (error) {
+    if (isOptionalHomepageCollection(collection) && isMissingTableError(error)) {
+      return [];
+    }
+
     console.error(`[Top7Spots Supabase] Failed to read "${collection}".`, {
       table: tableNames[collection],
       message: error.message,
@@ -421,6 +503,15 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
   return (data || []) as RowMap[T][];
 }
 
+function isOptionalHomepageCollection(collection: AdminCollection) {
+  return collection === "homepage_reviews" || collection === "homepage_faqs";
+}
+
+function isMissingTableError(error: { code?: string; message?: string }) {
+  const message = String(error.message || "").toLowerCase();
+  return error.code === "PGRST205" || message.includes("could not find the table");
+}
+
 async function readCollection<T extends AdminCollection>(
   collection: T,
 ): Promise<CollectionMap[T][]> {
@@ -438,7 +529,15 @@ async function readCollection<T extends AdminCollection>(
     return (rows as GuideRow[]).map(mapGuide).sort(byDisplayOrder) as CollectionMap[T][];
   }
 
-  return (rows as AttractionRow[]).map(mapAttraction).sort(byDisplayOrder) as CollectionMap[T][];
+  if (collection === "attractions") {
+    return (rows as AttractionRow[]).map(mapAttraction).sort(byDisplayOrder) as CollectionMap[T][];
+  }
+
+  if (collection === "homepage_reviews") {
+    return (rows as HomepageReviewRow[]).map(mapHomepageReview).sort(bySortOrder) as CollectionMap[T][];
+  }
+
+  return (rows as HomepageFaqRow[]).map(mapHomepageFaq).sort(bySortOrder) as CollectionMap[T][];
 }
 
 function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap[T]): RowMap[T] {
@@ -454,7 +553,15 @@ function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap
     return toGuideRow(item as Guide) as RowMap[T];
   }
 
-  return toAttractionRow(item as Attraction) as RowMap[T];
+  if (collection === "attractions") {
+    return toAttractionRow(item as Attraction) as RowMap[T];
+  }
+
+  if (collection === "homepage_reviews") {
+    return toHomepageReviewRow(item as HomepageReview) as RowMap[T];
+  }
+
+  return toHomepageFaqRow(item as HomepageFaq) as RowMap[T];
 }
 
 export async function getCities() {
@@ -559,15 +666,35 @@ export async function getAttractionByCityAndSlug(citySlug: string, attractionSlu
   );
 }
 
+export async function getHomepageReviews() {
+  return readCollection("homepage_reviews");
+}
+
+export async function getPublishedHomepageReviews() {
+  const reviews = await getHomepageReviews();
+  return reviews.filter((review) => review.isPublished);
+}
+
+export async function getHomepageFaqs() {
+  return readCollection("homepage_faqs");
+}
+
+export async function getPublishedHomepageFaqs() {
+  const faqs = await getHomepageFaqs();
+  return faqs.filter((faq) => faq.isPublished);
+}
+
 export async function getAdminData() {
-  const [cities, destinations, guides, attractions] = await Promise.all([
+  const [cities, destinations, guides, attractions, homepageReviews, homepageFaqs] = await Promise.all([
     getCities(),
     getDestinations(),
     getGuides(),
     getAttractions(),
+    getHomepageReviews(),
+    getHomepageFaqs(),
   ]);
 
-  return { cities, destinations, guides, attractions };
+  return { cities, destinations, guides, attractions, homepageReviews, homepageFaqs };
 }
 
 export async function upsertItem<T extends AdminCollection>(

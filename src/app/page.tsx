@@ -139,6 +139,7 @@ export default async function Home() {
   const visibleCities = sortHomepageCities(cities).slice(0, 12);
   const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
   const cityGroups = groupCitiesByCountry(cities);
+  const destinationGroups = groupDestinationsByCity(destinations, cityBySlug);
   const guideGroups = groupGuidesByCity(guides, cityBySlug);
   const cityDirectoryGroups = cityGroups.map((group) => ({
     country: group.country,
@@ -159,7 +160,11 @@ export default async function Home() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
           <BrandLogo priority imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
-          <HomepageNavigation cityGroups={cityGroups} guideGroups={guideGroups} />
+          <HomepageNavigation
+            cityGroups={cityGroups}
+            destinationGroups={destinationGroups}
+            guideGroups={guideGroups}
+          />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -168,7 +173,11 @@ export default async function Home() {
               <Globe2 className="size-4" aria-hidden="true" />
               EN
             </button>
-            <MobileHomepageNavigation cityGroups={cityGroups} guideGroups={guideGroups} />
+            <MobileHomepageNavigation
+              cityGroups={cityGroups}
+              destinationGroups={destinationGroups}
+              guideGroups={guideGroups}
+            />
           </div>
         </div>
       </header>
@@ -493,6 +502,30 @@ function groupCitiesByCountry(cities: City[]) {
     .sort((a, b) => a.country.localeCompare(b.country));
 }
 
+function groupDestinationsByCity(destinations: Destination[], cityBySlug: Map<string, City>) {
+  const groups = new Map<string, { label: string; href?: string; city?: City; destinations: Destination[] }>();
+
+  for (const destination of selectWeeklyDestinations(destinations)) {
+    if (!destination.name || !destination.slug) {
+      continue;
+    }
+
+    const city = cityBySlug.get(destination.citySlug);
+    const key = city?.slug || destination.city || destination.region || "More destinations";
+    const label = city?.name || destination.city || destination.region || "More destinations";
+    const current = groups.get(key);
+
+    groups.set(key, {
+      label,
+      href: city ? `/${city.slug}` : undefined,
+      city,
+      destinations: [...(current?.destinations || []), destination],
+    });
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
   const groups = new Map<string, { city: City; guides: Guide[] }>();
 
@@ -520,9 +553,11 @@ function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
 
 function HomepageNavigation({
   cityGroups,
+  destinationGroups,
   guideGroups,
 }: {
   cityGroups: ReturnType<typeof groupCitiesByCountry>;
+  destinationGroups: ReturnType<typeof groupDestinationsByCity>;
   guideGroups: ReturnType<typeof groupGuidesByCity>;
 }) {
   return (
@@ -553,9 +588,46 @@ function HomepageNavigation({
           </div>
         ) : null}
       </div>
-      <Link href="/destinations" className="transition hover:text-[#1D4ED8]">
-        Destinations
-      </Link>
+      <div className="group relative">
+        <Link href="/destinations" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+          Destinations
+          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
+        </Link>
+        {destinationGroups.length > 0 ? (
+          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <div className="grid grid-cols-2 gap-4">
+              {destinationGroups.slice(0, 6).map((group) => (
+                <div key={group.label}>
+                  {group.href ? (
+                    <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                      {group.label}
+                    </Link>
+                  ) : (
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                      {group.label}
+                    </p>
+                  )}
+                  <div className="mt-2 grid gap-1.5">
+                    {group.destinations.slice(0, 4).map((destination) => (
+                      <Link
+                        key={destination.id}
+                        href={getCanonicalDestinationPath(destination, group.city)}
+                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                      >
+                        {destination.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link href="/destinations" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
+              View all destinations
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
+        ) : null}
+      </div>
       <div className="group relative">
         <Link href="#travel-guides" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
           Travel Guides
@@ -596,9 +668,11 @@ function HomepageNavigation({
 
 function MobileHomepageNavigation({
   cityGroups,
+  destinationGroups,
   guideGroups,
 }: {
   cityGroups: ReturnType<typeof groupCitiesByCountry>;
+  destinationGroups: ReturnType<typeof groupDestinationsByCity>;
   guideGroups: ReturnType<typeof groupGuidesByCity>;
 }) {
   return (
@@ -647,12 +721,50 @@ function MobileHomepageNavigation({
               ))}
             </div>
           </details>
-          <Link
-            href="/destinations"
-            className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-          >
-            Destinations
-          </Link>
+          {destinationGroups.length > 0 ? (
+            <details className="group rounded-lg">
+              <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
+                Destinations
+                <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="grid gap-4 px-3 pb-3 pt-1">
+                <Link href="/destinations" className="text-sm font-semibold text-white transition hover:text-orange-200">
+                  View all destinations
+                </Link>
+                {destinationGroups.slice(0, 8).map((group) => (
+                  <div key={group.label}>
+                    {group.href ? (
+                      <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
+                        {group.label}
+                      </Link>
+                    ) : (
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
+                        {group.label}
+                      </p>
+                    )}
+                    <div className="mt-2 grid gap-1.5">
+                      {group.destinations.slice(0, 4).map((destination) => (
+                        <Link
+                          key={destination.id}
+                          href={getCanonicalDestinationPath(destination, group.city)}
+                          className="line-clamp-1 text-sm font-medium text-white/80 transition hover:text-white"
+                        >
+                          {destination.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : (
+            <Link
+              href="/destinations"
+              className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
+              Destinations
+            </Link>
+          )}
           {guideGroups.length > 0 ? (
             <details className="group rounded-lg">
               <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">

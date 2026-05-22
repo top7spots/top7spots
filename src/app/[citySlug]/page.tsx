@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { DestinationCard } from "@/components/destination-card";
-import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -108,15 +107,6 @@ export default async function CityPage({ params }: CityPageProps) {
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
                   {heroDescription}
                 </p>
-                <div className="mt-7 max-w-2xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgb(15_23_42_/_9%)]">
-                  <SearchBox
-                    containerClassName="relative"
-                    inputClassName="h-12 w-full rounded-xl border border-transparent bg-slate-50 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    dropdownClassName="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-blue-950/20"
-                    iconClassName="text-slate-400"
-                    placeholder={`Search ${city.name} spots, guides, and destinations...`}
-                  />
-                </div>
                 <div className="mt-5 flex flex-wrap gap-2.5">
                   <span className="rounded-full bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-[#0A2A66]">
                     {destinationCountLabel}
@@ -156,8 +146,6 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </div>
 
-          {longDescription ? <AboutCitySection city={city} longDescription={longDescription} /> : null}
-
           <div className="mb-7 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Top picks</p>
@@ -183,6 +171,8 @@ export default async function CityPage({ params }: CityPageProps) {
           ) : (
             <EmptyState title={`More ${city.name} places are coming`} text="Check back for new city ideas, nearby stops, and local travel inspiration." />
           )}
+
+          {longDescription ? <AboutCitySection city={city} longDescription={longDescription} /> : null}
         </section>
 
         <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
@@ -254,19 +244,17 @@ function AboutCitySection({
   const paragraphs = formatEditorialParagraphs(longDescription);
 
   return (
-    <section className="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgb(15_23_42_/_7%)] sm:p-8 lg:p-10">
-      <div className="grid gap-7 lg:grid-cols-[0.42fr_0.58fr]">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-            City context
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
-            About {city.name}
-          </h2>
-        </div>
-        <div className="grid gap-5 text-base leading-8 text-slate-600">
+    <section className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgb(15_23_42_/_7%)] sm:p-8 lg:p-10">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+        City context
+      </p>
+      <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
+        About {city.name}
+      </h2>
+      <div className="mt-7">
+        <div className="gap-x-10 gap-y-5 text-base leading-8 text-slate-600 lg:columns-2">
           {paragraphs.map((paragraph) => (
-            <p key={paragraph} className="whitespace-pre-line">
+            <p key={paragraph} className="mb-5 break-inside-avoid whitespace-pre-line">
               {paragraph}
             </p>
           ))}

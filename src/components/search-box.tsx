@@ -33,6 +33,7 @@ export function SearchBox({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
@@ -78,12 +79,43 @@ export function SearchBox({
     return () => window.clearTimeout(timeout);
   }, [query]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   function closeResults() {
     setIsOpen(false);
   }
 
   return (
-    <div className={containerClassName} onKeyDown={(event) => event.key === "Escape" && closeResults()}>
+    <div
+      ref={containerRef}
+      data-searchbox-root
+      className={containerClassName}
+      onKeyDown={(event) => event.key === "Escape" && closeResults()}
+    >
       <Search
         className={`pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 ${iconClassName}`}
         aria-hidden="true"
@@ -99,7 +131,7 @@ export function SearchBox({
         autoComplete="off"
       />
       {isOpen ? (
-        <div className={dropdownClassName}>
+        <div className={dropdownClassName} data-searchbox-dropdown>
           {isLoading ? (
             <p className="px-4 py-4 text-sm font-medium text-slate-500">Searching...</p>
           ) : results.length > 0 ? (

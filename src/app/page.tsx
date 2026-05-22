@@ -4,14 +4,17 @@ import Link from "next/link";
 import {
   ArrowRight,
   Binoculars,
+  BookOpen,
   Car,
+  ChevronDown,
   Crown,
   Gem,
   Globe2,
+  MapPin,
   Mountain,
+  Quote,
   ShieldCheck,
   Sparkles,
-  Star,
   TentTree,
   Waves,
 } from "lucide-react";
@@ -21,11 +24,12 @@ import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
-import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
+import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
+import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
-import type { City } from "@/lib/types";
+import type { City, Destination, Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -50,31 +54,6 @@ const categoryPills = [
   { label: "Road Trips", icon: Car },
 ];
 
-const inspiration = [
-  {
-    title: "Travel guides and inspiration",
-    text: "Use city guides and planning notes to understand when to go, what kind of trip fits the place, and how to connect nearby experiences into a better route.",
-    href: "/guides",
-  },
-  {
-    title: "Destination ideas with context",
-    text: "Browse beaches, mountain escapes, heritage landmarks, scenic drives, and hidden gems with summaries designed for quick, confident trip research.",
-    href: "/destinations",
-  },
-  {
-    title: "City-first discovery",
-    text: "Start with a city, then move naturally into its best places to visit, local guides, attractions, weekend escapes, and nearby destination ideas.",
-    href: "#featured-cities",
-  },
-];
-
-const whyTop7Spots = [
-  "Curated pages keep research focused on places worth comparing instead of endless search results.",
-  "City hubs connect destinations, attractions, and guides so travel planning feels organized from the first click.",
-  "Clean editorial pages make it easy to scan highlights, travel tips, best seasons, and related ideas.",
-  "Top7Spots is built for inspiration, not bookings, so every page can stay useful, calm, and easy to revisit.",
-];
-
 const featuredCityPriority = [
   "muscat",
   "salalah",
@@ -90,6 +69,58 @@ const featuredCityPriority = [
   "jebel-akhdar",
 ];
 
+const travelerReviews = [
+  {
+    name: "Maya R.",
+    text: "Top7Spots makes trip research feel calm. I can start with a city, compare the highlights, and save the deeper reading for later.",
+  },
+  {
+    name: "Daniel K.",
+    text: "The destination pages are concise without feeling thin. They give me enough context to decide what belongs in a route.",
+  },
+  {
+    name: "Aisha M.",
+    text: "I like that the guides connect back to cities and nearby places. It feels more organized than jumping between random lists.",
+  },
+  {
+    name: "Jonas L.",
+    text: "The site has a polished travel-magazine feel, but the pages are practical when I am actually planning.",
+  },
+];
+
+const homepageFaqs = [
+  {
+    question: "What is Top7Spots?",
+    answer:
+      "Top7Spots is a curated travel discovery site for finding standout cities, destinations, attractions, and practical travel guides in one organized place.",
+  },
+  {
+    question: "How are destinations selected?",
+    answer:
+      "Destinations are organized from the published Top7Spots collection using editorial signals such as featured status, display order, city context, and useful planning detail.",
+  },
+  {
+    question: "Can I explore places by country or city?",
+    answer:
+      "Yes. The homepage includes featured city hubs and a city directory grouped by country, so you can browse from broad country discovery into specific city pages.",
+  },
+  {
+    question: "What are travel guides?",
+    answer:
+      "Travel guides are planning articles connected to cities and destinations, covering practical topics such as timing, routes, local context, and trip preparation.",
+  },
+  {
+    question: "Are new destinations added regularly?",
+    answer:
+      "Yes. The destination library is designed to grow over time as new city hubs, guides, attractions, and curated places are published.",
+  },
+  {
+    question: "Can I suggest a destination?",
+    answer:
+      "Suggestions are welcome as the collection grows. For now, use the published city and destination pages as the best way to see what is already live.",
+  },
+];
+
 export default async function Home() {
   const [cities, destinations, guides] = await Promise.all([
     getPublishedCities(),
@@ -97,7 +128,9 @@ export default async function Home() {
     getPublishedGuides(),
   ]);
   const visibleCities = sortHomepageCities(cities).slice(0, 12);
+  const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
   const cityGroups = groupCitiesByCountry(cities);
+  const guideGroups = groupGuidesByCity(guides, cityBySlug);
   const cityDirectoryGroups = cityGroups.map((group) => ({
     country: group.country,
     countryPath: countryPath(group.country),
@@ -108,14 +141,8 @@ export default async function Home() {
       country: city.country,
     })),
   }));
-  const homepageDestinations = destinations.filter((destination) => destination.citySlug).slice(0, 4);
-  const homepageGuides = guides.slice(0, 4);
-  const homepageCountries = buildCountryHubs({
-    cities,
-    destinations,
-    guides,
-    attractions: [],
-  }).slice(0, 6);
+  const weeklyDestinations = selectWeeklyDestinations(destinations).slice(0, 7);
+  const homepageGuides = selectHomepageGuides(guides, cityBySlug, visibleCities).slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
@@ -123,17 +150,7 @@ export default async function Home() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
           <BrandLogo priority imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-            <Link href="#featured-cities" className="transition hover:text-[#1D4ED8]">
-              Cities
-            </Link>
-            <Link href="#categories" className="transition hover:text-[#1D4ED8]">
-              Categories
-            </Link>
-            <Link href="#inspiration" className="transition hover:text-[#1D4ED8]">
-              Inspiration
-            </Link>
-          </nav>
+          <HomepageNavigation cityGroups={cityGroups} guideGroups={guideGroups} />
           <button
             type="button"
             className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
@@ -194,10 +211,10 @@ export default async function Home() {
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
                 <Link
-                  href="#categories"
+                  href="#top-destinations"
                   className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/20 transition duration-300 hover:-translate-y-0.5 hover:bg-white/15"
                 >
-                  Trending Spots
+                  Top Destinations
                   <Sparkles className="size-4" aria-hidden="true" />
                 </Link>
               </div>
@@ -277,8 +294,67 @@ export default async function Home() {
           )}
         </section>
 
+        <section id="top-destinations" className="border-y border-slate-200 bg-white py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="This week's edit" title="Top 7 Destinations This Week">
+              A deterministic weekly-style selection from the published destination library, using
+              the current curated order until a dedicated weekly automation exists.
+            </SectionHeading>
+            {weeklyDestinations.length > 0 ? (
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {weeklyDestinations.map((destination) => (
+                  <DestinationFeatureCard
+                    key={destination.id}
+                    destination={destination}
+                    city={cityBySlug.get(destination.citySlug)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="Destination picks are coming" text="Published destination cards will appear here once the collection is available." />
+            )}
+          </div>
+        </section>
+
+        <section id="travel-guides" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <SectionHeading eyebrow="Plan with local context" title="Travel Guides">
+            Text-first planning guides connected to published city hubs, designed for practical
+            route research before you choose the final stops.
+          </SectionHeading>
+          {homepageGuides.length > 0 ? (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {homepageGuides.map((guide) => (
+                <GuideTextCard key={guide.id} guide={guide} city={cityBySlug.get(guide.citySlug)} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="Travel guides are coming" text="Published city travel guides will appear here as the guide library grows." />
+          )}
+        </section>
+
+        <section className="border-y border-slate-200 bg-white py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="Traveler perspective" title="What Travelers Say">
+              Notes from travelers who use Top7Spots as a calmer starting point for comparing city
+              hubs, destinations, and guide ideas.
+            </SectionHeading>
+            <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+              {travelerReviews.map((review) => (
+                <article
+                  key={review.name}
+                  className="min-w-[280px] snap-start rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm sm:min-w-[360px]"
+                >
+                  <Quote className="size-6 text-[#FF6B00]" aria-hidden="true" />
+                  <p className="mt-4 text-sm leading-7 text-slate-600">{review.text}</p>
+                  <p className="mt-5 text-sm font-semibold text-[#111827]">{review.name}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {cityGroups.length > 0 ? (
-          <section id="all-cities" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <section id="all-cities" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -314,131 +390,7 @@ export default async function Home() {
           </section>
         ) : null}
 
-        {homepageCountries.length > 0 ? (
-          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                Explore by country
-              </p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">
-                Country travel hubs on Top7Spots
-              </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Country pages connect published cities, destination pages, and travel guides into a
-                broader planning path.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {homepageCountries.map((country) => (
-                  <Link
-                    key={country.slug}
-                    href={countryPath(country.slug)}
-                    className="rounded-full border border-slate-200 bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-[#0A2A66] transition hover:border-[#2563EB] hover:bg-blue-50"
-                  >
-                    {country.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {(homepageDestinations.length > 0 || homepageGuides.length > 0) ? (
-          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-            <div className="grid gap-5 lg:grid-cols-2">
-              {homepageDestinations.length > 0 ? (
-                <InternalLinkPanel
-                  eyebrow="Popular destination paths"
-                  title="Continue into curated destination pages"
-                  text="Open a destination page when you want concise highlights, best-season notes, route context, and links back into its parent city hub."
-                  links={homepageDestinations.map((destination) => ({
-                    href: getCanonicalDestinationPath(destination),
-                    label: `${destination.name}${destination.city ? `, ${destination.city}` : ""}`,
-                  }))}
-                />
-              ) : null}
-              {homepageGuides.length > 0 ? (
-                <InternalLinkPanel
-                  eyebrow="Travel guide links"
-                  title="Read planning guides before choosing a route"
-                  text="Guide pages connect inspiration with city and destination research, helping travelers move naturally through the Top7Spots library."
-                  links={homepageGuides.map((guide) => ({
-                    href: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
-                    label: guide.title,
-                  }))}
-                />
-              ) : null}
-            </div>
-          </section>
-        ) : null}
-
-        <section id="categories" className="border-y border-slate-200 bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Explore By Category" title="Choose the mood of your next trip">
-              Browse travel ideas by the way you want a trip to feel, from coastal escapes and
-              mountain air to road trips, luxury stays, hidden gems, and family-friendly places.
-            </SectionHeading>
-            <div className="flex flex-wrap gap-3">
-              {categoryPills.map((category) => (
-                <button
-                  key={category.label}
-                  type="button"
-                  className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-[#F8FAFC] px-4 text-sm font-semibold text-slate-700 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-blue-50 hover:text-[#0A2A66]"
-                >
-                  <category.icon className="size-4" aria-hidden="true" />
-                  {category.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="inspiration" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Travel guides and inspiration" title="Plan with destination context">
-            Travel planning is easier when destination ideas, local guides, and city pages support
-            each other. Use these paths to move from inspiration into practical research.
-          </SectionHeading>
-          <div className="grid gap-5 md:grid-cols-3">
-            {inspiration.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <Star className="mb-5 size-7 fill-[#FF6B00] text-[#FF6B00]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold text-[#111827]">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {item.text}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t border-slate-200 bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Why use Top7Spots" title="Travel discovery without the clutter">
-              Top7Spots is made for travelers who want clear, curated starting points before they
-              compare routes, seasons, neighborhoods, and destination styles.
-            </SectionHeading>
-            <div className="grid gap-4 md:grid-cols-2">
-              {whyTop7Spots.map((item) => (
-                <div key={item} className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 text-sm leading-7 text-slate-600">
-                  {item}
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/destinations" className="inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]">
-                Browse destinations
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-              <Link href="/guides" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition hover:bg-blue-50">
-                Read travel guides
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <FaqSection />
       </main>
       <SiteFooter />
     </div>
@@ -471,6 +423,48 @@ function sortHomepageCities(cities: City[]) {
   });
 }
 
+function selectWeeklyDestinations(destinations: Destination[]) {
+  return [...destinations]
+    .filter((destination) => destination.name && destination.slug)
+    .sort((a, b) => {
+      if (a.isFeatured !== b.isFeatured) {
+        return a.isFeatured ? -1 : 1;
+      }
+
+      const orderA = Number.isFinite(a.displayOrder) && a.displayOrder > 0 ? a.displayOrder : 999;
+      const orderB = Number.isFinite(b.displayOrder) && b.displayOrder > 0 ? b.displayOrder : 999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      const cityCompare = a.city.localeCompare(b.city);
+      return cityCompare || a.name.localeCompare(b.name);
+    });
+}
+
+function selectHomepageGuides(guides: Guide[], cityBySlug: Map<string, City>, visibleCities: City[]) {
+  const visibleCitySlugs = new Set(visibleCities.map((city) => city.slug));
+  const guidePool = guides.filter((guide) => guide.citySlug && cityBySlug.has(guide.citySlug));
+  const visibleCityGuides = guidePool.filter((guide) => visibleCitySlugs.has(guide.citySlug));
+  const fallbackGuides = guidePool.filter((guide) => !visibleCitySlugs.has(guide.citySlug));
+
+  return [...visibleCityGuides, ...fallbackGuides].sort((a, b) => {
+    if (a.isFeatured !== b.isFeatured) {
+      return a.isFeatured ? -1 : 1;
+    }
+
+    const orderA = a.displayOrder || 999;
+    const orderB = b.displayOrder || 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
+}
+
 function groupCitiesByCountry(cities: City[]) {
   const groups = new Map<string, City[]>();
 
@@ -485,6 +479,107 @@ function groupCitiesByCountry(cities: City[]) {
       cities: sortHomepageCities(groupCities),
     }))
     .sort((a, b) => a.country.localeCompare(b.country));
+}
+
+function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
+  const groups = new Map<string, { city: City; guides: Guide[] }>();
+
+  for (const guide of guides) {
+    const city = cityBySlug.get(guide.citySlug);
+
+    if (!city) {
+      continue;
+    }
+
+    const current = groups.get(city.slug);
+    groups.set(city.slug, {
+      city,
+      guides: [...(current?.guides || []), guide],
+    });
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      guides: selectHomepageGuides(group.guides, cityBySlug, [group.city]).slice(0, 4),
+    }))
+    .sort((a, b) => a.city.name.localeCompare(b.city.name));
+}
+
+function HomepageNavigation({
+  cityGroups,
+  guideGroups,
+}: {
+  cityGroups: ReturnType<typeof groupCitiesByCountry>;
+  guideGroups: ReturnType<typeof groupGuidesByCity>;
+}) {
+  return (
+    <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
+      <div className="group relative">
+        <Link href="#all-cities" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+          Cities
+          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
+        </Link>
+        {cityGroups.length > 0 ? (
+          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <div className="grid grid-cols-2 gap-4">
+              {cityGroups.slice(0, 6).map((group) => (
+                <div key={group.country}>
+                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                    {group.country}
+                  </Link>
+                  <div className="mt-2 grid gap-1.5">
+                    {group.cities.slice(0, 5).map((city) => (
+                      <Link key={city.id} href={`/${city.slug}`} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
+                        {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+      <Link href="/destinations" className="transition hover:text-[#1D4ED8]">
+        Destinations
+      </Link>
+      <div className="group relative">
+        <Link href="#travel-guides" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+          Travel Guides
+          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
+        </Link>
+        {guideGroups.length > 0 ? (
+          <div className="invisible absolute right-0 top-full z-50 w-[520px] translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <div className="grid grid-cols-2 gap-4">
+              {guideGroups.slice(0, 6).map((group) => (
+                <div key={group.city.id}>
+                  <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                    {group.city.name}
+                  </Link>
+                  <div className="mt-2 grid gap-1.5">
+                    {group.guides.slice(0, 3).map((guide) => (
+                      <Link
+                        key={guide.id}
+                        href={`/${guide.citySlug}/guides/${guide.slug}`}
+                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                      >
+                        {guide.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link href="/guides" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
+              View all guides
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </nav>
+  );
 }
 
 function CityCard({ city }: { city: City }) {
@@ -532,30 +627,116 @@ function CityCard({ city }: { city: City }) {
   );
 }
 
-function InternalLinkPanel({
-  eyebrow,
-  title,
-  text,
-  links,
-}: {
-  eyebrow: string;
-  title: string;
-  text: string;
-  links: { href: string; label: string }[];
-}) {
+function DestinationFeatureCard({ destination, city }: { destination: Destination; city?: City }) {
+  const image = resolveImagePath(destination.image);
+  const href = getCanonicalDestinationPath(destination, city);
+  const context = [destination.city || city?.name, city?.country || destination.region]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{eyebrow}</p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827]">{title}</h2>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{text}</p>
-      <div className="mt-5 grid gap-2">
-        {links.map((link) => (
-          <Link key={link.href} href={link.href} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
-            {link.label}
-          </Link>
-        ))}
+    <article className="group relative min-h-[360px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-[0_18px_50px_rgb(15_23_42_/_10%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_90px_rgb(15_23_42_/_22%)]">
+      <div className="absolute inset-0 overflow-hidden bg-slate-100">
+        <Image
+          src={image}
+          alt={`${destination.name}${context ? `, ${context}` : ""}`}
+          fill
+          sizes="(min-width: 768px) 50vw, 100vw"
+          className="object-cover transition duration-700 ease-out group-hover:scale-110"
+        />
       </div>
-    </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/5" />
+      <div className="relative flex min-h-[360px] flex-col justify-between p-5 text-white">
+        <div className="flex items-center justify-between gap-3">
+          <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#0A2A66] shadow-sm backdrop-blur">
+            {destination.category || "Destination"}
+          </span>
+          {destination.duration ? (
+            <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20 backdrop-blur">
+              {destination.duration}
+            </span>
+          ) : null}
+        </div>
+        <div>
+          {context ? <p className="text-sm font-semibold text-orange-200">{context}</p> : null}
+          <h3 className="mt-2 text-3xl font-semibold tracking-tight">{destination.name}</h3>
+          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-100">
+            {destination.summary || destination.description || "A curated Top7Spots destination idea ready for deeper discovery."}
+          </p>
+          <Link
+            href={href}
+            className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0A2A66] shadow-lg shadow-slate-950/20 transition duration-300 hover:-translate-y-0.5 hover:bg-blue-50"
+          >
+            Explore destination
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function GuideTextCard({ guide, city }: { guide: Guide; city?: City }) {
+  return (
+    <article className="group flex min-h-[250px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
+      <div>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+          <BookOpen className="size-4" aria-hidden="true" />
+          <span>{guide.category || "Guide"}</span>
+        </div>
+        <h3 className="mt-4 text-xl font-semibold leading-tight tracking-tight text-[#111827]">
+          {guide.title}
+        </h3>
+        <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-600">
+          {guide.excerpt || "Curated planning notes from the Top7Spots guide library."}
+        </p>
+      </div>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        {city ? (
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+            <MapPin className="size-4 text-[#FF6B00]" aria-hidden="true" />
+            {city.name}
+          </span>
+        ) : null}
+        <Link
+          href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66] group-hover:translate-x-0.5"
+        >
+          Read guide
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section className="border-t border-slate-200 bg-white py-16">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <SectionHeading eyebrow="Helpful answers" title="Frequently Asked Questions">
+          Quick context for using Top7Spots as a city-first travel discovery and planning resource.
+        </SectionHeading>
+        <div className="grid gap-3">
+          {homepageFaqs.map((faq) => (
+            <details
+              key={faq.question}
+              className="group rounded-xl border border-slate-200 bg-[#F8FAFC] shadow-sm transition open:border-blue-200 open:bg-white open:shadow-lg open:shadow-slate-950/5"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+                <h3 className="text-base font-semibold tracking-tight text-[#111827]">{faq.question}</h3>
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[#0A2A66] transition group-open:rotate-180 group-hover:border-blue-200 group-hover:text-[#1D4ED8]">
+                  <ChevronDown className="size-4" aria-hidden="true" />
+                </span>
+              </summary>
+              <p className="border-t border-slate-100 px-5 pb-5 pt-4 text-sm leading-7 text-slate-600">
+                {faq.answer}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

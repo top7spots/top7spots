@@ -11,6 +11,7 @@ import {
   Gem,
   Globe2,
   MapPin,
+  Menu,
   Mountain,
   Quote,
   ShieldCheck,
@@ -24,6 +25,14 @@ import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
@@ -151,13 +160,16 @@ export default async function Home() {
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
           <BrandLogo priority imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
           <HomepageNavigation cityGroups={cityGroups} guideGroups={guideGroups} />
-          <button
-            type="button"
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            <Globe2 className="size-4" aria-hidden="true" />
-            EN
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              <Globe2 className="size-4" aria-hidden="true" />
+              EN
+            </button>
+            <MobileHomepageNavigation cityGroups={cityGroups} guideGroups={guideGroups} />
+          </div>
         </div>
       </header>
 
@@ -579,6 +591,109 @@ function HomepageNavigation({
         ) : null}
       </div>
     </nav>
+  );
+}
+
+function MobileHomepageNavigation({
+  cityGroups,
+  guideGroups,
+}: {
+  cityGroups: ReturnType<typeof groupCitiesByCountry>;
+  guideGroups: ReturnType<typeof groupGuidesByCity>;
+}) {
+  return (
+    <Sheet>
+      <SheetTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full md:hidden"
+            aria-label="Open menu"
+          />
+        }
+      >
+        <Menu className="size-4" aria-hidden="true" />
+      </SheetTrigger>
+      <SheetContent side="right" className="z-[70] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto bg-[#0A2A66] text-white">
+        <SheetHeader>
+          <SheetTitle>
+            <BrandLogo variant="dark" imageClassName="h-12 w-auto" />
+          </SheetTitle>
+        </SheetHeader>
+        <nav className="mt-8 grid gap-2 overflow-y-auto px-3 pb-6">
+          <details className="group rounded-lg">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
+              Cities
+              <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="grid gap-4 px-3 pb-3 pt-1">
+              <Link href="#all-cities" className="text-sm font-semibold text-white transition hover:text-orange-200">
+                All city hubs
+              </Link>
+              {cityGroups.slice(0, 8).map((group) => (
+                <div key={group.country}>
+                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
+                    {group.country}
+                  </Link>
+                  <div className="mt-2 grid gap-1.5">
+                    {group.cities.slice(0, 5).map((city) => (
+                      <Link key={city.id} href={`/${city.slug}`} className="text-sm font-medium text-white/80 transition hover:text-white">
+                        {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+          <Link
+            href="/destinations"
+            className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+          >
+            Destinations
+          </Link>
+          {guideGroups.length > 0 ? (
+            <details className="group rounded-lg">
+              <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
+                Travel Guides
+                <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="grid gap-4 px-3 pb-3 pt-1">
+                <Link href="/guides" className="text-sm font-semibold text-white transition hover:text-orange-200">
+                  All travel guides
+                </Link>
+                {guideGroups.slice(0, 8).map((group) => (
+                  <div key={group.city.id}>
+                    <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
+                      {group.city.name}
+                    </Link>
+                    <div className="mt-2 grid gap-1.5">
+                      {group.guides.slice(0, 3).map((guide) => (
+                        <Link
+                          key={guide.id}
+                          href={`/${guide.citySlug}/guides/${guide.slug}`}
+                          className="line-clamp-1 text-sm font-medium text-white/80 transition hover:text-white"
+                        >
+                          {guide.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : (
+            <Link
+              href="/guides"
+              className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+            >
+              Travel Guides
+            </Link>
+          )}
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }
 

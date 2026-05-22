@@ -46,14 +46,14 @@ export async function SiteHeader() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full md:hidden"
+                className="rounded-full lg:hidden"
                 aria-label="Open menu"
               />
             }
           >
             <Menu className="size-4" aria-hidden="true" />
           </SheetTrigger>
-          <SheetContent side="right" className="w-80 bg-[#0A2A66] text-white">
+          <SheetContent side="right" className="z-[70] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto bg-[#0A2A66] text-white">
             <SheetHeader>
               <SheetTitle>
                 <BrandLogo variant="dark" imageClassName="h-12 w-auto" />
@@ -82,25 +82,22 @@ export async function SiteHeader() {
                   ))}
                 </div>
               </details>
-              {[
-                { href: "/destinations", label: "Destinations" },
-                { href: "/guides", label: "Travel Guides" },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <Link
+                href="/destinations"
+                className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+              >
+                Destinations
+              </Link>
               {guideGroups.length > 0 ? (
                 <details className="group rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
-                    Guides by city
+                    Travel Guides
                     <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
                   </summary>
                   <div className="grid gap-4 px-3 pb-3 pt-1">
+                    <Link href="/guides" className="text-sm font-semibold text-white transition hover:text-orange-200">
+                      All travel guides
+                    </Link>
                     {guideGroups.slice(0, 8).map((group) => (
                       <div key={group.city.id}>
                         <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
@@ -121,7 +118,14 @@ export async function SiteHeader() {
                     ))}
                   </div>
                 </details>
-              ) : null}
+              ) : (
+                <Link
+                  href="/guides"
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+                >
+                  Travel Guides
+                </Link>
+              )}
             </nav>
           </SheetContent>
         </Sheet>

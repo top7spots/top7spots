@@ -25,7 +25,7 @@ export function SearchBox({
   placeholder = "Search cities, destinations, guides...",
   containerClassName = "relative w-full",
   inputClassName = "h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100",
-  dropdownClassName = "absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15",
+  dropdownClassName = "absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[100] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15",
   iconClassName = "text-slate-400",
 }: SearchBoxProps) {
   const [query, setQuery] = useState("");

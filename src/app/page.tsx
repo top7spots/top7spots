@@ -223,11 +223,11 @@ export default async function Home() {
                 practical travel inspiration for memorable trips around the world.
               </p>
 
-              <div className="mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/15 bg-white/95 p-2 shadow-2xl shadow-blue-950/30 backdrop-blur sm:flex-row">
+              <div className="relative z-30 mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/15 bg-white/95 p-2 shadow-2xl shadow-blue-950/30 backdrop-blur sm:flex-row">
                 <SearchBox
-                  containerClassName="relative min-w-0 flex-1"
+                  containerClassName="relative z-40 min-w-0 flex-1"
                   inputClassName="h-12 w-full rounded-xl border border-transparent bg-slate-50 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  dropdownClassName="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-blue-950/20"
+                  dropdownClassName="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[100] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl shadow-blue-950/20"
                   iconClassName="text-slate-400"
                   placeholder="Search cities, countries, beaches, mountains..."
                 />
@@ -255,7 +255,7 @@ export default async function Home() {
                   <Sparkles className="size-4" aria-hidden="true" />
                 </Link>
               </div>
-              <div className="mt-8 grid max-w-2xl grid-cols-3 gap-3">
+              <div className="relative z-0 mt-8 grid max-w-2xl grid-cols-3 gap-3">
                 {[
                   [String(visibleCities.length), "featured cities"],
                   ["Global", "travel scope"],
@@ -271,7 +271,7 @@ export default async function Home() {
               </div>
             </div>
 
-            <aside className="hidden rounded-2xl border border-white/15 bg-white/10 p-5 shadow-2xl shadow-blue-950/25 backdrop-blur-xl lg:block">
+            <aside className="relative z-0 hidden rounded-2xl border border-white/15 bg-white/10 p-5 shadow-2xl shadow-blue-950/25 backdrop-blur-xl lg:block">
               <p className="text-sm font-semibold text-orange-200">Today&apos;s discovery mood</p>
               <div className="mt-5 grid gap-3">
                 {categoryPills.slice(0, 5).map((category) => (

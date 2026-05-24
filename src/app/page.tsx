@@ -50,6 +50,10 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const heroImage = "/uploads/global/home-hero.jpg";
+const featuredCityImageSizes =
+  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const weeklyDestinationImageSizes =
+  "(min-width: 1280px) 630px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
 
 export const metadata: Metadata = seoMetadata({
   title: defaultSeoTitle,
@@ -208,6 +212,7 @@ export default async function Home() {
             priority
             fetchPriority="high"
             sizes="100vw"
+            quality={82}
             className="absolute inset-0 -z-20 object-cover"
           />
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(7_27_66_/_92%),rgb(7_27_66_/_70%),rgb(7_27_66_/_28%))]" />
@@ -838,7 +843,8 @@ function CityCard({ city }: { city: City }) {
             src={image}
             alt={`${city.name}, ${city.country}`}
             fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
+            sizes={featuredCityImageSizes}
+            quality={68}
             className="object-cover transition duration-700 ease-out group-hover:scale-110"
           />
         ) : null}
@@ -886,7 +892,8 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
           src={image}
           alt={`${destination.name}${context ? `, ${context}` : ""}`}
           fill
-          sizes="(min-width: 768px) 50vw, 100vw"
+          sizes={weeklyDestinationImageSizes}
+          quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
       </div>

@@ -10,9 +10,18 @@ type GuideCardProps = {
   guide: Guide;
   cityName?: string;
   href?: string;
+  imageSizes?: string;
 };
 
-export function GuideCard({ guide, cityName, href: hrefOverride }: GuideCardProps) {
+const defaultGuideCardImageSizes =
+  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+
+export function GuideCard({
+  guide,
+  cityName,
+  href: hrefOverride,
+  imageSizes = defaultGuideCardImageSizes,
+}: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
   const href = hrefOverride || (guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`);
   const imageAlt = guide.coverImageAlt || `${guide.title} travel guide${cityName ? ` for ${cityName}` : ""}`;
@@ -24,7 +33,8 @@ export function GuideCard({ guide, cityName, href: hrefOverride }: GuideCardProp
           src={image}
           alt={imageAlt}
           fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+          sizes={imageSizes}
+          quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent" />

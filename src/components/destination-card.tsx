@@ -9,9 +9,13 @@ import type { Destination } from "@/lib/types";
 
 type DestinationCardProps = {
   destination: Destination;
+  imageSizes?: string;
 };
 
-export function DestinationCard({ destination }: DestinationCardProps) {
+const defaultDestinationCardImageSizes =
+  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+
+export function DestinationCard({ destination, imageSizes = defaultDestinationCardImageSizes }: DestinationCardProps) {
   const image = resolveImagePath(destination.image);
   const category = destination.category || "Travel spot";
   const imageAlt = `${destination.name}${destination.city ? ` in ${destination.city}` : ""}${
@@ -30,7 +34,8 @@ export function DestinationCard({ destination }: DestinationCardProps) {
           src={image}
           alt={imageAlt}
           fill
-          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes={imageSizes}
+          quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent" />

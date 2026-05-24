@@ -165,7 +165,11 @@ export default async function CityPage({ params }: CityPageProps) {
           {cityDestinations.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {cityDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
+                <DestinationCard
+                  key={destination.id}
+                  destination={destination}
+                  imageSizes="(min-width: 1280px) 453px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)"
+                />
               ))}
             </div>
           ) : (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import {
   ArrowRight,
   Binoculars,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { CityDirectory } from "@/components/city-directory";
+import { HomeInitialLoader } from "@/components/home-initial-loader";
 import { SearchBox } from "@/components/search-box";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
@@ -54,6 +56,7 @@ const featuredCityImageSizes =
   "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
 const weeklyDestinationImageSizes =
   "(min-width: 1280px) 630px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const homeLoaderCookieName = "top7spots_home_loader_seen";
 
 export const metadata: Metadata = seoMetadata({
   title: defaultSeoTitle,
@@ -141,6 +144,8 @@ const fallbackHomepageFaqs = [
 ];
 
 export default async function Home() {
+  const cookieStore = await cookies();
+  const shouldShowInitialLoader = !cookieStore.has(homeLoaderCookieName);
   const [cities, destinations, guides, publishedReviews, publishedFaqs] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
@@ -177,6 +182,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
       <WebsiteJsonLd />
+      <HomeInitialLoader initiallyVisible={shouldShowInitialLoader} />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
           <BrandLogo imageClassName="h-10 w-auto sm:h-11 lg:h-12" />

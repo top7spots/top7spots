@@ -131,6 +131,87 @@
 }
 
 @layer utilities {
+  .home-initial-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 45%, rgb(37 99 235 / 18%), transparent 34rem),
+      linear-gradient(135deg, #061a3f 0%, #0a2a66 48%, #071b44 100%);
+    opacity: 1;
+    transition: opacity 220ms ease, visibility 220ms ease;
+  }
+
+  .home-initial-loader--leaving {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  .home-initial-loader__glow {
+    position: absolute;
+    width: min(46vw, 21rem);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: rgb(255 107 0 / 16%);
+    filter: blur(52px);
+    animation: home-loader-glow 1800ms ease-in-out infinite;
+  }
+
+  .home-initial-loader__mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(62vw, 17rem);
+    padding: 1.35rem 1.5rem;
+    border: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 1.25rem;
+    background: rgb(255 255 255 / 9%);
+    box-shadow: 0 24px 70px rgb(2 8 23 / 24%);
+    backdrop-filter: blur(18px);
+    animation: home-loader-mark 1600ms ease-in-out infinite;
+  }
+
+  .home-initial-loader__logo {
+    width: min(52vw, 13rem);
+    height: auto;
+  }
+
+  @keyframes home-loader-mark {
+    0%,
+    100% {
+      opacity: 0.88;
+      transform: scale(0.985);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes home-loader-glow {
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scale(0.94);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-initial-loader,
+    .home-initial-loader__glow,
+    .home-initial-loader__mark {
+      animation: none;
+      transition: none;
+    }
+  }
+
   .travel-card-shadow {
     box-shadow: 0 18px 45px rgb(15 23 42 / 8%);
   }

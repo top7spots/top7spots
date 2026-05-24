@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const loaderCookieName = "top7spots_home_loader_seen";
@@ -69,15 +68,12 @@ export function HomeInitialLoader({ initiallyVisible }: HomeInitialLoaderProps) 
     >
       <div className="home-initial-loader__glow" />
       <div className="home-initial-loader__mark">
-        <Image
-          src="/brand/top7spots-dark.png"
-          alt=""
-          width={1220}
-          height={497}
-          sizes="(max-width: 640px) 52vw, 208px"
-          loading="eager"
-          className="home-initial-loader__logo"
-        />
+        <div className="home-initial-loader__logo">
+          <span className="home-initial-loader__seven">7</span>
+          <span className="home-initial-loader__word">
+            Top<span>Spots</span>
+          </span>
+        </div>
       </div>
     </div>
   );

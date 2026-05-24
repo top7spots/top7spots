@@ -218,7 +218,7 @@ export default async function Home() {
             priority
             fetchPriority="high"
             sizes="100vw"
-            quality={82}
+            quality={78}
             className="absolute inset-0 -z-20 object-cover"
           />
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(7_27_66_/_92%),rgb(7_27_66_/_70%),rgb(7_27_66_/_28%))]" />

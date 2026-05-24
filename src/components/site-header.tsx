@@ -365,6 +365,10 @@ function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
   const groups = new Map<string, { city: City; guides: Guide[] }>();
 
   for (const guide of guides) {
+    if (guide.targetType !== "city") {
+      continue;
+    }
+
     const city = cityBySlug.get(guide.citySlug);
 
     if (!city) {

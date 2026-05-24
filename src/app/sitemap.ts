@@ -43,7 +43,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         {
           destinations: getLocalCityDestinations(city, cityDestinations),
           attractions: attractions.filter((attraction) => slugify(attraction.citySlug) === citySlug),
-          guides: guides.filter((guide) => slugify(guide.citySlug) === citySlug),
+          guides: guides.filter(
+            (guide) => guide.targetType === "city" && slugify(guide.citySlug) === citySlug,
+          ),
         },
       ];
     }),
@@ -111,7 +113,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...guides.map((guide) => ({
       url: absoluteUrl(
-        guide.citySlug ? `/${slugify(guide.citySlug)}/guides/${slugify(guide.slug)}` : `/guides/${slugify(guide.slug)}`,
+        guide.targetType === "city" && guide.citySlug
+          ? `/${slugify(guide.citySlug)}/guides/${slugify(guide.slug)}`
+          : `/guides/${slugify(guide.slug)}`,
       ),
       lastModified: lastModified(guide.updatedAt, guide.createdAt),
       changeFrequency: "monthly" as const,

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
 import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
-import { deleteItem, getCityBySlug, getGuides, upsertItem } from "@/lib/data";
+import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
 import type {
   AdminCollection,
@@ -13,6 +13,7 @@ import type {
   Destination,
   Guide,
   GuideFaq,
+  GuideTargetType,
   GuideTableOfContentsItem,
   HomepageFaq,
   HomepageReview,
@@ -103,6 +104,47 @@ async function cityContext(formData: FormData) {
   };
 }
 
+function guideTargetTypeValue(formData: FormData): GuideTargetType {
+  const targetType = value(formData, "targetType");
+  return targetType === "country" || targetType === "destination" ? targetType : "city";
+}
+
+async function guideOwnershipContext(formData: FormData) {
+  const targetType = guideTargetTypeValue(formData);
+
+  if (targetType === "country") {
+    const countryId = slugify(value(formData, "countryId"));
+    const countries = new Set((await getCities()).map((city) => slugify(city.country)).filter(Boolean));
+
+    if (!countryId || !countries.has(countryId)) {
+      throw new Error("Choose a valid country for this guide.");
+    }
+
+    return { targetType, countryId, cityId: "", citySlug: "", destinationId: "" };
+  }
+
+  if (targetType === "destination") {
+    const destinationId = value(formData, "destinationId");
+    const destination = (await getDestinations()).find(
+      (item) => item.id === destinationId || item.slug === slugify(destinationId),
+    );
+
+    if (!destination) {
+      throw new Error("Choose a valid destination for this guide.");
+    }
+
+    return { targetType, countryId: "", cityId: "", citySlug: "", destinationId: destination.id };
+  }
+
+  const { cityId, citySlug } = await cityContext(formData);
+
+  if (!citySlug) {
+    throw new Error("Choose a valid city for this guide.");
+  }
+
+  return { targetType, countryId: "", cityId, citySlug, destinationId: "" };
+}
+
 function redirectWithUploadError(error: unknown): never {
   const message =
     error instanceof Error ? error.message : "Image upload failed. Please choose another image.";
@@ -125,6 +167,33 @@ function revalidateCoreRoutes(citySlug?: string, itemSlug?: string, type?: "dest
 
   if (citySlug && itemSlug && type) {
     revalidatePath(`/${citySlug}/${type}/${itemSlug}`);
+  }
+}
+
+async function revalidateGuideRoutes(guide: Guide) {
+  revalidatePath("/");
+
+  if (guide.targetType === "city") {
+    revalidateCoreRoutes(guide.citySlug, guide.slug, "guides");
+    return;
+  }
+
+  if (guide.targetType === "country" && guide.countryId) {
+    revalidatePath(`/countries/${guide.countryId}`);
+    return;
+  }
+
+  if (guide.targetType === "destination" && guide.destinationId) {
+    const destination = (await getDestinations()).find((item) => item.id === guide.destinationId);
+
+    if (destination) {
+      revalidatePath(`/destinations/${destination.slug}`);
+
+      if (destination.citySlug) {
+        revalidatePath(`/${destination.citySlug}`);
+        revalidatePath(`/${destination.citySlug}/destinations/${destination.slug}`);
+      }
+    }
   }
 }
 
@@ -249,8 +318,15 @@ export async function deleteDestinationAction(formData: FormData) {
 
 export async function saveGuideAction(formData: FormData) {
   const title = value(formData, "title");
-  const { cityId, citySlug } = await cityContext(formData);
+  const id = value(formData, "id");
+  let ownership: Awaited<ReturnType<typeof guideOwnershipContext>>;
   let image: string;
+
+  try {
+    ownership = await guideOwnershipContext(formData);
+  } catch (error) {
+    redirectWithSaveError("guides", error, id);
+  }
 
   try {
     image = await getImagePathFromForm(formData, {
@@ -263,13 +339,16 @@ export async function saveGuideAction(formData: FormData) {
   }
 
   const slug = value(formData, "slug") || slugify(title);
-  const existingGuide = value(formData, "id")
-    ? (await getGuides()).find((guide) => guide.id === value(formData, "id"))
+  const existingGuide = id
+    ? (await getGuides()).find((guide) => guide.id === id)
     : undefined;
   const item: Guide = {
-    id: value(formData, "id") || idFrom("guide", title),
-    cityId,
-    citySlug,
+    id: id || idFrom("guide", title),
+    targetType: ownership.targetType,
+    countryId: ownership.countryId,
+    cityId: ownership.cityId,
+    citySlug: ownership.citySlug,
+    destinationId: ownership.destinationId,
     slug,
     title,
     category: value(formData, "category"),
@@ -316,19 +395,24 @@ export async function saveGuideAction(formData: FormData) {
     redirectWithSaveError("guides", error, item.id);
   }
 
-  revalidateCoreRoutes(item.citySlug, item.slug, "guides");
+  await revalidateGuideRoutes(item);
   revalidatePath("/guides");
   redirect("/admin/dashboard?section=guides&updated=guides");
 }
 
 export async function deleteGuideAction(formData: FormData) {
   const citySlug = value(formData, "citySlug");
+  const existingGuide = (await getGuides()).find((guide) => guide.id === value(formData, "id"));
   try {
     await deleteItem("guides", value(formData, "id"));
   } catch (error) {
     redirectWithSaveError("guides", error);
   }
-  revalidateCoreRoutes(citySlug);
+  if (existingGuide) {
+    await revalidateGuideRoutes(existingGuide);
+  } else {
+    revalidateCoreRoutes(citySlug);
+  }
   revalidatePath("/guides");
   redirect("/admin/dashboard?section=guides&deleted=guides");
 }

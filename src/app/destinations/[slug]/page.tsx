@@ -24,7 +24,14 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
-import { getAttractions, getDestination, getDestinations, getGuides, getPublishedCities } from "@/lib/data";
+import {
+  getAttractions,
+  getDestination,
+  getDestinations,
+  getGuidesForDestination,
+  getPublishedCities,
+  getPublishedGuides,
+} from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -58,11 +65,12 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { slug } = await params;
-  const [destination, destinations, attractions, guides, cities] = await Promise.all([
+  const [destination, destinations, attractions, guides, destinationGuides, cities] = await Promise.all([
     getDestination(slug),
     getDestinations(),
     getAttractions(),
-    getGuides(),
+    getPublishedGuides(),
+    getGuidesForDestination(slug),
     getPublishedCities(),
   ]);
 
@@ -79,9 +87,10 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const canonicalPath = getCanonicalDestinationPath(destination, parentCity);
   const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
-  const relatedGuides = guides
-    .filter((guide) => destination.citySlug && guide.citySlug === destination.citySlug)
+  const cityGuides = guides
+    .filter((guide) => guide.targetType === "city" && destination.citySlug && guide.citySlug === destination.citySlug)
     .slice(0, 4);
+  const relatedGuides = (destinationGuides.length > 0 ? destinationGuides : cityGuides).slice(0, 4);
   const nearbyAttractions =
     attractions.filter(
       (attraction) =>
@@ -330,7 +339,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               {relatedGuides.map((guide) => (
                 <Link
                   key={guide.id}
-                  href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+                  href={
+                    guide.targetType === "city" && guide.citySlug
+                      ? `/${guide.citySlug}/guides/${guide.slug}`
+                      : `/guides/${guide.slug}`
+                  }
                   className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                 >
                   {guide.title}

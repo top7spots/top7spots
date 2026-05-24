@@ -30,6 +30,7 @@ import {
   getDestinationByCityAndSlug,
   getDestinationsByCity,
   getGuidesByCity,
+  getGuidesForDestination,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
@@ -69,12 +70,13 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { citySlug, destinationSlug } = await params;
-  const [city, destination, destinations, attractions, guides] = await Promise.all([
+  const [city, destination, destinations, attractions, cityGuides, destinationGuides] = await Promise.all([
     getCityBySlug(citySlug),
     getDestinationByCityAndSlug(citySlug, destinationSlug),
     getDestinationsByCity(citySlug),
     getAttractionsByCity(citySlug),
     getGuidesByCity(citySlug),
+    getGuidesForDestination(destinationSlug),
   ]);
 
   if (!city || !destination) {
@@ -89,7 +91,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     city.name;
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const attractionIdeas = attractions;
-  const relatedGuides = guides.slice(0, 4);
+  const relatedGuides = (destinationGuides.length > 0 ? destinationGuides : cityGuides).slice(0, 4);
   const countryHref = city.country ? countryPath(city.country) : "";
   const canonicalPath = getCanonicalDestinationPath(destination, city);
   const galleryImages = Array.from(
@@ -325,7 +327,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               {relatedGuides.map((guide) => (
                 <Link
                   key={guide.id}
-                  href={`/${city.slug}/guides/${guide.slug}`}
+                  href={
+                    guide.targetType === "city" && guide.citySlug
+                      ? `/${guide.citySlug}/guides/${guide.slug}`
+                      : `/guides/${guide.slug}`
+                  }
                   className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                 >
                   {guide.title}

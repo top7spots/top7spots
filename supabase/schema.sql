@@ -53,8 +53,11 @@ create table if not exists public.destinations (
 
 create table if not exists public.guides (
   id text primary key,
+  target_type text not null default 'city' check (target_type in ('country', 'city', 'destination')),
+  country_id text not null default '',
   city_id text references public.cities(id) on delete set null,
-  city_slug text not null,
+  city_slug text not null default '',
+  destination_id text references public.destinations(id) on delete set null,
   slug text not null,
   title text not null,
   excerpt text,
@@ -80,6 +83,13 @@ create table if not exists public.guides (
   unique (city_slug, slug)
 );
 
+alter table public.guides add column if not exists target_type text not null default 'city';
+alter table public.guides add column if not exists country_id text not null default '';
+alter table public.guides add column if not exists destination_id text references public.destinations(id) on delete set null;
+alter table public.guides alter column city_slug set default '';
+update public.guides set target_type = 'city' where target_type is null or target_type = '';
+alter table public.guides drop constraint if exists guides_target_type_check;
+alter table public.guides add constraint guides_target_type_check check (target_type in ('country', 'city', 'destination'));
 alter table public.guides add column if not exists seo_keywords text[] not null default '{}';
 alter table public.guides add column if not exists cover_image_alt text not null default '';
 alter table public.guides add column if not exists faqs jsonb not null default '[]'::jsonb;
@@ -130,6 +140,8 @@ create table if not exists public.homepage_faqs (
 create index if not exists cities_status_display_order_idx on public.cities (status, display_order);
 create index if not exists destinations_city_status_display_order_idx on public.destinations (city_slug, status, display_order);
 create index if not exists guides_city_status_display_order_idx on public.guides (city_slug, status, display_order);
+create index if not exists guides_country_status_updated_idx on public.guides (country_id, status, updated_at);
+create index if not exists guides_destination_status_updated_idx on public.guides (destination_id, status, updated_at);
 create index if not exists attractions_city_status_display_order_idx on public.attractions (city_slug, status, display_order);
 create index if not exists homepage_reviews_published_sort_order_idx on public.homepage_reviews (is_published, sort_order);
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);

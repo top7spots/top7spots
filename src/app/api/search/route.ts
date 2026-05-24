@@ -92,13 +92,16 @@ export async function GET(request: Request) {
       };
     }),
     ...guides.map((guide) => {
-      const city = guide.citySlug ? cityBySlug.get(guide.citySlug) : undefined;
+      const city = guide.targetType === "city" && guide.citySlug ? cityBySlug.get(guide.citySlug) : undefined;
 
       return {
         id: `guide-${guide.id}`,
         title: guide.title,
         type: "Guide" as const,
-        href: guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+        href:
+          guide.targetType === "city" && guide.citySlug
+            ? `/${guide.citySlug}/guides/${guide.slug}`
+            : `/guides/${guide.slug}`,
         context: [city?.name, city?.country, guide.category].filter(Boolean).join(" · "),
         description: guide.excerpt || guide.seoDescription || guide.content[0],
         searchable: [

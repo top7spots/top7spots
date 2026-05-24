@@ -23,7 +23,11 @@ export function GuideCard({
   imageSizes = defaultGuideCardImageSizes,
 }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
-  const href = hrefOverride || (guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`);
+  const href =
+    hrefOverride ||
+    (guide.targetType === "city" && guide.citySlug
+      ? `/${guide.citySlug}/guides/${guide.slug}`
+      : `/guides/${guide.slug}`);
   const imageAlt = guide.coverImageAlt || `${guide.title} travel guide${cityName ? ` for ${cityName}` : ""}`;
 
   return (

@@ -30,6 +30,7 @@ import {
   saveHomepageReviewAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
+import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -389,7 +390,12 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
   const isForm = mode === "add" || (mode === "edit" && guide);
   const filters = getContentFilters(searchParams);
   const filtered = data.guides.filter((item) => {
-    const matchesQuery = searchBlob(item.title, item.category, item.excerpt).includes(filters.q);
+    const matchesQuery = searchBlob(
+      item.title,
+      item.category,
+      item.excerpt,
+      guideTargetLabel(item, data.cities, data.destinations),
+    ).includes(filters.q);
     return matchesQuery && matchesCity(item.citySlug, filters.city) && matchesStatus(item.status, filters.status);
   });
 
@@ -398,6 +404,7 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
       <GuideForm
         title={guide ? `Edit ${guide.title}` : "Add new guide"}
         cities={data.cities}
+        destinations={data.destinations}
         guide={guide}
         backHref={adminHref("guides")}
       />
@@ -423,19 +430,19 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
     >
       {filtered.length > 0 ? (
         <EntityTable
-          headers={["Guide", "City", "Category", "Read time", "Status", "Actions"]}
+          headers={["Guide", "Belongs to", "Category", "Read time", "Status", "Actions"]}
           rows={filtered.map((item) => ({
             key: item.id,
             cells: [
               <EntityCell key="entity" image={item.coverImage || item.image} title={item.title} subtitle={item.author} />,
-              cityLabel(data.cities, item.citySlug),
+              guideTargetLabel(item, data.cities, data.destinations),
               item.category || "Guide",
               item.readTime || "Quick read",
               <StatusBadge key="status" status={item.status} />,
               <RowActions
                 key="actions"
                 collection="guides"
-                viewHref={`/${item.citySlug}/guides/${item.slug}`}
+                viewHref={guideViewHref(item)}
                 editHref={adminHref("guides", { mode: "edit", id: item.id })}
                 redirectTo="/admin/dashboard?section=guides&deleted=guides"
                 hidden={{ id: item.id, citySlug: item.citySlug, slug: item.slug }}
@@ -838,11 +845,13 @@ function DestinationForm({
 function GuideForm({
   title,
   cities,
+  destinations,
   guide,
   backHref,
 }: {
   title: string;
   cities: City[];
+  destinations: Destination[];
   guide?: Guide;
   backHref: string;
 }) {
@@ -861,8 +870,15 @@ function GuideForm({
           <Field label="Display order" name="displayOrder" type="number" defaultValue={guide?.displayOrder ?? 0} />
           <Toggle label="Featured guide" name="isFeatured" defaultChecked={guide?.isFeatured} />
         </FormSection>
-        <FormSection title="City assignment">
-          <CitySelect cities={cities} defaultValue={guide?.citySlug} />
+        <FormSection title="Guide ownership">
+          <GuideOwnershipFields
+            cities={cities}
+            destinations={destinations}
+            defaultTargetType={guide?.targetType ?? "city"}
+            defaultCountryId={guide?.countryId}
+            defaultCitySlug={guide?.citySlug}
+            defaultDestinationId={guide?.destinationId}
+          />
         </FormSection>
         <FormSection title="Cover image" columns={1}>
           <ImageUploadField fieldName="image" label="Cover image" currentImage={guide?.image || guide?.coverImage} />
@@ -1613,6 +1629,26 @@ function unique(values: string[]) {
 function cityLabel(cities: City[], citySlug: string) {
   const city = cities.find((item) => item.slug === citySlug);
   return city ? `${city.name}, ${city.country}` : citySlug;
+}
+
+function guideTargetLabel(guide: Guide, cities: City[], destinations: Destination[]) {
+  if (guide.targetType === "country") {
+    const country = cities.find((city) => slugify(city.country) === guide.countryId)?.country;
+    return country ? `Country: ${country}` : `Country: ${guide.countryId || "Unassigned"}`;
+  }
+
+  if (guide.targetType === "destination") {
+    const destination = destinations.find((item) => item.id === guide.destinationId);
+    return destination ? `Destination: ${destination.name}` : `Destination: ${guide.destinationId || "Unassigned"}`;
+  }
+
+  return `City: ${cityLabel(cities, guide.citySlug)}`;
+}
+
+function guideViewHref(guide: Guide) {
+  return guide.targetType === "city" && guide.citySlug
+    ? `/${guide.citySlug}/guides/${guide.slug}`
+    : `/guides/${guide.slug}`;
 }
 
 function isPublished(item: { status: string }) {

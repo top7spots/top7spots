@@ -495,7 +495,9 @@ function selectWeeklyDestinations(destinations: Destination[]) {
 
 function selectHomepageGuides(guides: Guide[], cityBySlug: Map<string, City>, visibleCities: City[]) {
   const visibleCitySlugs = new Set(visibleCities.map((city) => city.slug));
-  const guidePool = guides.filter((guide) => guide.citySlug && cityBySlug.has(guide.citySlug));
+  const guidePool = guides.filter(
+    (guide) => guide.targetType === "city" && guide.citySlug && cityBySlug.has(guide.citySlug),
+  );
   const visibleCityGuides = guidePool.filter((guide) => visibleCitySlugs.has(guide.citySlug));
   const fallbackGuides = guidePool.filter((guide) => !visibleCitySlugs.has(guide.citySlug));
 
@@ -559,6 +561,10 @@ function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
   const groups = new Map<string, { city: City; guides: Guide[] }>();
 
   for (const guide of guides) {
+    if (guide.targetType !== "city") {
+      continue;
+    }
+
     const city = cityBySlug.get(guide.citySlug);
 
     if (!city) {

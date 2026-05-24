@@ -168,7 +168,7 @@ function sortGuides(guides: Guide[]) {
 }
 
 function cityLabel(cities: Map<string, City>, guide: Guide) {
-  return guide.citySlug ? cities.get(guide.citySlug)?.name || guide.citySlug : "";
+  return guide.targetType === "city" && guide.citySlug ? cities.get(guide.citySlug)?.name || guide.citySlug : "";
 }
 
 function EmptyGuides() {

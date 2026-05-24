@@ -7,6 +7,7 @@ import type {
   ContentStatus,
   Destination,
   Guide,
+  GuideTargetType,
   HomepageFaq,
   HomepageReview,
 } from "@/lib/types";
@@ -48,6 +49,9 @@ const tableNames: Record<AdminCollection, string> = {
 };
 
 const structuredGuideRowKeys = [
+  "target_type",
+  "country_id",
+  "destination_id",
   "seo_keywords",
   "cover_image_alt",
   "faqs",
@@ -55,6 +59,8 @@ const structuredGuideRowKeys = [
   "related_place_slugs",
   "table_of_contents",
 ] as const;
+
+const guideOwnershipRowKeys = ["target_type", "country_id", "destination_id"] as const;
 
 function byDisplayOrder<T extends { displayOrder?: number; name?: string; title?: string }>(a: T, b: T) {
   const orderA = a.displayOrder ?? 999;
@@ -65,6 +71,21 @@ function byDisplayOrder<T extends { displayOrder?: number; name?: string; title?
   }
 
   return String(a.name ?? a.title ?? "").localeCompare(String(b.name ?? b.title ?? ""));
+}
+
+function sortGuidesNewestFirst(guides: Guide[]) {
+  return [...guides].sort((a, b) => {
+    const dateA = Date.parse(a.updatedAt || a.createdAt || "");
+    const dateB = Date.parse(b.updatedAt || b.createdAt || "");
+    const safeDateA = Number.isFinite(dateA) ? dateA : 0;
+    const safeDateB = Number.isFinite(dateB) ? dateB : 0;
+
+    if (safeDateA !== safeDateB) {
+      return safeDateB - safeDateA;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
 }
 
 function bySortOrder<T extends { sortOrder?: number; name?: string; question?: string }>(a: T, b: T) {
@@ -113,6 +134,24 @@ function booleanField(row: Record<string, unknown>, ...keys: string[]) {
 
 function status(value?: string | null): ContentStatus {
   return value?.toLowerCase() === "draft" ? "draft" : "published";
+}
+
+function guideTargetType(row: GuideRow): GuideTargetType {
+  const value = stringField(row, "target_type", "targetType").toLowerCase();
+
+  if (value === "country" || value === "destination") {
+    return value;
+  }
+
+  if (stringField(row, "destination_id", "destinationId")) {
+    return "destination";
+  }
+
+  if (stringField(row, "country_id", "countryId")) {
+    return "country";
+  }
+
+  return "city";
 }
 
 function arrayValue(value: unknown) {
@@ -238,11 +277,15 @@ function mapDestination(row: DestinationRow): Destination {
 function mapGuide(row: GuideRow): Guide {
   const title = stringField(row, "title");
   const image = stringField(row, "image") || stringField(row, "cover_image", "coverImage");
+  const targetType = guideTargetType(row);
 
   return {
     id: stringField(row, "id"),
+    targetType,
+    countryId: slugify(stringField(row, "country_id", "countryId")),
     cityId: stringField(row, "city_id", "cityId"),
     citySlug: slugify(stringField(row, "city_slug", "citySlug")),
+    destinationId: stringField(row, "destination_id", "destinationId"),
     slug: slugify(stringField(row, "slug") || title),
     title,
     excerpt: stringField(row, "excerpt"),
@@ -377,8 +420,11 @@ function toDestinationRow(item: Destination): DestinationRow {
 function toGuideRow(item: Guide): GuideRow {
   return {
     id: item.id,
+    target_type: item.targetType,
+    country_id: item.countryId || "",
     city_id: item.cityId,
     city_slug: slugify(item.citySlug),
+    destination_id: item.destinationId || "",
     slug: slugify(item.slug || item.title),
     title: item.title,
     excerpt: item.excerpt,
@@ -417,6 +463,11 @@ function legacyGuideRow(row: GuideRow): GuideRow {
 function isMissingStructuredGuideColumn(error: { message?: string }) {
   const message = String(error.message || "").toLowerCase();
   return structuredGuideRowKeys.some((key) => message.includes(key));
+}
+
+function isMissingGuideOwnershipColumn(error: { message?: string }) {
+  const message = String(error.message || "").toLowerCase();
+  return guideOwnershipRowKeys.some((key) => message.includes(key));
 }
 
 function toAttractionRow(item: Attraction): AttractionRow {
@@ -626,7 +677,43 @@ export async function getPublishedGuides() {
 export async function getGuidesByCity(citySlug: string) {
   const normalizedCitySlug = slugify(citySlug);
   const guides = await getPublishedGuides();
-  return guides.filter((guide) => guide.citySlug === normalizedCitySlug);
+  return guides.filter((guide) => guide.targetType === "city" && guide.citySlug === normalizedCitySlug);
+}
+
+export async function getGuidesForCountry(countrySlug: string) {
+  const normalizedCountryId = slugify(countrySlug);
+  const guides = await getPublishedGuides();
+  return sortGuidesNewestFirst(
+    guides.filter((guide) => guide.targetType === "country" && guide.countryId === normalizedCountryId),
+  );
+}
+
+export async function getGuidesForCity(citySlug: string) {
+  const normalizedCitySlug = slugify(citySlug);
+  const guides = await getPublishedGuides();
+  return sortGuidesNewestFirst(
+    guides.filter((guide) => guide.targetType === "city" && guide.citySlug === normalizedCitySlug),
+  );
+}
+
+export async function getGuidesForDestination(destinationSlug: string) {
+  const normalizedDestinationSlug = slugify(destinationSlug);
+  const [guides, destinations] = await Promise.all([getPublishedGuides(), getPublishedDestinations()]);
+  const destination = destinations.find((item) => item.slug === normalizedDestinationSlug);
+
+  if (!destination) {
+    return [];
+  }
+
+  return sortGuidesNewestFirst(
+    guides.filter(
+      (guide) =>
+        guide.targetType === "destination" &&
+        (guide.destinationId === destination.id ||
+          guide.destinationId === destination.slug ||
+          slugify(guide.destinationId) === normalizedDestinationSlug),
+    ),
+  );
 }
 
 export async function getGuide(slug: string) {
@@ -638,7 +725,12 @@ export async function getGuideByCityAndSlug(citySlug: string, guideSlug: string)
   const normalizedCitySlug = slugify(citySlug);
   const normalizedGuideSlug = slugify(guideSlug);
   const guides = await getPublishedGuides();
-  return guides.find((guide) => guide.citySlug === normalizedCitySlug && guide.slug === normalizedGuideSlug);
+  return guides.find(
+    (guide) =>
+      guide.targetType === "city" &&
+      guide.citySlug === normalizedCitySlug &&
+      guide.slug === normalizedGuideSlug,
+  );
 }
 
 export async function getAttractions() {
@@ -704,6 +796,17 @@ export async function upsertItem<T extends AdminCollection>(
   const supabase = getSupabaseAdminClient();
   const row = itemToRow(collection, item);
   const { error } = await supabase.from(tableNames[collection]).upsert(row, { onConflict: "id" });
+
+  if (
+    error &&
+    collection === "guides" &&
+    isMissingGuideOwnershipColumn(error) &&
+    (row as GuideRow).target_type !== "city"
+  ) {
+    throw new Error(
+      "Failed to save guides: apply the Phase 2 guide ownership schema migration before saving country or destination guides.",
+    );
+  }
 
   if (error && collection === "guides" && isMissingStructuredGuideColumn(error)) {
     const { error: legacyError } = await supabase

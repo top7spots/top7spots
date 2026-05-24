@@ -333,7 +333,11 @@ function RelatedGuides({ guides }: { guides: Guide[] }) {
         {guides.map((guide) => (
           <Link
             key={guide.id}
-            href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+            href={
+              guide.targetType === "city" && guide.citySlug
+                ? `/${guide.citySlug}/guides/${guide.slug}`
+                : `/guides/${guide.slug}`
+            }
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">

@@ -50,7 +50,10 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   }
 
   const canonicalPath = `/guides/${guide.slug}`;
-  const parentCity = guide.citySlug ? cities.find((city) => city.slug === guide.citySlug) : undefined;
+  const parentCity =
+    guide.targetType === "city" && guide.citySlug
+      ? cities.find((city) => city.slug === guide.citySlug)
+      : undefined;
 
   return (
     <GuideDetailArticle

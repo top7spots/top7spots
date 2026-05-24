@@ -10,6 +10,8 @@ export type GuideTableOfContentsItem = {
   anchor: string;
 };
 
+export type GuideTargetType = "country" | "city" | "destination";
+
 export type City = {
   id: string;
   name: string;
@@ -64,8 +66,11 @@ export type Destination = {
 
 export type Guide = {
   id: string;
+  targetType: GuideTargetType;
+  countryId: string;
   cityId: string;
   citySlug: string;
+  destinationId: string;
   slug: string;
   title: string;
   excerpt: string;

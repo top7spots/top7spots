@@ -179,8 +179,11 @@ async function migrate() {
 
       return {
         id: guide.id,
-        city_id: guide.cityId,
-        city_slug: slugify(guide.citySlug),
+        target_type: guide.targetType || "city",
+        country_id: slugify(guide.countryId || ""),
+        city_id: guide.cityId || "",
+        city_slug: slugify(guide.citySlug || ""),
+        destination_id: guide.destinationId || "",
         slug: slugify(guide.slug || guide.title),
         title: guide.title,
         excerpt: guide.excerpt,

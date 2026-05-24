@@ -165,8 +165,11 @@ function guideRow(guide) {
   const slug = guide.slug || slugify(guide.title);
   return {
     id: guide.id || `guide-${slug}`,
-    city_id: guide.cityId,
-    city_slug: guide.citySlug,
+    target_type: guide.targetType || "city",
+    country_id: slugify(guide.countryId || ""),
+    city_id: guide.cityId || "",
+    city_slug: slugify(guide.citySlug || ""),
+    destination_id: guide.destinationId || "",
     slug,
     title: guide.title,
     category: guide.category,

@@ -31,6 +31,8 @@ export function buildCountryHubs({
   attractions,
 }: CountryHubInput): CountryHub[] {
   const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
+  const destinationById = new Map(destinations.map((destination) => [destination.id, destination]));
+  const destinationBySlug = new Map(destinations.map((destination) => [destination.slug, destination]));
   const hubs = new Map<string, CountryHub>();
 
   for (const city of cities) {
@@ -73,8 +75,16 @@ export function buildCountryHubs({
   }
 
   for (const guide of guides) {
-    const city = cityBySlug.get(guide.citySlug);
-    const hub = city ? hubs.get(slugify(city.country)) : undefined;
+    const destination =
+      guide.targetType === "destination"
+        ? destinationById.get(guide.destinationId) || destinationBySlug.get(slugify(guide.destinationId))
+        : undefined;
+    const city =
+      guide.targetType === "destination" && destination
+        ? cityBySlug.get(destination.citySlug)
+        : cityBySlug.get(guide.citySlug);
+    const countrySlug = guide.targetType === "country" ? guide.countryId : city ? slugify(city.country) : "";
+    const hub = countrySlug ? hubs.get(countrySlug) : undefined;
 
     if (hub) {
       hub.guides.push(guide);

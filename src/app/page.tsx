@@ -175,7 +175,7 @@ export default async function Home() {
       <WebsiteJsonLd />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
-          <BrandLogo priority imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
+          <BrandLogo imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
           <HomepageNavigation
             cityGroups={cityGroups}
             destinationGroups={destinationGroups}
@@ -206,6 +206,7 @@ export default async function Home() {
             alt="Scenic global travel landscape"
             fill
             priority
+            fetchPriority="high"
             sizes="100vw"
             className="absolute inset-0 -z-20 object-cover"
           />

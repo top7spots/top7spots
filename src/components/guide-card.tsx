@@ -51,6 +51,7 @@ export function GuideCard({ guide, cityName, href: hrefOverride }: GuideCardProp
         </div>
         <Link
           href={href}
+          aria-label={`Read ${guide.title}`}
           className="flex items-center gap-1 text-sm font-semibold text-[#1D4ED8] transition duration-300 hover:text-[#0A2A66] group-hover:translate-x-0.5"
         >
           Read guide

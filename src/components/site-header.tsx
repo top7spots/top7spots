@@ -45,7 +45,12 @@ export async function SiteHeader() {
         />
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="outline" size="sm" className="gap-2 rounded-full border-slate-200">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-full border-slate-200"
+            aria-label="Select language, English"
+          >
             <Globe2 className="size-4" aria-hidden="true" />
             EN
           </Button>

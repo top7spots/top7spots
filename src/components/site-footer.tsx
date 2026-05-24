@@ -52,9 +52,13 @@ export function SiteFooter() {
           <div className="mt-4 flex gap-2">
             <Input
               className="h-10 border-white/15 bg-white/10 text-white placeholder:text-blue-100"
+              aria-label="Email address"
               placeholder="Email address"
             />
-            <Button className="h-10 bg-[#FF6B00] text-white hover:bg-orange-600">
+            <Button
+              aria-label="Subscribe to newsletter"
+              className="h-10 bg-[#C2410C] text-white hover:bg-[#9A3412]"
+            >
               <Send className="size-4" aria-hidden="true" />
             </Button>
           </div>

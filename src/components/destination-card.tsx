@@ -62,7 +62,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
             href={href}
             className="flex items-center gap-1 rounded-full bg-[#0A2A66] px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:bg-[#1D4ED8] group-hover:translate-x-0.5"
           >
-            Explore
+            Explore {destination.name}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>

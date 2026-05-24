@@ -184,6 +184,7 @@ export default async function Home() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              aria-label="Select language, English"
               className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <Globe2 className="size-4" aria-hidden="true" />
@@ -233,7 +234,7 @@ export default async function Home() {
                 />
                 <Link
                   href="#featured-cities"
-                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#FF6B00] px-6 text-sm font-semibold text-white shadow-lg shadow-orange-950/15 transition duration-300 hover:-translate-y-0.5 hover:bg-orange-600"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-[#C2410C] px-6 text-sm font-semibold text-white shadow-lg shadow-orange-950/15 transition duration-300 hover:-translate-y-0.5 hover:bg-[#9A3412]"
                 >
                   Explore Cities
                 </Link>
@@ -861,7 +862,7 @@ function CityCard({ city }: { city: City }) {
             href={`/${city.slug}`}
             className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0A2A66] shadow-lg shadow-slate-950/20 transition duration-300 hover:-translate-y-0.5 hover:bg-blue-50"
           >
-            Explore
+            Explore {city.name}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>
@@ -910,7 +911,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
             href={href}
             className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0A2A66] shadow-lg shadow-slate-950/20 transition duration-300 hover:-translate-y-0.5 hover:bg-blue-50"
           >
-            Explore destination
+            Explore {destination.name}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>
@@ -943,6 +944,7 @@ function GuideTextCard({ guide, city }: { guide: Guide; city?: City }) {
         ) : null}
         <Link
           href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+          aria-label={`Read ${guide.title}`}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66] group-hover:translate-x-0.5"
         >
           Read guide

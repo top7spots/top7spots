@@ -8,7 +8,6 @@ import {
   Calendar,
   Camera,
   Clock,
-  Map,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -33,7 +32,6 @@ import {
   getGuidesByCity,
 } from "@/lib/data";
 import { resolveImagePath } from "@/lib/images";
-import { cityProgrammaticPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +99,22 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         .slice(0, 4),
     ),
   );
+  const overviewParagraphs = splitParagraphs(
+    destination.description ||
+      "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route.",
+  );
+  const overviewFacts = [
+    { label: "Best time", value: destination.bestSeason },
+    { label: "Duration", value: destination.duration },
+    { label: "Location", value: location },
+    { label: "Curated pick", value: "Top7Spots" },
+  ].filter((fact) => Boolean(fact.value));
+  const tipItems =
+    destination.travelTips.length > 0
+      ? destination.travelTips
+      : destination.practicalInfo.length > 0
+        ? destination.practicalInfo
+        : ["Save the location before you go", "Check opening hours", "Pack for the season"];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 md:pb-0">
@@ -229,45 +243,44 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
-          <article className="space-y-12">
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                Overview
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <article className="space-y-8">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                OVERVIEW
               </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827] md:text-3xl">
                 Why visit {destination.name}
               </h2>
-              <p className="mt-5 text-base leading-8 text-slate-600 md:text-lg">
-                {destination.description ||
-                  "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route."}
-              </p>
+              <div className="mt-5 space-y-4 text-base leading-8 text-slate-600">
+                {overviewParagraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+              {overviewFacts.length > 0 ? (
+                <div className="mt-6 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {overviewFacts.map((fact) => (
+                    <div key={fact.label} className="rounded-xl bg-slate-50 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        {fact.label}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[#111827]">{fact.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </section>
 
-            {destination.howToGo ? (
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                  How to plan this stop
-                </p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
-                  Getting there and fitting it into your route
-                </h2>
-                <p className="mt-5 text-base leading-8 text-slate-600 md:text-lg">
-                  {destination.howToGo}
-                </p>
-              </section>
-            ) : null}
-
-            <section>
-              <h2 className="text-3xl font-semibold tracking-tight text-[#111827]">Highlights</h2>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <section className="space-y-4">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Highlights</h2>
+              <div className="flex flex-wrap gap-2.5">
                 {(destination.highlights.length > 0
                   ? destination.highlights
                   : ["Signature views", "Local character", "Flexible route planning"]
                 ).map((highlight) => (
                   <div
                     key={highlight}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-medium leading-6 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                    className="max-w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium leading-6 text-slate-700 shadow-sm"
                   >
                     {highlight}
                   </div>
@@ -275,94 +288,32 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               </div>
             </section>
 
-            <section className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-3xl bg-[#0A2A66] p-6 text-white shadow-xl shadow-blue-950/15">
-                <Calendar className="size-8 text-orange-300" aria-hidden="true" />
-                <h2 className="mt-5 text-2xl font-semibold">Best time to visit</h2>
-                <p className="mt-3 text-sm leading-7 text-blue-50">
-                  {destination.bestSeason ||
-                    "Check local seasons, event dates, and road conditions before you go."}
-                </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-semibold text-[#111827]">Travel tips</h2>
-                <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
-                  {(destination.travelTips.length > 0
-                    ? destination.travelTips
-                    : destination.practicalInfo.length > 0
-                      ? destination.practicalInfo
-                      : ["Save the location before you go", "Check opening hours", "Pack for the season"]
-                  ).map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FF6B00]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="rounded-2xl bg-blue-50 p-3 text-[#1D4ED8]">
-                  <Map className="size-6" aria-hidden="true" />
-                </div>
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+              <div className="grid gap-5 md:grid-cols-[0.85fr_1.15fr]">
                 <div>
-                  <h2 className="text-2xl font-semibold text-[#111827]">Route planning note</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Use this destination with the broader {city.name} guide to compare nearby
-                    attractions, related destination ideas, and any available travel tips before
-                    finalizing your route. Location cue: {location}.
+                  <div className="flex items-center gap-2 text-[#1D4ED8]">
+                    <Calendar className="size-5" aria-hidden="true" />
+                    <h2 className="text-base font-semibold text-[#111827]">Best time to visit</h2>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {destination.bestSeason ||
+                      "Check local seasons, event dates, and road conditions before you go."}
                   </p>
+                </div>
+                <div className="border-t border-slate-100 pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+                  <h2 className="text-base font-semibold text-[#111827]">Travel tips</h2>
+                  <ul className="mt-3 grid gap-2.5 text-sm leading-6 text-slate-600">
+                    {tipItems.map((item) => (
+                      <li key={item} className="flex gap-3">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FF6B00]" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </section>
           </article>
-
-          <aside className="h-fit space-y-4 lg:sticky lg:top-24">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70">
-              <p className="text-sm font-semibold text-[#0A2A66]">Plan this idea</p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Save this as inspiration for a future itinerary. Top7Spots does not take bookings,
-                payments, or carts.
-              </p>
-              <div className="mt-5 border-t border-slate-100 pt-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Related hubs</p>
-                {countryHref ? (
-                  <Link
-                    href={countryHref}
-                    className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                  >
-                    Explore {city.country}
-                  </Link>
-                ) : null}
-                <Link
-                  href={`/${city.slug}`}
-                  className="mt-2 block text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                >
-                  Explore {city.name}
-                </Link>
-                <div className="mt-3 grid gap-2">
-                  {cityProgrammaticPages.slice(0, 6).map((page) => (
-                    <Link
-                      key={page.slug}
-                      href={citySeoPath(city.slug, page.slug)}
-                      className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                    >
-                      {page.title(city)}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-              <Link
-                href={`/${city.slug}`}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B00] px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
-              >
-                Explore more in {city.name}
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </aside>
         </section>
 
         {relatedGuides.length > 0 ? (
@@ -418,4 +369,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
       <SiteFooter />
     </div>
   );
+}
+
+function splitParagraphs(text: string) {
+  return text
+    .split(/\r?\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 }

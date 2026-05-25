@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
@@ -91,7 +92,8 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     city.name;
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const attractionIdeas = attractions;
-  const relatedGuides = (destinationGuides.length > 0 ? destinationGuides : cityGuides).slice(0, 4);
+  const destinationGuideIds = new Set(destinationGuides.map((guide) => guide.id));
+  const cityGuideCards = cityGuides.filter((guide) => !destinationGuideIds.has(guide.id)).slice(0, 6);
   const countryHref = city.country ? countryPath(city.country) : "";
   const canonicalPath = getCanonicalDestinationPath(destination, city);
   const galleryImages = Array.from(
@@ -318,28 +320,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           </article>
         </section>
 
-        {relatedGuides.length > 0 ? (
-          <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Relevant guides" title={`Travel guides for ${city.name}`}>
-              Add planning context from city guides before choosing nearby stops and route details.
-            </SectionHeading>
-            <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-              {relatedGuides.map((guide) => (
-                <Link
-                  key={guide.id}
-                  href={
-                    guide.targetType === "city" && guide.citySlug
-                      ? `/${guide.citySlug}/guides/${guide.slug}`
-                      : `/guides/${guide.slug}`
-                  }
-                  className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                >
-                  {guide.title}
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
+        <DestinationGuideSection
+          title={`Travel guides for ${destination.name}`}
+          guides={destinationGuides.slice(0, 6)}
+        />
+        <DestinationGuideSection title={`More travel guides for ${city.name}`} guides={cityGuideCards} />
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">

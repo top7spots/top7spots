@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCard } from "@/components/destination-card";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
@@ -88,9 +89,10 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
   const cityGuides = guides
-    .filter((guide) => guide.targetType === "city" && destination.citySlug && guide.citySlug === destination.citySlug)
-    .slice(0, 4);
-  const relatedGuides = (destinationGuides.length > 0 ? destinationGuides : cityGuides).slice(0, 4);
+    .filter((guide) => guide.targetType === "city" && destination.citySlug && guide.citySlug === destination.citySlug);
+  const destinationGuideIds = new Set(destinationGuides.map((guide) => guide.id));
+  const cityGuideCards = cityGuides.filter((guide) => !destinationGuideIds.has(guide.id)).slice(0, 6);
+  const cityGuideLabel = parentCity?.name || destination.city || "this city";
   const nearbyAttractions =
     attractions.filter(
       (attraction) =>
@@ -330,28 +332,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           </article>
         </section>
 
-        {relatedGuides.length > 0 ? (
-          <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Relevant guides" title="Travel guides for this city">
-              Use guide pages to connect this destination with broader trip planning context.
-            </SectionHeading>
-            <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-              {relatedGuides.map((guide) => (
-                <Link
-                  key={guide.id}
-                  href={
-                    guide.targetType === "city" && guide.citySlug
-                      ? `/${guide.citySlug}/guides/${guide.slug}`
-                      : `/guides/${guide.slug}`
-                  }
-                  className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                >
-                  {guide.title}
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
+        <DestinationGuideSection
+          title={`Travel guides for ${destination.name}`}
+          guides={destinationGuides.slice(0, 6)}
+        />
+        <DestinationGuideSection title={`More travel guides for ${cityGuideLabel}`} guides={cityGuideCards} />
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">

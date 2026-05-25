@@ -305,7 +305,7 @@ function GuideListingBlockCard({ item }: { item: ResolvedGuideListingBlockItem }
         {image ? (
           <Image
             src={image}
-            alt=""
+            alt={item.title}
             fill
             sizes="(min-width: 1024px) 260px, (min-width: 640px) 45vw, 70vw"
             className="object-cover transition duration-300 group-hover:scale-105"

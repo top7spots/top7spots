@@ -16,7 +16,7 @@ import {
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
-import { DestinationCard } from "@/components/destination-card";
+import { DestinationCarouselSection } from "@/components/destination-carousel-section";
 import { FaqSection } from "@/components/faq-section";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
@@ -91,7 +91,23 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     [destination.location, destination.region].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||
     city.name;
-  const relatedDestinations = destinations.filter((item) => item.id !== destination.id);
+  const relatedDestinations = Array.from(
+    new Map(
+      destinations
+        .filter((item) => {
+          if (item.id === destination.id) {
+            return false;
+          }
+
+          if (destination.citySlug) {
+            return item.citySlug === destination.citySlug;
+          }
+
+          return Boolean(item.city && destination.city && item.city.toLowerCase() === destination.city.toLowerCase());
+        })
+        .map((item) => [item.id, item]),
+    ).values(),
+  );
   const attractionIdeas = attractions;
   const destinationGuideIds = new Set(destinationGuides.map((guide) => guide.id));
   const cityGuideCards = cityGuides.filter((guide) => !destinationGuideIds.has(guide.id)).slice(0, 6);
@@ -340,16 +356,11 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Related destinations" title={`Keep exploring ${city.name}`}>
-            More curated places from this city library.
-          </SectionHeading>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {relatedDestinations.map((item) => (
-              <DestinationCard key={item.id} destination={item} />
-            ))}
-          </div>
-        </section>
+        <DestinationCarouselSection
+          title={`Keep exploring ${city.name}`}
+          description="More compact destination ideas from this city library."
+          destinations={relatedDestinations}
+        />
       </main>
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur md:hidden">
         <Link

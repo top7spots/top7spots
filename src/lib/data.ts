@@ -12,6 +12,7 @@ import type {
   HomepageReview,
 } from "@/lib/types";
 import { slugify } from "@/lib/format";
+import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
 type CollectionMap = {
@@ -58,6 +59,7 @@ const structuredGuideRowKeys = [
   "related_guide_slugs",
   "related_place_slugs",
   "table_of_contents",
+  "listing_blocks",
 ] as const;
 
 const guideOwnershipRowKeys = ["target_type", "country_id", "destination_id"] as const;
@@ -307,6 +309,7 @@ function mapGuide(row: GuideRow): Guide {
     relatedGuideSlugs: stringListValue(getField(row, "related_guide_slugs", "relatedGuideSlugs")),
     relatedPlaceSlugs: stringListValue(getField(row, "related_place_slugs", "relatedPlaceSlugs")),
     tableOfContents: tableOfContentsValue(getField(row, "table_of_contents", "tableOfContents")),
+    listingBlocks: normalizeGuideListingBlocks(getField(row, "listing_blocks", "listingBlocks")),
     createdAt: stringField(row, "created_at", "createdAt"),
     updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
@@ -447,6 +450,7 @@ function toGuideRow(item: Guide): GuideRow {
     related_guide_slugs: item.relatedGuideSlugs || [],
     related_place_slugs: item.relatedPlaceSlugs || [],
     table_of_contents: item.tableOfContents || [],
+    listing_blocks: item.listingBlocks || [],
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   };

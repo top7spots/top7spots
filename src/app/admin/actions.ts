@@ -6,6 +6,7 @@ import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/adm
 import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
 import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
+import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import type {
   AdminCollection,
   Attraction,
@@ -386,6 +387,9 @@ export async function saveGuideAction(formData: FormData) {
     tableOfContents: formData.has("tableOfContents")
       ? parseTableOfContentsText(formData.get("tableOfContents"))
       : existingGuide?.tableOfContents ?? [],
+    listingBlocks: formData.has("listingBlocks")
+      ? normalizeGuideListingBlocks(formData.get("listingBlocks"))
+      : existingGuide?.listingBlocks ?? [],
     createdAt: timestamp(formData),
     updatedAt: new Date().toISOString(),
   };

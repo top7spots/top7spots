@@ -67,6 +67,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       backHref="/guides"
       backLabel="Back to guides"
       guides={guides}
+      cities={cities}
       destinations={destinations.filter((destination) => !guide.citySlug || destination.citySlug === guide.citySlug)}
       attractions={attractions.filter((attraction) => !guide.citySlug || attraction.citySlug === guide.citySlug)}
       descriptionFallback="A practical travel guide from Top7Spots."

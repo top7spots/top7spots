@@ -15,6 +15,7 @@ export type TopicPageRisk =
 export type GuideEngineBlockSource =
   | "destinations"
   | "cities"
+  | "countries"
   | "guides"
   | "restaurants"
   | "hotels"

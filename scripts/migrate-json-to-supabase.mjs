@@ -205,6 +205,7 @@ async function migrate() {
         related_guide_slugs: stringListValue(guide.relatedGuideSlugs),
         related_place_slugs: stringListValue(guide.relatedPlaceSlugs),
         table_of_contents: tableOfContentsValue(guide.tableOfContents),
+        listing_blocks: Array.isArray(guide.listingBlocks) ? guide.listingBlocks : [],
         created_at: guide.createdAt,
         updated_at: guide.updatedAt,
       };

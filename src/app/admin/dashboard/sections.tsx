@@ -30,6 +30,7 @@ import {
   saveHomepageReviewAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
+import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { BrandLogo } from "@/components/brand-logo";
@@ -405,6 +406,7 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
         title={guide ? `Edit ${guide.title}` : "Add new guide"}
         cities={data.cities}
         destinations={data.destinations}
+        guides={data.guides}
         guide={guide}
         backHref={adminHref("guides")}
       />
@@ -858,12 +860,14 @@ function GuideForm({
   title,
   cities,
   destinations,
+  guides,
   guide,
   backHref,
 }: {
   title: string;
   cities: City[];
   destinations: Destination[];
+  guides: Guide[];
   guide?: Guide;
   backHref: string;
 }) {
@@ -925,6 +929,29 @@ function GuideForm({
               "Why rent a car in Muscat | why-rent-a-car-in-muscat\nDocuments needed | documents-needed\nDeposit and insurance | deposit-and-insurance"
             }
             rows={5}
+          />
+        </FormSection>
+        <FormSection title="Listing blocks" columns={1}>
+          <GuideListingBlocksField
+            defaultBlocks={guide?.listingBlocks}
+            cities={cities.map((city) => ({
+              id: city.id,
+              label: city.name,
+              meta: [city.country, city.region].filter(Boolean).join(" - "),
+            }))}
+            countries={countryOptions(cities)}
+            destinations={destinations.map((destination) => ({
+              id: destination.id,
+              label: destination.name,
+              meta: [destination.city, destination.category].filter(Boolean).join(" - "),
+            }))}
+            guides={guides
+              .filter((item) => item.id !== guide?.id)
+              .map((item) => ({
+                id: item.id,
+                label: item.title,
+                meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+              }))}
           />
         </FormSection>
         <FormSection title="SEO" columns={1}>
@@ -1641,6 +1668,39 @@ function unique(values: string[]) {
 function cityLabel(cities: City[], citySlug: string) {
   const city = cities.find((item) => item.slug === citySlug);
   return city ? `${city.name}, ${city.country}` : citySlug;
+}
+
+function countryOptions(cities: City[]) {
+  const options = new Map<string, { id: string; label: string; meta?: string }>();
+  const cityCounts = new Map<string, number>();
+
+  for (const city of cities) {
+    const country = city.country?.trim();
+
+    if (!country) {
+      continue;
+    }
+
+    const id = slugify(country);
+    cityCounts.set(id, (cityCounts.get(id) || 0) + 1);
+
+    if (!options.has(id)) {
+      options.set(id, {
+        id,
+        label: country,
+      });
+    }
+  }
+
+  return Array.from(options.values())
+    .map((option) => {
+      const count = cityCounts.get(option.id) || 0;
+      return {
+        ...option,
+        meta: `${count} ${count === 1 ? "city" : "cities"}`,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function guideTargetLabel(guide: Guide, cities: City[], destinations: Destination[]) {

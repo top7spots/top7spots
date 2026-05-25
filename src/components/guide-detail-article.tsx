@@ -22,6 +22,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
+import {
+  resolveGuideListingBlocks,
+  type ResolvedGuideListingBlock,
+  type ResolvedGuideListingBlockItem,
+} from "@/lib/guide-listing-blocks";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type { Attraction, City, Destination, Guide } from "@/lib/types";
@@ -40,7 +45,9 @@ type GuideDetailArticleProps = {
   backHref: string;
   backLabel: string;
   guides: Guide[];
+  cities: City[];
   destinations: Destination[];
+  listingDestinations?: Destination[];
   attractions: Attraction[];
   descriptionFallback: string;
 };
@@ -62,7 +69,9 @@ export function GuideDetailArticle({
   backHref,
   backLabel,
   guides,
+  cities,
   destinations,
+  listingDestinations,
   attractions,
   descriptionFallback,
 }: GuideDetailArticleProps) {
@@ -70,6 +79,13 @@ export function GuideDetailArticle({
   const imageAlt = guide.coverImageAlt || guide.title;
   const relatedGuides = resolveRelatedGuides(guide.relatedGuideSlugs, guides, guide.id);
   const relatedPlaces = resolveRelatedPlaces(guide.relatedPlaceSlugs, destinations, attractions, city);
+  const listingBlocks = resolveGuideListingBlocks({
+    blocks: guide.listingBlocks,
+    cities,
+    destinations: listingDestinations ?? destinations,
+    guides,
+    currentGuideId: guide.id,
+  });
   const sidebarDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
@@ -176,6 +192,14 @@ export function GuideDetailArticle({
               </div>
             </div>
 
+            {listingBlocks.length > 0 ? (
+              <section className="mt-10 grid gap-8" aria-label="Guide listing blocks">
+                {listingBlocks.map((block) => (
+                  <GuideListingBlockSection key={block.id} block={block} />
+                ))}
+              </section>
+            ) : null}
+
             {guide.faqs.length > 0 ? (
               <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
@@ -246,6 +270,59 @@ export function GuideDetailArticle({
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock }) {
+  const blockHeadingId = `listing-block-${slugify(block.id || block.title)}`;
+
+  return (
+    <section aria-labelledby={blockHeadingId} className="min-w-0">
+      <h2 id={blockHeadingId} className="text-2xl font-semibold tracking-tight text-[#111827]">
+        {block.title}
+      </h2>
+      <div className="-mx-4 mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+        {block.items.map((item) => (
+          <GuideListingBlockCard key={item.key} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function GuideListingBlockCard({ item }: { item: ResolvedGuideListingBlockItem }) {
+  const image = item.image ? resolveImagePath(item.image) : "";
+
+  return (
+    <Link
+      href={item.href}
+      className="group flex min-h-[18rem] w-[16.5rem] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:w-auto"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        {image ? (
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 260px, (min-width: 640px) 45vw, 70vw"
+            className="object-cover transition duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+            {item.badge || "Guide"}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-4">
+        {item.badge ? (
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">{item.badge}</p>
+        ) : null}
+        <h3 className="mt-2 line-clamp-2 text-lg font-semibold leading-6 text-[#111827]">{item.title}</h3>
+        {item.description ? (
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{item.description}</p>
+        ) : null}
+      </div>
+    </Link>
   );
 }
 

@@ -12,6 +12,24 @@ export type GuideTableOfContentsItem = {
 
 export type GuideTargetType = "country" | "city" | "destination";
 
+export type GuideListingBlockType = "destinations" | "cities" | "countries" | "guides" | "custom";
+
+export type GuideListingBlockCustomItem = {
+  title: string;
+  description?: string;
+  image?: string;
+  href: string;
+  badge?: string;
+};
+
+export type GuideListingBlock = {
+  id: string;
+  title: string;
+  type: GuideListingBlockType;
+  itemIds?: string[];
+  customItems?: GuideListingBlockCustomItem[];
+};
+
 export type City = {
   id: string;
   name: string;
@@ -92,6 +110,7 @@ export type Guide = {
   relatedGuideSlugs: string[];
   relatedPlaceSlugs: string[];
   tableOfContents: GuideTableOfContentsItem[];
+  listingBlocks: GuideListingBlock[];
   createdAt: string;
   updatedAt: string;
 };

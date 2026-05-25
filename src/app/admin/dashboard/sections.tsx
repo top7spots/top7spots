@@ -32,9 +32,11 @@ import {
   saveRestaurantAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
+import { DestinationAiContentImport } from "@/components/admin/destination-ai-content-import";
 import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
+import { TravelGuideAiContentImport } from "@/components/admin/travel-guide-ai-content-import";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -321,7 +323,7 @@ function CitiesSection({ data, searchParams }: AdminCrudProps) {
 }
 
 function DestinationsSection({ data, searchParams }: AdminCrudProps) {
-  const mode = getParam(searchParams.mode);
+  const mode = getCrudMode(searchParams);
   const id = getParam(searchParams.id);
   const destination = data.destinations.find((item) => item.id === id);
   const isForm = mode === "add" || (mode === "edit" && destination);
@@ -398,7 +400,7 @@ function DestinationsSection({ data, searchParams }: AdminCrudProps) {
 }
 
 function GuidesSection({ data, searchParams }: AdminCrudProps) {
-  const mode = getParam(searchParams.mode);
+  const mode = getCrudMode(searchParams);
   const id = getParam(searchParams.id);
   const guide = data.guides.find((item) => item.id === id);
   const isForm = mode === "add" || (mode === "edit" && guide);
@@ -902,6 +904,7 @@ function DestinationForm({
       <form action={saveDestinationAction} className="grid gap-6">
         <input type="hidden" name="id" value={destination?.id ?? ""} />
         <HiddenTimestamps createdAt={destination?.createdAt} />
+        <DestinationAiContentImport />
         <FormSection title="Basic info">
           <Field label="Name" name="name" defaultValue={destination?.name} placeholder="Mutrah Corniche" />
           <Field label="Slug" name="slug" defaultValue={destination?.slug} placeholder="mutrah-corniche" />
@@ -976,6 +979,7 @@ function GuideForm({
       <form action={saveGuideAction} className="grid gap-6">
         <input type="hidden" name="id" value={guide?.id ?? ""} />
         <HiddenTimestamps createdAt={guide?.createdAt} />
+        <TravelGuideAiContentImport />
         <FormSection title="Basic info">
           <Field label="Title" name="title" defaultValue={guide?.title} placeholder="Best places in Muscat" />
           <Field label="Slug" name="slug" defaultValue={guide?.slug} placeholder="best-places-in-muscat" />

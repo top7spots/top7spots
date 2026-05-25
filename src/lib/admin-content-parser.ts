@@ -12,7 +12,59 @@ export type ParsedCityImport = Partial<{
   seoDescription: string;
 }>;
 
-const fieldAliases: Record<string, keyof ParsedCityImport> = {
+export type ParsedDestinationImport = Partial<{
+  name: string;
+  slug: string;
+  category: string;
+  status: "published" | "draft";
+  displayOrder: string;
+  isFeatured: boolean;
+  citySlug: string;
+  location: string;
+  region: string;
+  image: string;
+  galleryImages: string;
+  summary: string;
+  description: string;
+  highlights: string;
+  duration: string;
+  bestSeason: string;
+  howToGo: string;
+  practicalInfo: string;
+  travelTips: string;
+  nearbyAttractions: string;
+  faqs: string;
+  seoTitle: string;
+  seoDescription: string;
+}>;
+
+export type ParsedTravelGuideImport = Partial<{
+  title: string;
+  slug: string;
+  category: string;
+  author: string;
+  readTime: string;
+  status: "published" | "draft";
+  displayOrder: string;
+  isFeatured: boolean;
+  targetType: "country" | "city" | "destination";
+  countryId: string;
+  citySlug: string;
+  destinationId: string;
+  image: string;
+  coverImageAlt: string;
+  excerpt: string;
+  content: string;
+  faqs: string;
+  tableOfContents: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
+  relatedGuideSlugs: string;
+  relatedPlaceSlugs: string;
+}>;
+
+const cityFieldAliases: Record<string, keyof ParsedCityImport> = {
   name: "name",
   cityname: "name",
   city: "name",
@@ -33,6 +85,107 @@ const fieldAliases: Record<string, keyof ParsedCityImport> = {
   seodescription: "seoDescription",
 };
 
+const destinationFieldAliases: Record<string, keyof ParsedDestinationImport> = {
+  name: "name",
+  destinationname: "name",
+  spotname: "name",
+  destination: "name",
+  spot: "name",
+  slug: "slug",
+  category: "category",
+  type: "category",
+  status: "status",
+  displayorder: "displayOrder",
+  order: "displayOrder",
+  featured: "isFeatured",
+  featuredspot: "isFeatured",
+  isfeatured: "isFeatured",
+  city: "citySlug",
+  cityslug: "citySlug",
+  cityassignment: "citySlug",
+  location: "location",
+  region: "region",
+  image: "image",
+  mainimage: "image",
+  heroimage: "image",
+  gallery: "galleryImages",
+  galleryimages: "galleryImages",
+  summary: "summary",
+  shortdescription: "summary",
+  description: "description",
+  overview: "description",
+  longdescription: "description",
+  highlights: "highlights",
+  duration: "duration",
+  besttime: "bestSeason",
+  besttimetovisit: "bestSeason",
+  bestseason: "bestSeason",
+  season: "bestSeason",
+  howtogo: "howToGo",
+  gettingthere: "howToGo",
+  practicalinfo: "practicalInfo",
+  practicalinformation: "practicalInfo",
+  traveltips: "travelTips",
+  tips: "travelTips",
+  nearbyattractions: "nearbyAttractions",
+  nearby: "nearbyAttractions",
+  faqs: "faqs",
+  faq: "faqs",
+  seotitle: "seoTitle",
+  seodescription: "seoDescription",
+};
+
+const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
+  title: "title",
+  name: "title",
+  guidetitle: "title",
+  slug: "slug",
+  category: "category",
+  type: "category",
+  author: "author",
+  readtime: "readTime",
+  readingtime: "readTime",
+  status: "status",
+  displayorder: "displayOrder",
+  order: "displayOrder",
+  featured: "isFeatured",
+  featuredguide: "isFeatured",
+  isfeatured: "isFeatured",
+  targettype: "targetType",
+  guidebelongsto: "targetType",
+  belongsto: "targetType",
+  country: "countryId",
+  countryid: "countryId",
+  city: "citySlug",
+  cityslug: "citySlug",
+  destination: "destinationId",
+  destinationid: "destinationId",
+  image: "image",
+  coverimage: "image",
+  coverimageurl: "image",
+  coverimagealt: "coverImageAlt",
+  coveralt: "coverImageAlt",
+  excerpt: "excerpt",
+  summary: "excerpt",
+  shortdescription: "excerpt",
+  content: "content",
+  body: "content",
+  paragraphs: "content",
+  articlebody: "content",
+  faqs: "faqs",
+  faq: "faqs",
+  tableofcontents: "tableOfContents",
+  toc: "tableOfContents",
+  seotitle: "seoTitle",
+  seodescription: "seoDescription",
+  seokeywords: "seoKeywords",
+  keywords: "seoKeywords",
+  relatedguideslugs: "relatedGuideSlugs",
+  relatedguides: "relatedGuideSlugs",
+  relatedplaceslugs: "relatedPlaceSlugs",
+  relatedplaces: "relatedPlaceSlugs",
+};
+
 const ignoredSections = new Set([
   "optionalfutureseokeywords",
   "recommendedrelatedinternallinks",
@@ -44,9 +197,25 @@ const ignoredSections = new Set([
 ]);
 
 export function parseCityImportContent(input: string): ParsedCityImport {
-  const parsed: ParsedCityImport = {};
+  return parseStructuredImport(input, cityFieldAliases, assignCityParsedValue);
+}
+
+export function parseDestinationImportContent(input: string): ParsedDestinationImport {
+  return parseStructuredImport(input, destinationFieldAliases, assignDestinationParsedValue);
+}
+
+export function parseTravelGuideImportContent(input: string): ParsedTravelGuideImport {
+  return parseStructuredImport(input, travelGuideFieldAliases, assignTravelGuideParsedValue);
+}
+
+function parseStructuredImport<T extends object>(
+  input: string,
+  aliases: Record<string, keyof T>,
+  assignParsedValue: (parsed: Partial<T>, field: keyof T, value: string) => void,
+): Partial<T> {
+  const parsed: Partial<T> = {};
   const lines = input.replace(/\r\n?/g, "\n").split("\n");
-  let currentField: keyof ParsedCityImport | null = null;
+  let currentField: keyof T | null = null;
   let buffer: string[] = [];
 
   const flush = () => {
@@ -65,7 +234,7 @@ export function parseCityImportContent(input: string): ParsedCityImport {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
-    const headingField = fieldFromMarkdownHeading(line);
+    const headingField = fieldFromMarkdownHeading(line, aliases);
 
     if (headingField || isIgnoredHeading(line)) {
       flush();
@@ -73,7 +242,7 @@ export function parseCityImportContent(input: string): ParsedCityImport {
       continue;
     }
 
-    const colonField = fieldFromColonLabel(line);
+    const colonField = fieldFromColonLabel(line, aliases);
     if (colonField || isIgnoredColonLabel(line)) {
       flush();
       currentField = colonField;
@@ -95,7 +264,7 @@ export function parseCityImportContent(input: string): ParsedCityImport {
   return parsed;
 }
 
-function assignParsedValue(parsed: ParsedCityImport, field: keyof ParsedCityImport, value: string) {
+function assignCityParsedValue(parsed: ParsedCityImport, field: keyof ParsedCityImport, value: string) {
   if (field === "status") {
     parsed.status = normalizeStatus(value);
     return;
@@ -117,27 +286,78 @@ function assignParsedValue(parsed: ParsedCityImport, field: keyof ParsedCityImpo
   parsed[field] = value;
 }
 
-function fieldFromMarkdownHeading(line: string) {
+function assignDestinationParsedValue(
+  parsed: ParsedDestinationImport,
+  field: keyof ParsedDestinationImport,
+  value: string,
+) {
+  if (field === "status") {
+    parsed.status = normalizeStatus(value);
+    return;
+  }
+
+  if (field === "isFeatured") {
+    parsed.isFeatured = normalizeBoolean(value);
+    return;
+  }
+
+  if (field === "displayOrder") {
+    parsed.displayOrder = normalizeNumberString(value);
+    return;
+  }
+
+  parsed[field] = value;
+}
+
+function assignTravelGuideParsedValue(
+  parsed: ParsedTravelGuideImport,
+  field: keyof ParsedTravelGuideImport,
+  value: string,
+) {
+  if (field === "status") {
+    parsed.status = normalizeStatus(value);
+    return;
+  }
+
+  if (field === "isFeatured") {
+    parsed.isFeatured = normalizeBoolean(value);
+    return;
+  }
+
+  if (field === "displayOrder") {
+    parsed.displayOrder = normalizeNumberString(value);
+    return;
+  }
+
+  if (field === "targetType") {
+    parsed.targetType = normalizeTargetType(value);
+    return;
+  }
+
+  parsed[field] = value;
+}
+
+function fieldFromMarkdownHeading<T extends object>(line: string, aliases: Record<string, keyof T>) {
   const match = line.match(/^#{1,6}\s+(.+?)\s*#*$/);
   if (!match) {
     return null;
   }
 
-  return fieldFromLabel(match[1]);
+  return fieldFromLabel(match[1], aliases);
 }
 
-function fieldFromColonLabel(line: string) {
+function fieldFromColonLabel<T extends object>(line: string, aliases: Record<string, keyof T>) {
   const colonIndex = line.indexOf(":");
   if (colonIndex < 0) {
     return null;
   }
 
-  return fieldFromLabel(line.slice(0, colonIndex));
+  return fieldFromLabel(line.slice(0, colonIndex), aliases);
 }
 
-function fieldFromLabel(label: string): keyof ParsedCityImport | null {
+function fieldFromLabel<T extends object>(label: string, aliases: Record<string, keyof T>): keyof T | null {
   const normalized = normalizeLabel(label);
-  return fieldAliases[normalized] || null;
+  return aliases[normalized] || null;
 }
 
 function isIgnoredHeading(line: string) {
@@ -175,4 +395,23 @@ function normalizeStatus(value: string): "published" | "draft" {
 
 function normalizeBoolean(value: string) {
   return ["1", "true", "yes", "y", "featured", "on"].includes(value.trim().toLowerCase());
+}
+
+function normalizeNumberString(value: string) {
+  const number = Number(value.replace(/[^\d.-]/g, ""));
+  return Number.isFinite(number) ? String(number) : "";
+}
+
+function normalizeTargetType(value: string): "country" | "city" | "destination" {
+  const normalized = normalizeLabel(value);
+
+  if (normalized.includes("country")) {
+    return "country";
+  }
+
+  if (normalized.includes("destination") || normalized.includes("spot")) {
+    return "destination";
+  }
+
+  return "city";
 }

@@ -938,12 +938,18 @@ function GuideForm({
               id: city.id,
               label: city.name,
               meta: [city.country, city.region].filter(Boolean).join(" - "),
+              description: city.shortDescription || city.seoDescription,
+              image: city.cardImage || city.featuredImage || city.heroImage,
+              badge: "City",
             }))}
             countries={countryOptions(cities)}
             destinations={destinations.map((destination) => ({
               id: destination.id,
               label: destination.name,
               meta: [destination.city, destination.category].filter(Boolean).join(" - "),
+              description: destination.summary || destination.location,
+              image: destination.image,
+              badge: destination.category || "Destination",
             }))}
             guides={guides
               .filter((item) => item.id !== guide?.id)
@@ -951,6 +957,9 @@ function GuideForm({
                 id: item.id,
                 label: item.title,
                 meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+                description: item.excerpt || item.seoDescription,
+                image: item.coverImage || item.image,
+                badge: item.category || "Guide",
               }))}
           />
         </FormSection>
@@ -1671,7 +1680,10 @@ function cityLabel(cities: City[], citySlug: string) {
 }
 
 function countryOptions(cities: City[]) {
-  const options = new Map<string, { id: string; label: string; meta?: string }>();
+  const options = new Map<
+    string,
+    { id: string; label: string; meta?: string; description?: string; image?: string; badge?: string }
+  >();
   const cityCounts = new Map<string, number>();
 
   for (const city of cities) {
@@ -1688,6 +1700,9 @@ function countryOptions(cities: City[]) {
       options.set(id, {
         id,
         label: country,
+        description: `Country hub for ${country}.`,
+        image: city.featuredImage || city.heroImage || city.cardImage,
+        badge: "Country",
       });
     }
   }

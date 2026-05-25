@@ -16,7 +16,7 @@ export function BrandLogo({
   priority = false,
 }: BrandLogoProps) {
   const src =
-    variant === "dark" ? "/brand/top7spots-dark.png" : "/brand/top7spots-light.png";
+    variant === "dark" ? "/brand/top7spots-dark.png" : "/brand/top7spots-light.webp";
 
   return (
     <Link
@@ -27,8 +27,8 @@ export function BrandLogo({
       <Image
         src={src}
         alt="Top7Spots"
-        width={1220}
-        height={497}
+        width={360}
+        height={113}
         priority={priority}
         sizes="(min-width: 1024px) 118px, (min-width: 640px) 108px, 98px"
         className={cn("h-10 w-auto shrink-0 object-contain sm:h-11", imageClassName)}

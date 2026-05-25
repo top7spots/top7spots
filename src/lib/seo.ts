@@ -5,7 +5,7 @@ export const siteBaseUrl = "https://www.top7spots.com";
 export const defaultSeoTitle = "Top7Spots – Discover the Best Places to Visit Around the World";
 export const defaultSeoDescription =
   "Discover top travel spots, hidden gems, city guides, and destination ideas curated by Top7Spots.";
-export const defaultSeoImage = "/uploads/global/home-hero.jpg";
+export const defaultSeoImage = "/uploads/global/home-hero.webp";
 
 type SeoMetadataInput = {
   title: string;

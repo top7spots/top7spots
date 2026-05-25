@@ -49,11 +49,22 @@ import type { City, Destination, Guide } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const heroImage = "/uploads/global/home-hero.jpg";
+const heroImage = "/uploads/global/home-hero.webp";
 const featuredCityImageSizes =
   "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
 const weeklyDestinationImageSizes =
   "(min-width: 1280px) 630px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const optimizedHomepageCityImages: Record<string, string> = {
+  "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.jpg":
+    "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.webp",
+  "/uploads/cities/dubai-card.jpg": "/uploads/cities/dubai-card.webp",
+  "/uploads/cities/istanbul-card.jpg": "/uploads/cities/istanbul-card.webp",
+  "/uploads/cities/bali-card.jpg": "/uploads/cities/bali-card.webp",
+  "/uploads/cities/london-card.jpg": "/uploads/cities/london-card.webp",
+  "/uploads/cities/kuala-lumpur-card.jpg": "/uploads/cities/kuala-lumpur-card.webp",
+  "/uploads/cities/kerala-card-09bf0c65-e1f0-41d7-a36b-861ff4eab546.jpg":
+    "/uploads/cities/kerala-card-09bf0c65-e1f0-41d7-a36b-861ff4eab546.webp",
+};
 
 export const metadata: Metadata = seoMetadata({
   title: defaultSeoTitle,
@@ -210,6 +221,7 @@ export default async function Home() {
             alt="Scenic global travel landscape"
             fill
             priority
+            loading="eager"
             fetchPriority="high"
             sizes="100vw"
             quality={78}
@@ -839,7 +851,7 @@ function MobileHomepageNavigation({
 }
 
 function CityCard({ city }: { city: City }) {
-  const image = city.cardImage || city.featuredImage || city.heroImage;
+  const image = optimizedHomepageImage(city.cardImage || city.featuredImage || city.heroImage);
 
   return (
     <article className="group relative min-h-[420px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-[0_18px_50px_rgb(15_23_42_/_10%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_90px_rgb(15_23_42_/_22%)]">
@@ -882,6 +894,10 @@ function CityCard({ city }: { city: City }) {
       </div>
     </article>
   );
+}
+
+function optimizedHomepageImage(image?: string) {
+  return image ? optimizedHomepageCityImages[image] || image : "";
 }
 
 function DestinationFeatureCard({ destination, city }: { destination: Destination; city?: City }) {

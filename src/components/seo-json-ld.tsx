@@ -89,7 +89,7 @@ export function OrganizationJsonLd() {
         "@type": "Organization",
         name: siteName,
         url: siteBaseUrl,
-        logo: absoluteImageUrl("/brand/top7spots-light.png"),
+        logo: absoluteImageUrl("/brand/top7spots-light.webp"),
         description: defaultSeoDescription,
       }}
     />
@@ -196,7 +196,7 @@ export function ArticleJsonLd({
         publisher: {
           "@type": "Organization",
           name: siteName,
-          logo: imageObject("/brand/top7spots-light.png"),
+          logo: imageObject("/brand/top7spots-light.webp"),
         },
         articleSection: section,
         datePublished,
@@ -265,7 +265,7 @@ export function buildGuideArticleJsonLd({
     publisher: {
       "@type": "Organization",
       name: siteName,
-      logo: imageObject("/brand/top7spots-light.png"),
+      logo: imageObject("/brand/top7spots-light.webp"),
     },
     datePublished: guide.createdAt || undefined,
     dateModified: guide.updatedAt || guide.createdAt || undefined,

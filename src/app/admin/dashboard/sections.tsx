@@ -21,6 +21,7 @@ import {
   Settings,
   SlidersHorizontal,
   Trash2,
+  Utensils,
 } from "lucide-react";
 import {
   saveAttractionAction,
@@ -28,6 +29,7 @@ import {
   saveGuideAction,
   saveHomepageFaqAction,
   saveHomepageReviewAction,
+  saveRestaurantAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
@@ -48,6 +50,7 @@ import type {
   Guide,
   HomepageFaq,
   HomepageReview,
+  Restaurant,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +60,7 @@ type AdminSection =
   | "destinations"
   | "guides"
   | "attractions"
+  | "restaurants"
   | "homepage_reviews"
   | "homepage_faqs"
   | "categories"
@@ -71,6 +75,8 @@ type AdminCrudProps = {
     destinations: Destination[];
     guides: Guide[];
     attractions: Attraction[];
+    restaurants: Restaurant[];
+    restaurantTableMissing?: boolean;
     homepageReviews: HomepageReview[];
     homepageFaqs: HomepageFaq[];
   };
@@ -83,6 +89,7 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
   { section: "destinations", label: "Destinations / Spots", icon: <Compass className="size-4" /> },
   { section: "guides", label: "Travel Guides", icon: <BookOpen className="size-4" /> },
   { section: "attractions", label: "Attractions", icon: <MapPin className="size-4" /> },
+  { section: "restaurants", label: "Restaurants", icon: <Utensils className="size-4" /> },
   { section: "homepage_reviews", label: "Homepage Reviews", icon: <Quote className="size-4" /> },
   { section: "homepage_faqs", label: "Homepage FAQs", icon: <FileText className="size-4" /> },
   { section: "categories", label: "Categories / Filters", icon: <SlidersHorizontal className="size-4" /> },
@@ -166,6 +173,9 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
         {activeSection === "attractions" ? (
           <AttractionsSection data={data} searchParams={searchParams} />
         ) : null}
+        {activeSection === "restaurants" ? (
+          <RestaurantsSection data={data} searchParams={searchParams} />
+        ) : null}
         {activeSection === "homepage_reviews" ? (
           <HomepageReviewsSection data={data} searchParams={searchParams} />
         ) : null}
@@ -185,13 +195,15 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     data.cities.filter(isDraft).length +
     data.destinations.filter(isDraft).length +
     data.guides.filter(isDraft).length +
-    data.attractions.filter(isDraft).length;
+    data.attractions.filter(isDraft).length +
+    data.restaurants.filter((item) => !item.published).length;
   const stats = [
     { label: "Total cities", value: data.cities.length, icon: <Building2 className="size-5" /> },
     { label: "Published cities", value: data.cities.filter(isPublished).length, icon: <Globe2 className="size-5" /> },
     { label: "Total destinations", value: data.destinations.length, icon: <Compass className="size-5" /> },
     { label: "Total guides", value: data.guides.length, icon: <BookOpen className="size-5" /> },
     { label: "Total attractions", value: data.attractions.length, icon: <MapPin className="size-5" /> },
+    { label: "Total restaurants", value: data.restaurants.length, icon: <Utensils className="size-5" /> },
     { label: "Homepage reviews", value: data.homepageReviews.length, icon: <Quote className="size-5" /> },
     { label: "Homepage FAQs", value: data.homepageFaqs.length, icon: <FileText className="size-5" /> },
     { label: "Draft content", value: draftCount, icon: <FileText className="size-5" /> },
@@ -222,6 +234,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
           <QuickAction href={adminHref("destinations", { mode: "add" })} label="Add destination" />
           <QuickAction href={adminHref("guides", { mode: "add" })} label="Add guide" />
           <QuickAction href={adminHref("attractions", { mode: "add" })} label="Add attraction" />
+          <QuickAction href={adminHref("restaurants", { mode: "add" })} label="Add restaurant" />
           <QuickAction href={adminHref("homepage_reviews", { mode: "add" })} label="Add homepage review" />
           <QuickAction href={adminHref("homepage_faqs", { mode: "add" })} label="Add homepage FAQ" />
         </CardContent>
@@ -407,6 +420,7 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
         cities={data.cities}
         destinations={data.destinations}
         guides={data.guides}
+        restaurants={data.restaurants}
         guide={guide}
         backHref={adminHref("guides")}
       />
@@ -530,6 +544,90 @@ function AttractionsSection({ data, searchParams }: AdminCrudProps) {
         />
       ) : (
         <EmptyState title="No attractions found" text="Adjust filters or add a city-assigned attraction." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function RestaurantsSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getCrudMode(searchParams);
+  const id = getParam(searchParams.id);
+  const restaurant = data.restaurants.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && restaurant);
+  const filters = getContentFilters(searchParams);
+  const cuisines = unique(data.restaurants.map((item) => item.cuisineType));
+  const filtered = data.restaurants.filter((item) => {
+    const city = data.cities.find((cityItem) => cityItem.id === item.cityId);
+    const matchesQuery = searchBlob(item.name, item.shortDescription, item.cuisineType, item.address).includes(filters.q);
+    return (
+      matchesQuery &&
+      matchesCity(city?.slug || "", filters.city) &&
+      matchesPublication(item.published, filters.status) &&
+      matchesValue(item.cuisineType, filters.category)
+    );
+  });
+
+  if (isForm) {
+    return (
+      <RestaurantForm
+        title={restaurant ? `Edit ${restaurant.name}` : "Add new restaurant"}
+        cities={data.cities}
+        destinations={data.destinations}
+        restaurant={restaurant}
+        backHref={adminHref("restaurants")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Restaurants"
+      description="Manage lightweight food and dining entities for guides and future SEO pages."
+      addHref={adminHref("restaurants", { action: "new" })}
+      addLabel="Add New Restaurant"
+      filters={
+        <ContentFilters
+          section="restaurants"
+          cities={data.cities}
+          categories={cuisines}
+          searchLabel="Search restaurant"
+          categoryLabel="Cuisine"
+          searchValue={getParam(searchParams.q)}
+          statusValue={filters.status}
+          cityValue={filters.city}
+          categoryValue={filters.category}
+        />
+      }
+    >
+      {data.restaurantTableMissing ? (
+        <Alert tone="danger">
+          Restaurants table is not available in Supabase yet. Apply the Phase 7A restaurants schema before adding restaurant records.
+        </Alert>
+      ) : null}
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Restaurant", "City", "Cuisine", "Price", "Status", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <EntityCell key="entity" image={item.image} title={item.name} subtitle={item.shortDescription} />,
+              restaurantCityLabel(data.cities, item),
+              item.cuisineType || "Restaurant",
+              item.priceRange || "Flexible",
+              <PublishBadge key="status" published={item.published} />,
+              <RowActions
+                key="actions"
+                collection="restaurants"
+                viewHref={`/restaurants/${item.slug}`}
+                editHref={adminHref("restaurants", { action: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=restaurants&deleted=restaurants"
+                hidden={{ id: item.id, slug: item.slug }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No restaurants found" text="Adjust filters or add a lightweight restaurant entity." />
       )}
     </ManagementShell>
   );
@@ -861,6 +959,7 @@ function GuideForm({
   cities,
   destinations,
   guides,
+  restaurants,
   guide,
   backHref,
 }: {
@@ -868,6 +967,7 @@ function GuideForm({
   cities: City[];
   destinations: Destination[];
   guides: Guide[];
+  restaurants: Restaurant[];
   guide?: Guide;
   backHref: string;
 }) {
@@ -961,6 +1061,7 @@ function GuideForm({
                 image: item.coverImage || item.image,
                 badge: item.category || "Guide",
               }))}
+            restaurants={restaurantOptions(restaurants, cities)}
           />
         </FormSection>
         <FormSection title="SEO" columns={1}>
@@ -1030,6 +1131,79 @@ function AttractionForm({
           <Field label="SEO description" name="seoDescription" defaultValue={attraction?.seoDescription} />
         </FormSection>
         <FormActions backHref={backHref} label="Save attraction" />
+      </form>
+    </EditShell>
+  );
+}
+
+function RestaurantForm({
+  title,
+  cities,
+  destinations,
+  restaurant,
+  backHref,
+}: {
+  title: string;
+  cities: City[];
+  destinations: Destination[];
+  restaurant?: Restaurant;
+  backHref: string;
+}) {
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveRestaurantAction} className="grid gap-6">
+        <input type="hidden" name="id" value={restaurant?.id ?? ""} />
+        <HiddenTimestamps createdAt={restaurant?.createdAt} />
+        <FormSection title="Basic info">
+          <Field label="Name" name="name" defaultValue={restaurant?.name} placeholder="Bait Al Luban" />
+          <Field label="Slug" name="slug" defaultValue={restaurant?.slug} placeholder="bait-al-luban" />
+          <CitySelect
+            cities={cities}
+            defaultValue={restaurantCitySlug(cities, restaurant)}
+          />
+          <Toggle label="Published" name="published" defaultChecked={restaurant?.published ?? true} />
+          <Toggle label="Featured" name="featured" defaultChecked={restaurant?.featured} />
+        </FormSection>
+        <FormSection title="Optional relationships">
+          <SelectField label="Destination" name="destinationId" defaultValue={restaurant?.destinationId || ""}>
+            <option value="">No destination</option>
+            {destinations.map((destination) => (
+              <option key={destination.id} value={destination.id}>
+                {destination.name} - {destination.city}
+              </option>
+            ))}
+          </SelectField>
+          <Field label="Cuisine" name="cuisineType" defaultValue={restaurant?.cuisineType} placeholder="Omani" />
+          <Field label="Price range" name="priceRange" defaultValue={restaurant?.priceRange} placeholder="$$" />
+        </FormSection>
+        <FormSection title="Image" columns={1}>
+          <ImageUploadField fieldName="image" label="Restaurant image" currentImage={restaurant?.image} />
+        </FormSection>
+        <FormSection title="Description" columns={1}>
+          <Area
+            label="Short description"
+            name="shortDescription"
+            defaultValue={restaurant?.shortDescription}
+            rows={3}
+          />
+          <Area
+            label="Long description"
+            name="longDescription"
+            defaultValue={restaurant?.longDescription}
+            rows={5}
+          />
+        </FormSection>
+        <FormSection title="Practical info" columns={1}>
+          <Field label="Address" name="address" defaultValue={restaurant?.address} />
+          <Field label="Google Maps URL" name="googleMapsUrl" defaultValue={restaurant?.googleMapsUrl} />
+          <Area
+            label="Tags, one per line"
+            name="tags"
+            defaultValue={lines(restaurant?.tags)}
+            placeholder={"rooftop\ntraditional\nseafood"}
+          />
+        </FormSection>
+        <FormActions backHref={backHref} label="Save restaurant" />
       </form>
     </EditShell>
   );
@@ -1650,6 +1824,21 @@ function getContentFilters(params: SearchParams) {
   };
 }
 
+function getCrudMode(params: SearchParams) {
+  const mode = getParam(params.mode);
+  const action = getParam(params.action);
+
+  if (mode) {
+    return mode;
+  }
+
+  if (action === "new") {
+    return "add";
+  }
+
+  return action;
+}
+
 function searchBlob(...values: Array<string | undefined>) {
   return values.filter(Boolean).join(" ").toLowerCase();
 }
@@ -1677,6 +1866,26 @@ function unique(values: string[]) {
 function cityLabel(cities: City[], citySlug: string) {
   const city = cities.find((item) => item.slug === citySlug);
   return city ? `${city.name}, ${city.country}` : citySlug;
+}
+
+function restaurantCityLabel(cities: City[], restaurant: Restaurant) {
+  const city = cities.find((item) => item.id === restaurant.cityId);
+  return city ? `${city.name}, ${city.country}` : restaurant.cityId;
+}
+
+function restaurantCitySlug(cities: City[], restaurant?: Restaurant) {
+  return cities.find((city) => city.id === restaurant?.cityId)?.slug;
+}
+
+function restaurantOptions(restaurants: Restaurant[], cities: City[]) {
+  return restaurants.map((restaurant) => ({
+    id: restaurant.id,
+    label: restaurant.name,
+    meta: [restaurant.cuisineType, restaurantCityLabel(cities, restaurant)].filter(Boolean).join(" - "),
+    description: restaurant.shortDescription || restaurant.address,
+    image: restaurant.image,
+    badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+  }));
 }
 
 function countryOptions(cities: City[]) {

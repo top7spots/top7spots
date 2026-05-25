@@ -8,6 +8,7 @@ import type {
   GuideListingBlock,
   GuideListingBlockCustomItem,
   GuideListingBlockType,
+  Restaurant,
 } from "@/lib/types";
 
 const guideListingBlockTypes: GuideListingBlockType[] = [
@@ -15,6 +16,7 @@ const guideListingBlockTypes: GuideListingBlockType[] = [
   "cities",
   "countries",
   "guides",
+  "restaurants",
   "custom",
 ];
 
@@ -39,6 +41,7 @@ type ResolveGuideListingBlockItemsInput = {
   cities: City[];
   destinations: Destination[];
   guides: Guide[];
+  restaurants?: Restaurant[];
   currentGuideId?: string;
 };
 
@@ -60,6 +63,7 @@ export function resolveGuideListingBlocks(input: {
   cities: City[];
   destinations: Destination[];
   guides: Guide[];
+  restaurants?: Restaurant[];
   currentGuideId?: string;
 }) {
   return input.blocks
@@ -72,6 +76,7 @@ export function resolveGuideListingBlocks(input: {
         cities: input.cities,
         destinations: input.destinations,
         guides: input.guides,
+        restaurants: input.restaurants,
         currentGuideId: input.currentGuideId,
       }),
     }))
@@ -83,6 +88,7 @@ export function resolveGuideListingBlockItems({
   cities,
   destinations,
   guides,
+  restaurants = [],
   currentGuideId,
 }: ResolveGuideListingBlockItemsInput): ResolvedGuideListingBlockItem[] {
   if (block.type === "custom") {
@@ -168,12 +174,28 @@ export function resolveGuideListingBlockItems({
     );
   }
 
+  if (block.type === "restaurants") {
+    return uniqueByKey(
+      itemIds
+        .map((id) => restaurants.find((restaurant) => matchesEntityId(restaurant, id)))
+        .filter((restaurant): restaurant is Restaurant => Boolean(restaurant))
+        .map((restaurant) => ({
+          key: `restaurant-${restaurant.id}`,
+          href: getListingBlockHref("restaurants", restaurant),
+          title: restaurant.name,
+          description: restaurant.shortDescription || restaurant.address,
+          image: restaurant.image,
+          badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+        })),
+    );
+  }
+
   return [];
 }
 
 export function getListingBlockHref(
   type: GuideListingBlockType,
-  item: Destination | City | Guide | string | GuideListingBlockCustomItem,
+  item: Destination | City | Guide | Restaurant | string | GuideListingBlockCustomItem,
 ) {
   if (type === "destinations" && isDestination(item)) {
     return getCanonicalDestinationPath(item);
@@ -191,6 +213,10 @@ export function getListingBlockHref(
     return item.targetType === "city" && item.citySlug
       ? `/${item.citySlug}/guides/${item.slug}`
       : `/guides/${item.slug}`;
+  }
+
+  if (type === "restaurants" && isRestaurant(item)) {
+    return `/restaurants/${item.slug}`;
   }
 
   if (type === "custom" && isCustomItem(item)) {
@@ -320,6 +346,10 @@ function isCity(value: unknown): value is City {
 
 function isGuide(value: unknown): value is Guide {
   return isRecord(value) && typeof value.id === "string" && typeof value.title === "string" && "targetType" in value;
+}
+
+function isRestaurant(value: unknown): value is Restaurant {
+  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string" && "cuisineType" in value;
 }
 
 function isCustomItem(value: unknown): value is GuideListingBlockCustomItem {

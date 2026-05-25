@@ -13,7 +13,7 @@ const allowedImageTypes = new Map([
   ["image/webp", "webp"],
 ]);
 
-export type UploadFolder = "cities" | "destinations" | "guides" | "attractions";
+export type UploadFolder = "cities" | "destinations" | "guides" | "attractions" | "restaurants";
 
 type ImageUploadOptions = {
   fieldName: string;

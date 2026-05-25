@@ -12,7 +12,13 @@ export type GuideTableOfContentsItem = {
 
 export type GuideTargetType = "country" | "city" | "destination";
 
-export type GuideListingBlockType = "destinations" | "cities" | "countries" | "guides" | "custom";
+export type GuideListingBlockType =
+  | "destinations"
+  | "cities"
+  | "countries"
+  | "guides"
+  | "restaurants"
+  | "custom";
 
 export type GuideListingBlockCustomItem = {
   title: string;
@@ -134,6 +140,27 @@ export type Attraction = {
   seoDescription: string;
 };
 
+export type Restaurant = {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  image: string;
+  cityId: string;
+  destinationId: string;
+  countrySlug: string;
+  cuisineType: string;
+  priceRange: string;
+  address: string;
+  googleMapsUrl: string;
+  tags: string[];
+  featured: boolean;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type HomepageReview = {
   id: string;
   name: string;
@@ -159,5 +186,6 @@ export type AdminCollection =
   | "destinations"
   | "guides"
   | "attractions"
+  | "restaurants"
   | "homepage_reviews"
   | "homepage_faqs";

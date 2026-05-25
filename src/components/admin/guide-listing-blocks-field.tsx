@@ -19,6 +19,7 @@ type GuideListingBlocksFieldProps = {
   cities: SelectableItem[];
   countries: SelectableItem[];
   guides: SelectableItem[];
+  restaurants: SelectableItem[];
 };
 
 type EditableGuideListingBlock = GuideListingBlock & {
@@ -30,6 +31,7 @@ const blockTypes: Array<{ value: GuideListingBlockType; label: string }> = [
   { value: "cities", label: "Cities" },
   { value: "countries", label: "Countries" },
   { value: "guides", label: "Guides" },
+  { value: "restaurants", label: "Restaurants" },
   { value: "custom", label: "Custom links" },
 ];
 
@@ -41,6 +43,7 @@ export function GuideListingBlocksField({
   cities,
   countries,
   guides,
+  restaurants,
 }: GuideListingBlocksFieldProps) {
   const [blocks, setBlocks] = useState<EditableGuideListingBlock[]>(() =>
     defaultBlocks.map((block) => ({
@@ -51,8 +54,8 @@ export function GuideListingBlocksField({
   );
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<string[]>([]);
   const selectorItems = useMemo(
-    () => ({ destinations, cities, countries, guides }),
-    [destinations, cities, countries, guides],
+    () => ({ destinations, cities, countries, guides, restaurants }),
+    [destinations, cities, countries, guides, restaurants],
   );
   const serializedBlocks = useMemo(() => JSON.stringify(toPayload(blocks, selectorItems)), [blocks, selectorItems]);
 
@@ -567,6 +570,7 @@ function itemsForType(
     cities: SelectableItem[];
     countries: SelectableItem[];
     guides: SelectableItem[];
+    restaurants: SelectableItem[];
   },
 ) {
   if (type === "destinations") {
@@ -585,6 +589,10 @@ function itemsForType(
     return items.guides;
   }
 
+  if (type === "restaurants") {
+    return items.restaurants;
+  }
+
   return [];
 }
 
@@ -595,6 +603,7 @@ function toPayload(
     cities: SelectableItem[];
     countries: SelectableItem[];
     guides: SelectableItem[];
+    restaurants: SelectableItem[];
   },
 ): GuideListingBlock[] {
   return blocks

@@ -121,6 +121,27 @@ create table if not exists public.attractions (
   unique (city_slug, slug)
 );
 
+create table if not exists public.restaurants (
+  id uuid primary key,
+  slug text not null unique,
+  name text not null,
+  short_description text not null default '',
+  long_description text,
+  image text,
+  city_id text references public.cities(id) on delete set null,
+  destination_id text references public.destinations(id) on delete set null,
+  country_slug text not null default '',
+  cuisine_type text,
+  price_range text,
+  address text,
+  google_maps_url text,
+  tags text[] not null default '{}',
+  featured boolean not null default false,
+  published boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.homepage_reviews (
   id text primary key,
   name text not null,
@@ -147,6 +168,11 @@ create index if not exists guides_city_status_display_order_idx on public.guides
 create index if not exists guides_country_status_updated_idx on public.guides (country_id, status, updated_at);
 create index if not exists guides_destination_status_updated_idx on public.guides (destination_id, status, updated_at);
 create index if not exists attractions_city_status_display_order_idx on public.attractions (city_slug, status, display_order);
+create index if not exists restaurants_slug_idx on public.restaurants (slug);
+create index if not exists restaurants_city_idx on public.restaurants (city_id);
+create index if not exists restaurants_destination_idx on public.restaurants (destination_id);
+create index if not exists restaurants_country_idx on public.restaurants (country_slug);
+create index if not exists restaurants_published_idx on public.restaurants (published);
 create index if not exists homepage_reviews_published_sort_order_idx on public.homepage_reviews (is_published, sort_order);
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);
 
@@ -154,6 +180,7 @@ alter table public.cities enable row level security;
 alter table public.destinations enable row level security;
 alter table public.guides enable row level security;
 alter table public.attractions enable row level security;
+alter table public.restaurants enable row level security;
 alter table public.homepage_reviews enable row level security;
 alter table public.homepage_faqs enable row level security;
 
@@ -161,6 +188,7 @@ drop policy if exists "Public cities are readable" on public.cities;
 drop policy if exists "Published destinations are readable" on public.destinations;
 drop policy if exists "Published guides are readable" on public.guides;
 drop policy if exists "Published attractions are readable" on public.attractions;
+drop policy if exists "Published restaurants are readable" on public.restaurants;
 drop policy if exists "Published homepage reviews are readable" on public.homepage_reviews;
 drop policy if exists "Published homepage FAQs are readable" on public.homepage_faqs;
 
@@ -183,6 +211,11 @@ create policy "Published attractions are readable"
   on public.attractions for select
   to anon
   using (status = 'published');
+
+create policy "Published restaurants are readable"
+  on public.restaurants for select
+  to anon
+  using (published = true);
 
 create policy "Published homepage reviews are readable"
   on public.homepage_reviews for select

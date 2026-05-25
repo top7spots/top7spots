@@ -9,6 +9,7 @@ import {
   getPublishedAttractions,
   getPublishedCities,
   getPublishedGuides,
+  getPublishedRestaurants,
 } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { citySlug, guideSlug } = await params;
-  const [city, guide, guides, destinations, allDestinations, attractions, cities] = await Promise.all([
+  const [city, guide, guides, destinations, allDestinations, attractions, cities, restaurants] = await Promise.all([
     getCityBySlug(citySlug),
     getGuideByCityAndSlug(citySlug, guideSlug),
     getPublishedGuides(),
@@ -53,6 +54,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     getDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
+    getPublishedRestaurants(),
   ]);
 
   if (!city || !guide) {
@@ -76,6 +78,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       cities={cities}
       destinations={destinations}
       listingDestinations={allDestinations}
+      restaurants={restaurants}
       attractions={attractions.filter((attraction) => attraction.citySlug === city.slug)}
       descriptionFallback={`A practical ${city.name} travel guide from Top7Spots.`}
     />

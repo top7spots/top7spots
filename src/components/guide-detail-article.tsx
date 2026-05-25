@@ -29,7 +29,7 @@ import {
 } from "@/lib/guide-listing-blocks";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
-import type { Attraction, City, Destination, Guide } from "@/lib/types";
+import type { Attraction, City, Destination, Guide, Restaurant } from "@/lib/types";
 
 type BreadcrumbItem = {
   label: string;
@@ -48,6 +48,7 @@ type GuideDetailArticleProps = {
   cities: City[];
   destinations: Destination[];
   listingDestinations?: Destination[];
+  restaurants?: Restaurant[];
   attractions: Attraction[];
   descriptionFallback: string;
 };
@@ -72,6 +73,7 @@ export function GuideDetailArticle({
   cities,
   destinations,
   listingDestinations,
+  restaurants = [],
   attractions,
   descriptionFallback,
 }: GuideDetailArticleProps) {
@@ -84,6 +86,7 @@ export function GuideDetailArticle({
     cities,
     destinations: listingDestinations ?? destinations,
     guides,
+    restaurants,
     currentGuideId: guide.id,
   });
   const sidebarDestinations = destinations

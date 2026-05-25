@@ -18,6 +18,7 @@ import type {
   GuideTableOfContentsItem,
   HomepageFaq,
   HomepageReview,
+  Restaurant,
 } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
@@ -102,6 +103,7 @@ async function cityContext(formData: FormData) {
     cityId: city?.id || citySlug,
     cityName: city?.name || citySlug,
     citySlug,
+    countrySlug: slugify(city?.country || ""),
   };
 }
 
@@ -476,6 +478,62 @@ export async function deleteAttractionAction(formData: FormData) {
   }
   revalidateCoreRoutes(citySlug);
   redirect("/admin/dashboard?section=attractions&deleted=attractions");
+}
+
+export async function saveRestaurantAction(formData: FormData) {
+  const name = value(formData, "name");
+  const { cityId, citySlug, countrySlug } = await cityContext(formData);
+  const destinationId = value(formData, "destinationId");
+  let image: string;
+
+  try {
+    image = await getImagePathFromForm(formData, {
+      fieldName: "image",
+      folder: "restaurants",
+      fallbackName: slugify(name),
+    });
+  } catch (error) {
+    redirectWithUploadError(error);
+  }
+
+  if (destinationId) {
+    const destination = (await getDestinations()).find((item) => item.id === destinationId);
+
+    if (!destination) {
+      redirectWithSaveError("restaurants", new Error("Choose a valid destination."), value(formData, "id"));
+    }
+  }
+
+  const item: Restaurant = {
+    id: value(formData, "id") || crypto.randomUUID(),
+    slug: value(formData, "slug") || slugify(name),
+    name,
+    shortDescription: value(formData, "shortDescription"),
+    longDescription: value(formData, "longDescription"),
+    image,
+    cityId,
+    destinationId,
+    countrySlug,
+    cuisineType: value(formData, "cuisineType"),
+    priceRange: value(formData, "priceRange"),
+    address: value(formData, "address"),
+    googleMapsUrl: value(formData, "googleMapsUrl"),
+    tags: listFromTextarea(formData.get("tags")),
+    featured: checkboxValue(formData, "featured"),
+    published: checkboxValue(formData, "published"),
+    createdAt: timestamp(formData),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertItem("restaurants", item);
+  } catch (error) {
+    redirectWithSaveError("restaurants", error, item.id);
+  }
+
+  revalidateCoreRoutes(citySlug);
+  revalidatePath(`/restaurants/${item.slug}`);
+  redirect("/admin/dashboard?section=restaurants&updated=restaurants");
 }
 
 export async function saveHomepageReviewAction(formData: FormData) {

@@ -10,6 +10,7 @@ import type {
   GuideTargetType,
   HomepageFaq,
   HomepageReview,
+  Restaurant,
 } from "@/lib/types";
 import { slugify } from "@/lib/format";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
@@ -20,6 +21,7 @@ type CollectionMap = {
   destinations: Destination;
   guides: Guide;
   attractions: Attraction;
+  restaurants: Restaurant;
   homepage_reviews: HomepageReview;
   homepage_faqs: HomepageFaq;
 };
@@ -28,6 +30,7 @@ type CityRow = Record<string, unknown>;
 type DestinationRow = Record<string, unknown>;
 type GuideRow = Record<string, unknown>;
 type AttractionRow = Record<string, unknown>;
+type RestaurantRow = Record<string, unknown>;
 type HomepageReviewRow = Record<string, unknown>;
 type HomepageFaqRow = Record<string, unknown>;
 
@@ -36,6 +39,7 @@ type RowMap = {
   destinations: DestinationRow;
   guides: GuideRow;
   attractions: AttractionRow;
+  restaurants: RestaurantRow;
   homepage_reviews: HomepageReviewRow;
   homepage_faqs: HomepageFaqRow;
 };
@@ -45,6 +49,7 @@ const tableNames: Record<AdminCollection, string> = {
   destinations: "destinations",
   guides: "guides",
   attractions: "attractions",
+  restaurants: "restaurants",
   homepage_reviews: "homepage_reviews",
   homepage_faqs: "homepage_faqs",
 };
@@ -339,6 +344,31 @@ function mapAttraction(row: AttractionRow): Attraction {
   };
 }
 
+function mapRestaurant(row: RestaurantRow): Restaurant {
+  const name = stringField(row, "name");
+
+  return {
+    id: stringField(row, "id"),
+    slug: slugify(stringField(row, "slug") || name),
+    name,
+    shortDescription: stringField(row, "short_description", "shortDescription"),
+    longDescription: stringField(row, "long_description", "longDescription"),
+    image: stringField(row, "image"),
+    cityId: stringField(row, "city_id", "cityId"),
+    destinationId: stringField(row, "destination_id", "destinationId"),
+    countrySlug: slugify(stringField(row, "country_slug", "countrySlug")),
+    cuisineType: stringField(row, "cuisine_type", "cuisineType"),
+    priceRange: stringField(row, "price_range", "priceRange"),
+    address: stringField(row, "address"),
+    googleMapsUrl: stringField(row, "google_maps_url", "googleMapsUrl"),
+    tags: arrayValue(getField(row, "tags")),
+    featured: booleanField(row, "featured"),
+    published: booleanField(row, "published"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  };
+}
+
 function mapHomepageReview(row: HomepageReviewRow): HomepageReview {
   const name = stringField(row, "name");
 
@@ -491,6 +521,29 @@ function toAttractionRow(item: Attraction): AttractionRow {
   };
 }
 
+function toRestaurantRow(item: Restaurant): RestaurantRow {
+  return {
+    id: item.id,
+    slug: slugify(item.slug || item.name),
+    name: item.name,
+    short_description: item.shortDescription,
+    long_description: item.longDescription,
+    image: item.image,
+    city_id: item.cityId,
+    destination_id: item.destinationId || null,
+    country_slug: slugify(item.countrySlug),
+    cuisine_type: item.cuisineType,
+    price_range: item.priceRange,
+    address: item.address,
+    google_maps_url: item.googleMapsUrl,
+    tags: item.tags || [],
+    featured: item.featured,
+    published: item.published,
+    created_at: item.createdAt,
+    updated_at: item.updatedAt,
+  };
+}
+
 function toHomepageReviewRow(item: HomepageReview): HomepageReviewRow {
   return {
     id: item.id,
@@ -555,7 +608,7 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
 }
 
 function isOptionalHomepageCollection(collection: AdminCollection) {
-  return collection === "homepage_reviews" || collection === "homepage_faqs";
+  return collection === "homepage_reviews" || collection === "homepage_faqs" || collection === "restaurants";
 }
 
 function isMissingTableError(error: { code?: string; message?: string }) {
@@ -584,6 +637,10 @@ async function readCollection<T extends AdminCollection>(
     return (rows as AttractionRow[]).map(mapAttraction).sort(byDisplayOrder) as CollectionMap[T][];
   }
 
+  if (collection === "restaurants") {
+    return (rows as RestaurantRow[]).map(mapRestaurant).sort(byDisplayOrder) as CollectionMap[T][];
+  }
+
   if (collection === "homepage_reviews") {
     return (rows as HomepageReviewRow[]).map(mapHomepageReview).sort(bySortOrder) as CollectionMap[T][];
   }
@@ -606,6 +663,10 @@ function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap
 
   if (collection === "attractions") {
     return toAttractionRow(item as Attraction) as RowMap[T];
+  }
+
+  if (collection === "restaurants") {
+    return toRestaurantRow(item as Restaurant) as RowMap[T];
   }
 
   if (collection === "homepage_reviews") {
@@ -758,6 +819,35 @@ export async function getAttractionByCityAndSlug(citySlug: string, attractionSlu
   );
 }
 
+export async function getRestaurants() {
+  return readCollection("restaurants");
+}
+
+export async function getPublishedRestaurants() {
+  const restaurants = await getRestaurants();
+  return restaurants.filter((restaurant) => restaurant.published);
+}
+
+export async function getRestaurantsByCityId(cityId: string) {
+  const restaurants = await getPublishedRestaurants();
+  return restaurants.filter((restaurant) => restaurant.cityId === cityId);
+}
+
+export async function getRestaurantsByDestinationId(destinationId: string) {
+  const restaurants = await getPublishedRestaurants();
+  return restaurants.filter((restaurant) => restaurant.destinationId === destinationId);
+}
+
+export async function getRestaurant(slug: string) {
+  const restaurants = await getRestaurants();
+  return restaurants.find((restaurant) => restaurant.slug === slugify(slug));
+}
+
+export async function getPublishedRestaurant(slug: string) {
+  const restaurant = await getRestaurant(slug);
+  return restaurant?.published ? restaurant : undefined;
+}
+
 export async function getHomepageReviews() {
   return readCollection("homepage_reviews");
 }
@@ -777,16 +867,37 @@ export async function getPublishedHomepageFaqs() {
 }
 
 export async function getAdminData() {
-  const [cities, destinations, guides, attractions, homepageReviews, homepageFaqs] = await Promise.all([
+  const [cities, destinations, guides, attractions, restaurants, restaurantTableMissing, homepageReviews, homepageFaqs] = await Promise.all([
     getCities(),
     getDestinations(),
     getGuides(),
     getAttractions(),
+    getRestaurants(),
+    isRestaurantTableMissing(),
     getHomepageReviews(),
     getHomepageFaqs(),
   ]);
 
-  return { cities, destinations, guides, attractions, homepageReviews, homepageFaqs };
+  return {
+    cities,
+    destinations,
+    guides,
+    attractions,
+    restaurants,
+    restaurantTableMissing,
+    homepageReviews,
+    homepageFaqs,
+  };
+}
+
+async function isRestaurantTableMissing() {
+  if (!hasSupabaseConfig()) {
+    return false;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase.from("restaurants").select("id").limit(1);
+  return Boolean(error && isMissingTableError(error));
 }
 
 export async function upsertItem<T extends AdminCollection>(

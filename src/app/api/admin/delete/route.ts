@@ -9,6 +9,7 @@ const adminCollections: AdminCollection[] = [
   "destinations",
   "guides",
   "attractions",
+  "restaurants",
   "homepage_reviews",
   "homepage_faqs",
 ];
@@ -93,5 +94,9 @@ function revalidateDeletedContent(collection: AdminCollection, formData: FormDat
 
   if (collection === "attractions" && citySlug && slug) {
     revalidatePath(`/${citySlug}/attractions/${slug}`);
+  }
+
+  if (collection === "restaurants" && slug) {
+    revalidatePath(`/restaurants/${slug}`);
   }
 }

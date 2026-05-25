@@ -7,6 +7,7 @@ import {
   getPublishedAttractions,
   getPublishedCities,
   getPublishedGuides,
+  getPublishedRestaurants,
 } from "@/lib/data";
 import { seoMetadata } from "@/lib/seo";
 
@@ -37,12 +38,13 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { slug } = await params;
-  const [guide, destinations, attractions, cities, guides] = await Promise.all([
+  const [guide, destinations, attractions, cities, guides, restaurants] = await Promise.all([
     getGuide(slug),
     getDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedGuides(),
+    getPublishedRestaurants(),
   ]);
 
   if (!guide) {
@@ -69,6 +71,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       guides={guides}
       cities={cities}
       destinations={destinations.filter((destination) => !guide.citySlug || destination.citySlug === guide.citySlug)}
+      restaurants={restaurants}
       attractions={attractions.filter((attraction) => !guide.citySlug || attraction.citySlug === guide.citySlug)}
       descriptionFallback="A practical travel guide from Top7Spots."
     />

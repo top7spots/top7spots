@@ -28,12 +28,24 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
     return {};
   }
 
-  return seoMetadata({
+  const metadata = seoMetadata({
     title: `${restaurant.name} | Top7Spots`,
     description: restaurant.shortDescription || `A Top7Spots restaurant pick for ${restaurant.name}.`,
     path: `/restaurants/${restaurant.slug}`,
     image: restaurant.image,
   });
+
+  return {
+    ...metadata,
+    robots: {
+      index: false,
+      follow: true,
+      googleBot: {
+        index: false,
+        follow: true,
+      },
+    },
+  };
 }
 
 export default async function RestaurantPage({ params }: RestaurantPageProps) {

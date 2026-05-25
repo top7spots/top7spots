@@ -456,19 +456,13 @@ function toGuideRow(item: Guide): GuideRow {
   };
 }
 
-function legacyGuideRow(row: GuideRow): GuideRow {
-  const copy = { ...row };
-
-  for (const key of structuredGuideRowKeys) {
-    delete copy[key];
-  }
-
-  return copy;
+function isMissingStructuredGuideColumn(error: { message?: string }) {
+  return Boolean(missingStructuredGuideColumn(error));
 }
 
-function isMissingStructuredGuideColumn(error: { message?: string }) {
+function missingStructuredGuideColumn(error: { message?: string }) {
   const message = String(error.message || "").toLowerCase();
-  return structuredGuideRowKeys.some((key) => message.includes(key));
+  return structuredGuideRowKeys.find((key) => message.includes(key));
 }
 
 function isMissingGuideOwnershipColumn(error: { message?: string }) {
@@ -801,7 +795,7 @@ export async function upsertItem<T extends AdminCollection>(
 ) {
   const supabase = getSupabaseAdminClient();
   const row = itemToRow(collection, item);
-  const { error } = await supabase.from(tableNames[collection]).upsert(row, { onConflict: "id" });
+  let { error } = await supabase.from(tableNames[collection]).upsert(row, { onConflict: "id" });
 
   if (
     error &&
@@ -815,11 +809,42 @@ export async function upsertItem<T extends AdminCollection>(
   }
 
   if (error && collection === "guides" && isMissingStructuredGuideColumn(error)) {
-    const { error: legacyError } = await supabase
-      .from(tableNames[collection])
-      .upsert(legacyGuideRow(row as GuideRow), { onConflict: "id" });
+    const guideRow = row as GuideRow;
+    const fallbackRow = { ...guideRow };
+    const hasListingBlocks =
+      Array.isArray(guideRow.listing_blocks) && guideRow.listing_blocks.length > 0;
 
-    if (!legacyError) {
+    for (let attempt = 0; error && attempt < structuredGuideRowKeys.length; attempt += 1) {
+      const missingColumn = missingStructuredGuideColumn(error);
+
+      if (!missingColumn) {
+        break;
+      }
+
+      if (missingColumn === "listing_blocks" && hasListingBlocks) {
+        throw new Error(
+          "Failed to save guides: apply the Phase 6C listing_blocks schema migration before saving guide listing blocks.",
+        );
+      }
+
+      delete fallbackRow[missingColumn];
+      const result = await supabase
+        .from(tableNames[collection])
+        .upsert(fallbackRow, { onConflict: "id" });
+      error = result.error;
+
+      if (
+        error &&
+        isMissingGuideOwnershipColumn(error) &&
+        fallbackRow.target_type !== "city"
+      ) {
+        throw new Error(
+          "Failed to save guides: apply the Phase 2 guide ownership schema migration before saving country or destination guides.",
+        );
+      }
+    }
+
+    if (!error) {
       return;
     }
   }

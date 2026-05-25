@@ -832,6 +832,18 @@ function DestinationForm({
           <Area label="Travel tips, one per line" name="travelTips" defaultValue={lines(destination?.travelTips)} />
           <Area label="Nearby attractions, one per line" name="nearbyAttractions" defaultValue={lines(destination?.nearbyAttractions)} />
         </FormSection>
+        <FormSection title="FAQs" columns={1}>
+          <Area
+            label="FAQ blocks"
+            name="faqs"
+            defaultValue={formatFaqText(destination?.faqs)}
+            placeholder={
+              "Question: What is the best time to visit Mutrah Corniche?\nAnswer: Evenings from October to April are usually the most comfortable.\n\nQuestion: How long should I spend there?\nAnswer: Plan around one to two hours for a relaxed walk and photos."
+            }
+            helperText="Optional. Use one Question/Answer block per FAQ. Empty blocks are ignored."
+            rows={8}
+          />
+        </FormSection>
         <FormSection title="SEO" columns={1}>
           <Field label="SEO title" name="seoTitle" defaultValue={destination?.seoTitle} />
           <Field label="SEO description" name="seoDescription" defaultValue={destination?.seoDescription} />

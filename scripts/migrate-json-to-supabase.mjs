@@ -162,6 +162,7 @@ async function migrate() {
       how_to_go: destination.howToGo,
       travel_tips: destination.travelTips || [],
       nearby_attractions: destination.nearbyAttractions || [],
+      faqs: faqValue(destination.faqs),
       status: destination.status,
       is_featured: destination.isFeatured,
       display_order: destination.displayOrder,

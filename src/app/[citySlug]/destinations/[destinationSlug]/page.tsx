@@ -17,8 +17,9 @@ import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCard } from "@/components/destination-card";
+import { FaqSection } from "@/components/faq-section";
 import { SectionHeading } from "@/components/section-heading";
-import { BreadcrumbJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
+import { BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -143,6 +144,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         country={city.country}
         region={destination.region || city.region}
       />
+      <FAQPageJsonLd faqs={destination.faqs} />
       <SiteHeader />
       <main>
         <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
@@ -325,6 +327,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           guides={destinationGuides.slice(0, 6)}
         />
         <DestinationGuideSection title={`More travel guides for ${city.name}`} guides={cityGuideCards} />
+        <FaqSection title={`FAQs about ${destination.name}`} faqs={destination.faqs} />
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">

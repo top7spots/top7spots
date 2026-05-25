@@ -41,6 +41,7 @@ create table if not exists public.destinations (
   how_to_go text,
   travel_tips text[] not null default '{}',
   nearby_attractions text[] not null default '{}',
+  faqs jsonb not null default '[]'::jsonb,
   status text not null default 'draft' check (status in ('draft', 'published')),
   is_featured boolean not null default false,
   display_order integer not null default 0,
@@ -96,6 +97,7 @@ alter table public.guides add column if not exists faqs jsonb not null default '
 alter table public.guides add column if not exists related_guide_slugs text[] not null default '{}';
 alter table public.guides add column if not exists related_place_slugs text[] not null default '{}';
 alter table public.guides add column if not exists table_of_contents jsonb not null default '[]'::jsonb;
+alter table public.destinations add column if not exists faqs jsonb not null default '[]'::jsonb;
 
 create table if not exists public.attractions (
   id text primary key,

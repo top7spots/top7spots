@@ -284,6 +284,7 @@ export async function saveDestinationAction(formData: FormData) {
     howToGo: value(formData, "howToGo"),
     travelTips: listFromTextarea(formData.get("travelTips")),
     nearbyAttractions: listFromTextarea(formData.get("nearbyAttractions")),
+    faqs: parseFaqText(formData.get("faqs")),
     status: statusValue(formData),
     isFeatured: checkboxValue(formData, "isFeatured"),
     displayOrder: numberValue(formData, "displayOrder"),

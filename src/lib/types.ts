@@ -55,6 +55,7 @@ export type Destination = {
   howToGo: string;
   travelTips: string[];
   nearbyAttractions: string[];
+  faqs: GuideFaq[];
   status: ContentStatus;
   isFeatured: boolean;
   displayOrder: number;

@@ -151,6 +151,7 @@ function destinationRow(destination) {
     how_to_go: destination.howToGo || "",
     travel_tips: destination.travelTips || [],
     nearby_attractions: destination.nearbyAttractions || [],
+    faqs: destination.faqs || [],
     status: "published",
     is_featured: destination.isFeatured ?? false,
     display_order: destination.displayOrder ?? 100,

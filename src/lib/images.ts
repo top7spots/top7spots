@@ -3,7 +3,9 @@ import "server-only";
 export const fallbackImage = "/uploads/placeholder.svg";
 
 export function resolveImagePath(image?: string) {
-  const normalized = String(image ?? "").trim();
+  const rawValue = String(image ?? "").trim();
+  const markdownLink = rawValue.match(/^\[[^\]]+\]\(([^)]+)\)?$/);
+  const normalized = (markdownLink?.[1] ?? rawValue).trim();
   return normalized || fallbackImage;
 }
 

@@ -17,6 +17,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { GuideCarouselScroller } from "@/components/guides/guide-carousel-scroller";
 import { GuideEntityCard, type GuideEntityCardItem } from "@/components/guides/guide-entity-card";
 import {
   buildGuideArticleJsonLd,
@@ -235,20 +236,20 @@ export function GuideDetailArticle({
       ))}
       <SiteHeader />
       <main>
-        <section className="border-b border-slate-200 bg-[#FCFDFF] px-4 py-5 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl xl:max-w-[88rem]">
-            <BreadcrumbTrail items={breadcrumbItems} />
-            <Link
-              href={backHref}
-              className={buttonVariants({
-                variant: "ghost",
-                className: "mb-5 rounded-full px-0 text-slate-600 hover:bg-transparent",
-              })}
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              {backLabel}
-            </Link>
-            <div className="grid gap-8 py-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,40%)] lg:items-end lg:py-8">
+      <section className="border-b border-slate-200 bg-[#FCFDFF] px-4 pb-5 pt-3 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl xl:max-w-[88rem]">
+          <BreadcrumbTrail items={breadcrumbItems} />
+          <Link
+            href={backHref}
+            className={buttonVariants({
+              variant: "ghost",
+              className: "mb-3 rounded-full px-0 text-slate-600 hover:bg-transparent",
+            })}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {backLabel}
+          </Link>
+          <div className="grid gap-8 pb-5 pt-2 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,40%)] lg:items-end lg:pb-7 lg:pt-4">
               <div className="min-w-0">
                 <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#1D4ED8] hover:bg-blue-50">
                   {heroBlock?.eyebrow || guide.category || "Travel guide"}
@@ -1095,14 +1096,14 @@ function renderLinkedText(text: string, entities: ContextualEntity[]) {
 function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
   return (
     <section className="bg-white px-4 pb-14 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl xl:max-w-[88rem]">
         <div className="mb-5">
           <p className="text-sm font-medium text-[#1D4ED8]">Keep planning</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
             More travel guides you may like
           </h2>
         </div>
-        <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto scroll-smooth px-4 pb-4 [scrollbar-width:thin] sm:mx-0 sm:px-0">
+        <GuideCarouselScroller>
           {guides.map((guide) => (
             <GuideEntityCard
               key={guide.id}
@@ -1111,7 +1112,7 @@ function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
               className="grow-0 !w-[19.5rem] !max-w-[86vw] sm:!w-[20rem] sm:!min-w-[20rem] sm:!max-w-[20rem]"
             />
           ))}
-        </div>
+        </GuideCarouselScroller>
       </div>
     </section>
   );

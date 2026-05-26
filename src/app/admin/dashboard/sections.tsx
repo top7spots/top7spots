@@ -983,7 +983,40 @@ function GuideForm({
       <form action={saveGuideAction} className="grid gap-6">
         <input type="hidden" name="id" value={guide?.id ?? ""} />
         <HiddenTimestamps createdAt={guide?.createdAt} />
-        <TravelGuideAiContentImport />
+        <TravelGuideAiContentImport
+          cities={cities.map((city) => ({
+            id: city.slug,
+            label: city.name,
+            meta: [city.country, city.region].filter(Boolean).join(" - "),
+          }))}
+          countries={countryOptions(cities).map((country) => ({
+            id: country.id,
+            label: country.label,
+            meta: country.meta,
+          }))}
+          destinations={destinations.map((destination) => ({
+            id: destination.id,
+            label: destination.name,
+            meta: [destination.slug, destination.city, destination.category].filter(Boolean).join(" - "),
+          }))}
+          guides={guides
+            .filter((item) => item.id !== guide?.id)
+            .map((item) => ({
+              id: item.id,
+              label: item.title,
+              meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+            }))}
+          restaurants={restaurantOptions(restaurants, cities).map((restaurant) => ({
+            id: restaurant.id,
+            label: restaurant.label,
+            meta: restaurant.meta,
+          }))}
+          activities={attractions.map((attraction) => ({
+            id: attraction.id,
+            label: attraction.name,
+            meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+          }))}
+        />
         <FormSection title="Basic info">
           <Field label="Title" name="title" defaultValue={guide?.title} placeholder="Best places in Muscat" />
           <Field label="Slug" name="slug" defaultValue={guide?.slug} placeholder="best-places-in-muscat" />

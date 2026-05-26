@@ -55,6 +55,15 @@ export type ParsedTravelGuideImport = Partial<{
   coverImageAlt: string;
   excerpt: string;
   content: string;
+  selectedDestinations: string;
+  selectedCities: string;
+  selectedCountries: string;
+  selectedRestaurants: string;
+  selectedActivities: string;
+  selectedGuides: string;
+  quickInfo: string;
+  bestTimeToVisit: string;
+  travelTips: string;
   faqs: string;
   tableOfContents: string;
   seoTitle: string;
@@ -161,6 +170,7 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   destination: "destinationId",
   destinationid: "destinationId",
   image: "image",
+  heroimage: "image",
   coverimage: "image",
   coverimageurl: "image",
   coverimagealt: "coverImageAlt",
@@ -168,10 +178,36 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   excerpt: "excerpt",
   summary: "excerpt",
   shortdescription: "excerpt",
+  shortdesc: "excerpt",
+  description: "content",
+  longdescription: "content",
+  overview: "content",
   content: "content",
   body: "content",
   paragraphs: "content",
   articlebody: "content",
+  selecteddestinations: "selectedDestinations",
+  destinations: "selectedDestinations",
+  places: "selectedDestinations",
+  selectedcities: "selectedCities",
+  cities: "selectedCities",
+  selectedcountries: "selectedCountries",
+  countries: "selectedCountries",
+  selectedrestaurants: "selectedRestaurants",
+  restaurants: "selectedRestaurants",
+  selectedactivities: "selectedActivities",
+  activities: "selectedActivities",
+  attractions: "selectedActivities",
+  selectedguides: "selectedGuides",
+  guideblocks: "selectedGuides",
+  quickinfo: "quickInfo",
+  quickfacts: "quickInfo",
+  facts: "quickInfo",
+  besttime: "bestTimeToVisit",
+  besttimetovisit: "bestTimeToVisit",
+  bestseason: "bestTimeToVisit",
+  traveltips: "travelTips",
+  tips: "travelTips",
   faqs: "faqs",
   faq: "faqs",
   tableofcontents: "tableOfContents",

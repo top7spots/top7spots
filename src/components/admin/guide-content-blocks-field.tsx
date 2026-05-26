@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   GuideContentBlock,
   GuideContentBlockType,
@@ -92,6 +92,22 @@ export function GuideContentBlocksField({
   );
   const serializedBlocks = useMemo(() => JSON.stringify(toPayload(blocks)), [blocks]);
   const invalidCount = validationMessages.filter(Boolean).length;
+
+  useEffect(() => {
+    const handleImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ blocks?: GuideContentBlock[] }>).detail;
+
+      if (!Array.isArray(detail?.blocks)) {
+        return;
+      }
+
+      setBlocks(detail.blocks.map(normalizeEditableBlock));
+      setCollapsedBlockIds([]);
+    };
+
+    window.addEventListener("guide-builder-import", handleImport);
+    return () => window.removeEventListener("guide-builder-import", handleImport);
+  }, []);
 
   return (
     <div className="grid gap-4">
@@ -220,6 +236,16 @@ export function GuideContentBlocksField({
       </div>
     </div>
   );
+}
+
+function normalizeEditableBlock(block: GuideContentBlock): GuideContentBlock {
+  return {
+    ...block,
+    itemIds: uniqueStrings(block.itemIds || []),
+    quickInfo: block.quickInfo || [],
+    tips: block.tips || [],
+    faqs: block.faqs || [],
+  };
 }
 
 function BlockEditor({

@@ -11,6 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { GuideEntityCard, type GuideEntityCardItem } from "@/components/guides/guide-entity-card";
 import {
   buildGuideArticleJsonLd,
   buildGuideBreadcrumbJsonLd,
@@ -59,6 +60,7 @@ type RelatedPlace = {
   name: string;
   description: string;
   label: string;
+  image?: string;
 };
 
 export function GuideDetailArticle({
@@ -81,6 +83,7 @@ export function GuideDetailArticle({
   const imageAlt = guide.coverImageAlt || guide.title;
   const relatedGuides = resolveRelatedGuides(guide.relatedGuideSlugs, guides, guide.id);
   const relatedPlaces = resolveRelatedPlaces(guide.relatedPlaceSlugs, destinations, attractions, city);
+  const similarGuides = resolveSimilarGuides(guide, guides, city).slice(0, 10);
   const listingBlocks = resolveGuideListingBlocks({
     blocks: guide.listingBlocks,
     cities,
@@ -89,7 +92,7 @@ export function GuideDetailArticle({
     restaurants,
     currentGuideId: guide.id,
   });
-  const sidebarDestinations = destinations
+  const ctaDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
   const jsonLd = [
@@ -152,7 +155,9 @@ export function GuideDetailArticle({
           </div>
         </section>
 
-        <article className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8">
+        <GuidePlanningCta city={city} destinations={ctaDestinations} />
+
+        <article className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="min-w-0">
             {guide.tableOfContents.length > 0 ? (
               <nav
@@ -176,11 +181,11 @@ export function GuideDetailArticle({
               </nav>
             ) : null}
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10 lg:p-12">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
                 Travel guide
               </p>
-              <div className="mt-7 grid gap-7">
+              <div className="mt-8 grid gap-8">
                 {(guide.content.length > 0
                   ? guide.content
                   : ["More travel notes are being shaped for this guide."]
@@ -233,46 +238,61 @@ export function GuideDetailArticle({
               </section>
             ) : null}
           </div>
-
-          <aside className="h-fit rounded-3xl bg-[#0A2A66] p-6 text-white shadow-xl shadow-blue-950/15 lg:sticky lg:top-24">
-            <Sparkles className="size-8 text-orange-300" aria-hidden="true" />
-            <h2 className="mt-5 text-2xl font-semibold">Use this guide to shape a route</h2>
-            <p className="mt-3 text-sm leading-7 text-blue-50">
-              Top7Spots is built for discovery and inspiration, keeping travel planning fast,
-              visual, and easy to revisit.
-            </p>
-            <div className="mt-5 grid gap-2 border-t border-white/10 pt-5">
-              {city ? (
-                <>
-                  <Link href={`/${city.slug}`} className="text-sm font-semibold text-white transition hover:text-orange-200">
-                    Explore {city.name}
-                  </Link>
-                  {cityTopicPages.slice(0, 4).map((topic) => (
-                    <Link
-                      key={topic.slug}
-                      href={citySeoPath(city.slug, topic.slug)}
-                      className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
-                    >
-                      {topic.title(city)}
-                    </Link>
-                  ))}
-                </>
-              ) : null}
-              {sidebarDestinations.map((destination) => (
-                <Link
-                  key={destination.id}
-                  href={getCanonicalDestinationPath(destination, city)}
-                  className="text-sm font-semibold text-blue-50 transition hover:text-orange-200"
-                >
-                  {destination.name}
-                </Link>
-              ))}
-            </div>
-          </aside>
         </article>
+
+        {similarGuides.length > 0 ? <SimilarGuidesCarousel guides={similarGuides} /> : null}
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function GuidePlanningCta({ city, destinations }: { city?: City; destinations: Destination[] }) {
+  if (!city && destinations.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="border-y border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-5 rounded-3xl bg-[#0A2A66] p-6 text-white shadow-xl shadow-blue-950/10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-center lg:p-7">
+        <div>
+          <Sparkles className="size-7 text-orange-300" aria-hidden="true" />
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Use this guide to shape a route</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">
+            Top7Spots is built for discovery and inspiration, keeping travel planning fast,
+            visual, and easy to revisit.
+          </p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {city ? (
+            <>
+              <GuideCtaLink href={`/${city.slug}`}>Explore {city.name}</GuideCtaLink>
+              {cityTopicPages.slice(0, 3).map((topic) => (
+                <GuideCtaLink key={topic.slug} href={citySeoPath(city.slug, topic.slug)}>
+                  {topic.title(city)}
+                </GuideCtaLink>
+              ))}
+            </>
+          ) : null}
+          {destinations.slice(0, 4).map((destination) => (
+            <GuideCtaLink key={destination.id} href={getCanonicalDestinationPath(destination, city)}>
+              {destination.name}
+            </GuideCtaLink>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GuideCtaLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 hover:text-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -286,46 +306,14 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
       </h2>
       <div className="-mx-4 mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
         {block.items.map((item) => (
-          <GuideListingBlockCard key={item.key} item={item} />
+          <GuideEntityCard
+            key={item.key}
+            item={listingBlockItemToEntityCard(item)}
+            className="sm:min-w-0"
+          />
         ))}
       </div>
     </section>
-  );
-}
-
-function GuideListingBlockCard({ item }: { item: ResolvedGuideListingBlockItem }) {
-  const image = item.image ? resolveImagePath(item.image) : "";
-
-  return (
-    <Link
-      href={item.href}
-      className="group flex min-h-[18rem] w-[16.5rem] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:w-auto"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        {image ? (
-          <Image
-            src={image}
-            alt={item.title}
-            fill
-            sizes="(min-width: 1024px) 260px, (min-width: 640px) 45vw, 70vw"
-            className="object-cover transition duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-            {item.badge || "Guide"}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-4">
-        {item.badge ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">{item.badge}</p>
-        ) : null}
-        <h3 className="mt-2 line-clamp-2 text-lg font-semibold leading-6 text-[#111827]">{item.title}</h3>
-        {item.description ? (
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{item.description}</p>
-        ) : null}
-      </div>
-    </Link>
   );
 }
 
@@ -402,30 +390,24 @@ function ContentBlock({
     );
   }
 
-  return <p className="text-base leading-8 text-slate-600 md:text-lg">{text}</p>;
+  const listSection = parseListSection(text);
+
+  if (listSection) {
+    return <InlineCardListSection section={listSection} />;
+  }
+
+  return <p className="max-w-4xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{text}</p>;
 }
 
 function RelatedGuides({ guides }: { guides: Guide[] }) {
+  const items = guides.map(guideToEntityCardItem);
+
   return (
     <div>
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Related guides</p>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        {guides.map((guide) => (
-          <Link
-            key={guide.id}
-            href={
-              guide.targetType === "city" && guide.citySlug
-                ? `/${guide.citySlug}/guides/${guide.slug}`
-                : `/guides/${guide.slug}`
-            }
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-              {guide.category || "Guide"}
-            </p>
-            <h3 className="mt-2 text-lg font-semibold leading-7 text-[#111827]">{guide.title}</h3>
-            {guide.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{guide.excerpt}</p> : null}
-          </Link>
+      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Related guides</h2>
+      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <GuideEntityCard key={item.key} item={item} className="w-auto" />
         ))}
       </div>
     </div>
@@ -433,23 +415,60 @@ function RelatedGuides({ guides }: { guides: Guide[] }) {
 }
 
 function RelatedPlaces({ places }: { places: RelatedPlace[] }) {
+  const items = places.map((place) => ({
+    key: place.key,
+    href: place.href,
+    title: place.name,
+    description: place.description,
+    image: place.image,
+    type: place.label,
+  }));
+
   return (
     <div>
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Related places</p>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        {places.map((place) => (
-          <Link
-            key={place.key}
-            href={place.href}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">{place.label}</p>
-            <h3 className="mt-2 text-lg font-semibold leading-7 text-[#111827]">{place.name}</h3>
-            {place.description ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{place.description}</p> : null}
-          </Link>
+      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Places mentioned in this guide</h2>
+      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <GuideEntityCard key={item.key} item={item} className="w-auto" />
         ))}
       </div>
     </div>
+  );
+}
+
+function InlineCardListSection({ section }: { section: InlineListSection }) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">{section.title}</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {section.items.map((item, index) => (
+          <div key={`${item}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold leading-6 text-[#111827]">{item}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
+  return (
+    <section className="bg-white px-4 pb-14 pt-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+          More travel guides you may like
+        </h2>
+        <div className="-mx-4 mt-5 flex snap-x gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
+          {guides.map((guide) => (
+            <GuideEntityCard
+              key={guide.id}
+              item={guideToEntityCardItem(guide)}
+              imageSizes="(min-width: 1024px) 270px, 78vw"
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -473,8 +492,8 @@ function resolveRelatedPlaces(
     return [];
   }
 
-  return slugs
-    .map((slug) => {
+  const places = slugs
+    .map((slug): RelatedPlace | undefined => {
       const destination = destinations.find((item) => item.slug === slug);
 
       if (destination) {
@@ -484,6 +503,7 @@ function resolveRelatedPlaces(
           name: destination.name,
           description: destination.summary || destination.description,
           label: destination.category || "Destination",
+          image: destination.image,
         };
       }
 
@@ -496,12 +516,140 @@ function resolveRelatedPlaces(
           name: attraction.name,
           description: attraction.summary || attraction.description,
           label: attraction.category || attraction.type || "Attraction",
+          image: attraction.image,
         };
       }
 
       return undefined;
     })
     .filter((place): place is RelatedPlace => Boolean(place));
+
+  return places;
+}
+
+function resolveSimilarGuides(currentGuide: Guide, guides: Guide[], city?: City) {
+  const selected = new Map<string, Guide>();
+  const sameCitySlug = currentGuide.citySlug || city?.slug;
+  const sameCountryId = currentGuide.countryId;
+
+  const addGuides = (items: Guide[]) => {
+    for (const guide of items) {
+      if (guide.id !== currentGuide.id && !selected.has(guide.id)) {
+        selected.set(guide.id, guide);
+      }
+    }
+  };
+
+  if (sameCitySlug) {
+    addGuides(guides.filter((guide) => guide.citySlug === sameCitySlug));
+  }
+
+  if (sameCountryId) {
+    addGuides(guides.filter((guide) => guide.countryId === sameCountryId));
+  }
+
+  addGuides(guides);
+
+  return Array.from(selected.values()).sort(sortGuidesNewestFirst);
+}
+
+function sortGuidesNewestFirst(a: Guide, b: Guide) {
+  const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+  const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+  return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+}
+
+function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
+  return {
+    key: `guide-${guide.id}`,
+    href:
+      guide.targetType === "city" && guide.citySlug
+        ? `/${guide.citySlug}/guides/${guide.slug}`
+        : `/guides/${guide.slug}`,
+    title: guide.title,
+    description: guide.excerpt || guide.seoDescription,
+    image: guide.coverImage || guide.image,
+    type: guide.category || "Guide",
+    badge: guide.readTime || undefined,
+    imageAlt: guide.coverImageAlt || `${guide.title} travel guide`,
+  };
+}
+
+function listingBlockItemToEntityCard(item: ResolvedGuideListingBlockItem): GuideEntityCardItem {
+  return {
+    key: item.key,
+    href: item.href,
+    title: item.title,
+    description: item.description,
+    image: item.image,
+    type: item.badge || "Guide",
+  };
+}
+
+type InlineListSection = {
+  title: string;
+  items: string[];
+};
+
+const listSectionHeadingPattern =
+  /^(travel tips|recommended attractions|recommended destinations|recommended places|best areas|what to eat|where to eat|highlights|places mentioned|places to visit|things to do)\b/i;
+
+function parseListSection(text: string): InlineListSection | undefined {
+  const trimmedText = text.trim();
+  const lines = trimmedText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+  if (lines.length > 1) {
+    const title = lines[0].replace(/:$/, "").trim();
+
+    if (!listSectionHeadingPattern.test(title)) {
+      return undefined;
+    }
+
+    const items = lines.slice(1).map(cleanListItem).filter(Boolean);
+    return validInlineListSection(title, items);
+  }
+
+  const labelMatch = trimmedText.match(/^([^:]{3,70}):\s*([\s\S]+)$/);
+
+  if (!labelMatch) {
+    return undefined;
+  }
+
+  const title = labelMatch[1].trim();
+
+  if (!listSectionHeadingPattern.test(title)) {
+    return undefined;
+  }
+
+  const items = splitInlineListItems(labelMatch[2]);
+  return validInlineListSection(title, items);
+}
+
+function splitInlineListItems(value: string) {
+  return value
+    .split(/\s*(?:;|\||\n| - )\s*|,\s+(?=[A-Z0-9])/)
+    .map(cleanListItem)
+    .filter(Boolean);
+}
+
+function cleanListItem(value: string) {
+  return value
+    .replace(/^[-*]\s*/, "")
+    .replace(/^\d+[.)]\s*/, "")
+    .trim();
+}
+
+function validInlineListSection(title: string, items: string[]): InlineListSection | undefined {
+  const uniqueItems = Array.from(new Set(items)).filter((item) => item.length > 1);
+
+  if (uniqueItems.length < 2 || uniqueItems.length > 12) {
+    return undefined;
+  }
+
+  return {
+    title,
+    items: uniqueItems,
+  };
 }
 
 function headingId(label: string, tableOfContents: Guide["tableOfContents"], index: number) {

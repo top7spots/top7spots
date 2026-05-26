@@ -5,20 +5,18 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
+  Car,
+  ChevronDown,
   Clock,
   Hash,
+  Info,
+  ListTree,
   MapPin,
+  Route,
   Sparkles,
   UserRound,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
-import {
-  GuideArticleToc,
-  GuideFaqAccordion,
-  ReadingProgress,
-  type GuideFaqItem,
-  type GuideTocItem,
-} from "@/components/guides/guide-article-enhancements";
 import { GuideEntityCard, type GuideEntityCardItem } from "@/components/guides/guide-entity-card";
 import {
   buildGuideArticleJsonLd,
@@ -52,6 +50,17 @@ import type {
 type BreadcrumbItem = {
   label: string;
   href?: string;
+};
+
+type GuideTocItem = {
+  id: string;
+  title: string;
+  level: 2 | 3;
+};
+
+type GuideFaqItem = {
+  question: string;
+  answer: string;
 };
 
 type GuideDetailArticleProps = {
@@ -158,6 +167,9 @@ export function GuideDetailArticle({
     currentGuideId: guide.id,
   });
   const hasPageBlocks = pageBlocks.length > 0;
+  const sidebarQuickInfoBlock = pageBlocks.find((block) => block.type === "quick-info");
+  const carRentalBlock = pageBlocks.find((block) => block.type === "car-rental-cta");
+  const mainPageBlocks = pageBlocks.filter((block) => block.type !== "quick-info" && block.type !== "car-rental-cta");
   const ctaDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
@@ -181,11 +193,9 @@ export function GuideDetailArticle({
     currentCountrySlug: guide.countryId || city?.country,
   });
   const faqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
-  const tocItems = buildTocItems(contentBlocks, faqItems);
-  const articleLayoutClass =
-    tocItems.length > 0
-      ? "mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:px-8 xl:grid-cols-[240px_minmax(0,1fr)] xl:items-start"
-      : "mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8";
+  const tocItems = hasPageBlocks
+    ? buildPageBlockTocItems(mainPageBlocks, listingBlocks, faqItems)
+    : buildTocItems(contentBlocks, faqItems);
   const jsonLd = [
     buildGuideArticleJsonLd({ guide, canonicalPath }),
     buildGuideBreadcrumbJsonLd({
@@ -198,14 +208,13 @@ export function GuideDetailArticle({
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <ReadingProgress />
+    <div className="min-h-screen bg-[#F6F8FB]">
       {jsonLd.map((data) => (
         <JsonLd key={String(data["@type"])} data={data} />
       ))}
       <SiteHeader />
       <main>
-        <section className="bg-white px-4 py-6 sm:px-6 lg:px-8">
+        <section className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <BreadcrumbTrail items={breadcrumbItems} />
             <Link
@@ -218,27 +227,27 @@ export function GuideDetailArticle({
               <ArrowLeft className="size-4" aria-hidden="true" />
               {backLabel}
             </Link>
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-end">
-              <div>
+            <div className="grid gap-8 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,44%)] lg:items-end lg:py-8">
+              <div className="min-w-0">
                 <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#1D4ED8] hover:bg-blue-50">
                   {heroBlock?.eyebrow || guide.category || "Travel guide"}
                 </Badge>
-                <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#111827] md:text-6xl">
+                <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#111827] md:text-5xl lg:text-6xl">
                   {heroTitle}
                 </h1>
                 <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
                   {heroDescription}
                 </p>
-                <ArticleMeta guide={guide} city={city} />
+                <HeroQuickChips guide={guide} city={city} />
               </div>
               {heroImage ? (
-                <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
+                <div className="relative aspect-[4/3] min-h-72 overflow-hidden rounded-[1.75rem] bg-slate-200 shadow-2xl shadow-slate-200/80 lg:aspect-[5/4]">
                   <Image
                     src={image}
                     alt={imageAlt}
                     fill
                     priority
-                    sizes="(min-width: 1024px) 430px, 100vw"
+                    sizes="(min-width: 1280px) 560px, (min-width: 1024px) 44vw, 100vw"
                     className="object-cover"
                   />
                 </div>
@@ -247,20 +256,16 @@ export function GuideDetailArticle({
           </div>
         </section>
 
-        <GuidePlanningCta city={city} destinations={ctaDestinations} />
-
-        <article className={articleLayoutClass}>
-          <GuideArticleToc items={tocItems} />
-          <div className="min-w-0">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10 lg:p-12">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                Travel guide
-              </p>
-              <div className="mt-8 grid gap-8 md:gap-9">
+        <article className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:grid-cols-[230px_minmax(0,1fr)_300px] xl:items-start">
+          <StaticGuideArticleToc items={tocItems} />
+          <div className="min-w-0 xl:col-start-2">
+            <div className="grid gap-8">
+              <WhyVisitSection guide={guide} city={city} description={heroDescription} />
+              <div className="grid gap-8 md:gap-10">
                 {hasPageBlocks ? (
                   <GuidePageBlocks
                     guide={guide}
-                    blocks={pageBlocks}
+                    blocks={mainPageBlocks}
                     listingBlocks={listingBlocks}
                     cities={cities}
                     destinations={listingDestinations ?? destinations}
@@ -290,7 +295,7 @@ export function GuideDetailArticle({
               </section>
             ) : null}
 
-            {!hasPageBlocks ? <GuideFaqAccordion faqs={faqItems} /> : null}
+            {!hasPageBlocks ? <ServerGuideFaqAccordion faqs={faqItems} /> : null}
 
             {(relatedGuides.length > 0 || relatedPlaces.length > 0) ? (
               <section className="mt-10 grid gap-8">
@@ -303,7 +308,18 @@ export function GuideDetailArticle({
               </section>
             ) : null}
           </div>
+
+          <GuideSideRail
+            guide={guide}
+            city={city}
+            quickInfoBlock={sidebarQuickInfoBlock}
+            relatedGuides={relatedGuides.length > 0 ? relatedGuides : similarGuides.slice(0, 3)}
+            carRentalBlock={carRentalBlock}
+            destinations={ctaDestinations}
+          />
         </article>
+
+        <GuidePlanningCta city={city} destinations={ctaDestinations} />
 
         {similarGuides.length > 0 ? <SimilarGuidesCarousel guides={similarGuides} /> : null}
       </main>
@@ -361,11 +377,94 @@ function GuideCtaLink({ href, children }: { href: string; children: ReactNode })
   );
 }
 
+function StaticGuideArticleToc({ items }: { items: GuideTocItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <aside className="hidden xl:block">
+        <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">On this page</p>
+          <StaticTocLinks items={items} className="mt-3" />
+        </div>
+      </aside>
+
+      <details id="guide-toc-mobile" className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-[#111827] [&::-webkit-details-marker]:hidden">
+          <span className="inline-flex items-center gap-2">
+            <ListTree className="size-4 text-[#1D4ED8]" aria-hidden="true" />
+            Jump to section
+          </span>
+          <ChevronDown className="size-4 text-slate-500" aria-hidden="true" />
+        </summary>
+        <StaticTocLinks items={items} className="mt-4" />
+      </details>
+
+      <a
+        href="#guide-toc-mobile"
+        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-950/20 transition hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] xl:hidden"
+        aria-label="Jump to table of contents"
+      >
+        <ListTree className="size-4" aria-hidden="true" />
+        Jump
+      </a>
+    </>
+  );
+}
+
+function StaticTocLinks({ items, className = "" }: { items: GuideTocItem[]; className?: string }) {
+  return (
+    <nav aria-label="Guide sections" className={`grid gap-1 ${className}`}>
+      {items.map((item, index) => (
+        <Link
+          key={item.id}
+          href={`#${item.id}`}
+          className={`rounded-xl px-3 py-2 text-sm font-semibold leading-5 transition ${
+            item.level === 3 ? "ml-3 text-xs" : ""
+          } ${index === 0 ? "bg-blue-50 text-[#1D4ED8]" : "text-slate-600 hover:bg-slate-50 hover:text-[#111827]"}`}
+        >
+          {item.title}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
+  const validFaqs = faqs.filter((faq) => faq.question.trim() && faq.answer.trim());
+
+  if (validFaqs.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-10" aria-labelledby="guide-faq-heading">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">FAQs</p>
+      <h2 id="guide-faq-heading" className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
+        Common questions
+      </h2>
+      <div className="mt-6 grid gap-3">
+        {validFaqs.map((faq, index) => (
+          <details key={faq.question} open={index === 0} className="rounded-2xl border border-slate-200 bg-slate-50">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden">
+              <span>{faq.question}</span>
+              <ChevronDown className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
+            </summary>
+            <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock }) {
   const blockHeadingId = `listing-block-${slugify(block.id || block.title)}`;
 
   return (
-    <section aria-labelledby={blockHeadingId} className="min-w-0">
+    <section aria-labelledby={blockHeadingId} className="min-w-0 [content-visibility:auto] [contain-intrinsic-size:1px_520px]">
       <div className="mb-5">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">In this guide</p>
         <h2 id={blockHeadingId} className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
@@ -378,11 +477,203 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
             key={item.key}
             item={listingBlockItemToEntityCard(item)}
             className="sm:min-w-0"
+            imageSizes="(min-width: 1280px) 250px, (min-width: 640px) 45vw, 78vw"
           />
         ))}
       </div>
     </section>
   );
+}
+
+function HeroQuickChips({ guide, city }: { guide: Guide; city?: City }) {
+  const date = formatDate(guide.updatedAt || guide.createdAt);
+  const chips: Array<{ label: string; icon: ReactNode } | undefined> = [
+    guide.readTime
+      ? { label: guide.readTime, icon: <Clock className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      : { label: "Travel guide", icon: <BookOpen className="size-4 text-[#1D4ED8]" aria-hidden="true" /> },
+    city
+      ? { label: city.name, icon: <MapPin className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      : undefined,
+    guide.author
+      ? { label: guide.author, icon: <UserRound className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      : undefined,
+    date
+      ? { label: `Updated ${date}`, icon: <CalendarDays className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      : undefined,
+  ];
+  const visibleChips = chips.filter((item): item is { label: string; icon: ReactNode } => Boolean(item));
+
+  return (
+    <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-medium text-slate-600">
+      {visibleChips.map((item) => (
+        <span key={item.label} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 shadow-sm">
+          {item.icon}
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function WhyVisitSection({
+  guide,
+  city,
+  description,
+}: {
+  guide: Guide;
+  city?: City;
+  description: string;
+}) {
+  const title = city ? `Why visit ${city.name}` : "Why this guide matters";
+  const text =
+    description ||
+    guide.excerpt ||
+    "Use this guide as a focused starting point for planning the best places, practical stops, and next steps.";
+
+  return (
+    <section id="why-visit" className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Why visit</p>
+      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827] md:text-3xl">{title}</h2>
+      <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">{text}</p>
+    </section>
+  );
+}
+
+function GuideSideRail({
+  guide,
+  city,
+  quickInfoBlock,
+  relatedGuides,
+  carRentalBlock,
+  destinations,
+}: {
+  guide: Guide;
+  city?: City;
+  quickInfoBlock?: GuideCmsBlock;
+  relatedGuides: Guide[];
+  carRentalBlock?: GuideCmsBlock;
+  destinations: Destination[];
+}) {
+  return (
+    <aside className="grid gap-4 xl:sticky xl:top-24 xl:col-start-3">
+      <QuickInfoSideCard guide={guide} city={city} block={quickInfoBlock} />
+      {relatedGuides.length > 0 ? <RelatedGuidesSideCard guides={relatedGuides.slice(0, 3)} /> : null}
+      {isCarRentalRelevant(guide, carRentalBlock) ? (
+        <CarRentalSideCard block={carRentalBlock} city={city} destinations={destinations} />
+      ) : null}
+    </aside>
+  );
+}
+
+function QuickInfoSideCard({ guide, city, block }: { guide: Guide; city?: City; block?: GuideCmsBlock }) {
+  const date = formatDate(guide.updatedAt || guide.createdAt);
+  const fallbackItems = [
+    guide.readTime ? { label: "Read time", value: guide.readTime } : undefined,
+    guide.category ? { label: "Category", value: guide.category } : undefined,
+    city ? { label: "Location", value: city.country ? `${city.name}, ${city.country}` : city.name } : undefined,
+    date ? { label: "Updated", value: date } : undefined,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
+  const items = block?.quickInfo?.length ? block.quickInfo : fallbackItems;
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm" aria-label="Quick info">
+      <div className="flex items-center gap-2">
+        <Info className="size-4 text-[#1D4ED8]" aria-hidden="true" />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-700">Quick info</h2>
+      </div>
+      <dl className="mt-4 grid gap-3">
+        {items.map((item) => (
+          <div key={`${item.label}-${item.value}`} className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
+            <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.label}</dt>
+            <dd className="mt-1 text-sm font-semibold leading-6 text-[#111827]">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+function RelatedGuidesSideCard({ guides }: { guides: Guide[] }) {
+  return (
+    <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm" aria-label="Related guides">
+      <div className="flex items-center gap-2">
+        <Route className="size-4 text-[#1D4ED8]" aria-hidden="true" />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-700">Related guides</h2>
+      </div>
+      <div className="mt-4 grid gap-3">
+        {guides.map((guide) => (
+          <Link
+            key={guide.id}
+            href={guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+            className="group rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50"
+          >
+            <p className="line-clamp-2 text-sm font-semibold leading-6 text-[#111827] group-hover:text-[#1D4ED8]">{guide.title}</p>
+            {guide.category || guide.readTime ? (
+              <p className="mt-1 text-xs font-medium text-slate-500">{[guide.category, guide.readTime].filter(Boolean).join(" - ")}</p>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CarRentalSideCard({
+  block,
+  city,
+  destinations,
+}: {
+  block?: GuideCmsBlock;
+  city?: City;
+  destinations: Destination[];
+}) {
+  const title = block?.title || (city ? `Rent a car in ${city.name}` : "Plan a rental car");
+  const body =
+    block?.body ||
+    "Compare routes, driving time, and parking-friendly stops before you lock in the plan.";
+  const href = block?.ctaHref || (city ? `/${city.slug}/guides` : "/guides");
+  const label = block?.ctaLabel || "Plan transport";
+
+  return (
+    <section className="rounded-[1.5rem] bg-[#0A2A66] p-5 text-white shadow-sm" aria-label="Car rental planning">
+      <Car className="size-5 text-orange-200" aria-hidden="true" />
+      <h2 className="mt-3 text-lg font-semibold tracking-tight">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-blue-50">{body}</p>
+      {destinations.length > 0 ? (
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-blue-100">
+          Useful near {destinations.slice(0, 2).map((destination) => destination.name).join(" and ")}
+        </p>
+      ) : null}
+      <Link
+        href={href}
+        className="mt-4 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition hover:bg-orange-100"
+      >
+        {label}
+      </Link>
+    </section>
+  );
+}
+
+function isCarRentalRelevant(guide: Guide, block?: GuideCmsBlock) {
+  if (block) {
+    return true;
+  }
+
+  const searchText = [
+    guide.title,
+    guide.slug,
+    guide.category,
+    guide.excerpt,
+    ...guide.content,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return /\b(car|rental|rent|driving|drive|road trip|self drive)\b/.test(searchText);
 }
 
 function GuidePageBlocks({
@@ -449,7 +740,7 @@ function GuidePageBlock({
 }) {
   if (block.type === "faq") {
     const faqs = block.faqs?.length ? block.faqs : fallbackFaqs;
-    return <GuideFaqAccordion faqs={faqs} />;
+    return <ServerGuideFaqAccordion faqs={faqs} />;
   }
 
   const listingBlock = listingBlockForContentBlock(block, {
@@ -489,7 +780,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
   const image = resolveImagePath(block.image || "");
 
   return (
-    <section id={block.id} className="scroll-mt-24">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-8">
       {block.eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{block.eyebrow}</p>
       ) : null}
@@ -506,7 +797,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
         </div>
       ) : null}
       {block.image ? (
-        <div className="relative mt-6 min-h-80 overflow-hidden rounded-3xl bg-slate-100">
+        <div className="relative mt-6 aspect-[16/10] min-h-72 overflow-hidden rounded-3xl bg-slate-100">
           <Image
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
@@ -546,7 +837,7 @@ function TipsBlock({ block }: { block: GuideCmsBlock }) {
   const tips = block.tips || [];
 
   return (
-    <section id={block.id} className="scroll-mt-24">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-8">
       <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
       {block.body ? <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">{block.body}</p> : null}
       {tips.length > 0 ? (
@@ -568,7 +859,7 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
   }
 
   return (
-    <section id={block.id} className="scroll-mt-24">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-8">
       <BlockHeading block={block} fallbackTitle="Map" />
       <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
         <iframe
@@ -585,7 +876,7 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
 
 function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-3xl bg-[#0A2A66] p-6 text-white md:p-8">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] bg-[#0A2A66] p-6 text-white shadow-sm [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-8">
       {block.eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-200">{block.eyebrow}</p> : null}
       <h2 className="mt-2 text-2xl font-semibold tracking-tight">{block.title || ctaFallbackTitle(block.type)}</h2>
       {block.body ? <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">{block.body}</p> : null}
@@ -606,52 +897,6 @@ function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallback
     <div>
       {block.eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{block.eyebrow}</p> : null}
       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">{block.title || fallbackTitle}</h2>
-    </div>
-  );
-}
-
-function ArticleMeta({ guide, city }: { guide: Guide; city?: City }) {
-  const date = formatDate(guide.updatedAt || guide.createdAt);
-  const meta: Array<{ label: string; icon: ReactNode }> = [
-    {
-      label: guide.readTime || "Quick read",
-      icon: guide.readTime ? (
-        <Clock className="size-4 text-[#1D4ED8]" aria-hidden="true" />
-      ) : (
-        <BookOpen className="size-4 text-[#1D4ED8]" aria-hidden="true" />
-      ),
-    },
-  ];
-
-  if (guide.author) {
-    meta.unshift({
-      label: guide.author,
-      icon: <UserRound className="size-4 text-[#1D4ED8]" aria-hidden="true" />,
-    });
-  }
-
-  if (city) {
-    meta.push({
-      label: city.name,
-      icon: <MapPin className="size-4 text-[#1D4ED8]" aria-hidden="true" />,
-    });
-  }
-
-  if (date) {
-    meta.push({
-      label: `Updated ${date}`,
-      icon: <CalendarDays className="size-4 text-[#1D4ED8]" aria-hidden="true" />,
-    });
-  }
-
-  return (
-    <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium text-slate-600">
-      {meta.map((item) => (
-        <span key={item.label} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
-          {item.icon}
-          {item.label}
-        </span>
-      ))}
     </div>
   );
 }
@@ -1350,6 +1595,77 @@ function buildTocItems(blocks: GuideArticleContentBlock[], faqs: GuideFaqItem[])
   return items;
 }
 
+function buildPageBlockTocItems(
+  blocks: GuideCmsBlock[],
+  listingBlocks: ResolvedGuideListingBlock[],
+  faqs: GuideFaqItem[],
+): GuideTocItem[] {
+  const items: GuideTocItem[] = [
+    {
+      id: "why-visit",
+      title: "Why visit",
+      level: 2,
+    },
+  ];
+
+  blocks.forEach((block) => {
+    const title = pageBlockTocTitle(block, listingBlocks);
+
+    if (!title || block.type === "cta" || block.type === "car-rental-cta" || block.type === "newsletter-cta") {
+      return;
+    }
+
+    items.push({
+      id: pageBlockTocId(block),
+      title,
+      level: 2,
+    });
+  });
+
+  if (faqs.length > 0 && !items.some((item) => item.id === "guide-faq-heading")) {
+    items.push({
+      id: "guide-faq-heading",
+      title: "Common questions",
+      level: 2,
+    });
+  }
+
+  return items;
+}
+
+function pageBlockTocId(block: GuideCmsBlock) {
+  if (isSelectedEntityBlock(block)) {
+    return `listing-block-${slugify(block.id || block.title || selectedBlockFallbackTitle(block.type))}`;
+  }
+
+  if (block.type === "faq") {
+    return "guide-faq-heading";
+  }
+
+  return block.id;
+}
+
+function pageBlockTocTitle(block: GuideCmsBlock, listingBlocks: ResolvedGuideListingBlock[]) {
+  if (isSelectedEntityBlock(block)) {
+    const listingBlock = listingBlocks.find((item) => item.id === block.id);
+    return listingBlock?.title || block.title || selectedBlockFallbackTitle(block.type);
+  }
+
+  if (block.type === "faq") {
+    return "Common questions";
+  }
+
+  if (block.type === "map") {
+    return block.title || "Map";
+  }
+
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
+    return block.title || tipsFallbackTitle(block.type);
+  }
+
+  return block.title || block.eyebrow || "";
+}
+
 function headingFromText(text: string): { level: 2 | 3; title: string } | undefined {
   if (text.startsWith("## ")) {
     return {
@@ -1674,6 +1990,17 @@ function selectedBlockListingType(type: GuideCmsBlock["type"]): ResolvedGuideLis
   if (type === "selected-restaurants") return "restaurants";
   if (type === "selected-activities") return "activities";
   return "guides";
+}
+
+function isSelectedEntityBlock(block: GuideCmsBlock) {
+  return (
+    block.type === "selected-destinations" ||
+    block.type === "selected-cities" ||
+    block.type === "selected-countries" ||
+    block.type === "selected-restaurants" ||
+    block.type === "selected-activities" ||
+    block.type === "related-guides"
+  );
 }
 
 function selectedBlockFallbackTitle(type: GuideCmsBlock["type"]) {

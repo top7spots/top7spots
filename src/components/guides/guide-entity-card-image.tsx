@@ -1,7 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { useState } from "react";
 import { MapPinned } from "lucide-react";
 
 type GuideEntityCardImageProps = {
@@ -12,9 +9,7 @@ type GuideEntityCardImageProps = {
 };
 
 export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCardImageProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  if (!src || imageFailed) {
+  if (!src) {
     return <GuideEntityCardImageFallback label={label} />;
   }
 
@@ -24,8 +19,7 @@ export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCard
       alt={alt}
       fill
       sizes={sizes}
-      onError={() => setImageFailed(true)}
-      className="object-cover transition duration-500 group-hover:scale-105"
+      className="object-cover"
     />
   );
 }

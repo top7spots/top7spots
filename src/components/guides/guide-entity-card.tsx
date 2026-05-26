@@ -31,7 +31,7 @@ export function GuideEntityCard({
   return (
     <Link
       href={item.href}
-      className={`group flex h-[23.5rem] w-[18rem] max-w-[82vw] shrink-0 snap-start scroll-ml-4 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:h-96 sm:w-auto sm:max-w-none ${className}`}
+      className={`group flex h-[23.5rem] w-[18rem] max-w-[82vw] shrink-0 snap-start scroll-ml-4 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition-colors hover:border-blue-200 focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:h-96 sm:w-auto sm:max-w-none ${className}`}
     >
       <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44">
         <GuideEntityCardImage
@@ -53,7 +53,7 @@ export function GuideEntityCard({
         ) : null}
         <span className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-[#1D4ED8]">
           Explore
-          <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden="true" />
+          <ArrowRight className="size-4" aria-hidden="true" />
         </span>
       </div>
     </Link>

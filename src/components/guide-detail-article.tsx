@@ -6,11 +6,19 @@ import {
   BookOpen,
   CalendarDays,
   Clock,
+  Hash,
   MapPin,
   Sparkles,
   UserRound,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import {
+  GuideArticleToc,
+  GuideFaqAccordion,
+  ReadingProgress,
+  type GuideFaqItem,
+  type GuideTocItem,
+} from "@/components/guides/guide-article-enhancements";
 import { GuideEntityCard, type GuideEntityCardItem } from "@/components/guides/guide-entity-card";
 import {
   buildGuideArticleJsonLd,
@@ -30,7 +38,7 @@ import {
 } from "@/lib/guide-listing-blocks";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
-import type { Attraction, City, Destination, Guide, Restaurant } from "@/lib/types";
+import type { Attraction, City, Destination, Guide, GuideFaq, Restaurant } from "@/lib/types";
 
 type BreadcrumbItem = {
   label: string;
@@ -62,6 +70,26 @@ type RelatedPlace = {
   label: string;
   image?: string;
 };
+
+type GuideContentBlock =
+  | {
+      kind: "heading";
+      key: string;
+      id: string;
+      level: 2 | 3;
+      title: string;
+    }
+  | {
+      kind: "paragraph";
+      key: string;
+      text: string;
+    }
+  | {
+      kind: "list";
+      key: string;
+      id: string;
+      section: InlineListSection;
+    };
 
 export function GuideDetailArticle({
   guide,
@@ -95,6 +123,16 @@ export function GuideDetailArticle({
   const ctaDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
+  const contentBlocks = buildGuideContentBlocks(
+    guide.content.length > 0 ? guide.content : ["More travel notes are being shaped for this guide."],
+    guide.tableOfContents,
+  );
+  const faqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
+  const tocItems = buildTocItems(contentBlocks, faqItems);
+  const articleLayoutClass =
+    tocItems.length > 0
+      ? "mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:px-8 xl:grid-cols-[240px_minmax(0,1fr)] xl:items-start"
+      : "mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8";
   const jsonLd = [
     buildGuideArticleJsonLd({ guide, canonicalPath }),
     buildGuideBreadcrumbJsonLd({
@@ -103,11 +141,12 @@ export function GuideDetailArticle({
       city,
       includeCity: includeCityInBreadcrumbJson,
     }),
-    buildGuideFaqJsonLd(guide),
+    buildGuideFaqJsonLd({ faqs: faqItems }),
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <ReadingProgress />
       {jsonLd.map((data) => (
         <JsonLd key={String(data["@type"])} data={data} />
       ))}
@@ -157,45 +196,16 @@ export function GuideDetailArticle({
 
         <GuidePlanningCta city={city} destinations={ctaDestinations} />
 
-        <article className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <article className={articleLayoutClass}>
+          <GuideArticleToc items={tocItems} />
           <div className="min-w-0">
-            {guide.tableOfContents.length > 0 ? (
-              <nav
-                aria-label="Table of contents"
-                className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                  In this guide
-                </p>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {guide.tableOfContents.map((item) => (
-                    <Link
-                      key={`${item.label}-${item.anchor}`}
-                      href={`#${item.anchor}`}
-                      className="rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-[#1D4ED8]"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
-            ) : null}
-
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10 lg:p-12">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
                 Travel guide
               </p>
               <div className="mt-8 grid gap-8 md:gap-9">
-                {(guide.content.length > 0
-                  ? guide.content
-                  : ["More travel notes are being shaped for this guide."]
-                ).map((paragraph, index) => (
-                  <ContentBlock
-                    key={`${paragraph}-${index}`}
-                    text={paragraph}
-                    index={index}
-                    tableOfContents={guide.tableOfContents}
-                  />
+                {contentBlocks.map((block) => (
+                  <ContentBlock key={block.key} block={block} />
                 ))}
               </div>
             </div>
@@ -208,24 +218,7 @@ export function GuideDetailArticle({
               </section>
             ) : null}
 
-            {guide.faqs.length > 0 ? (
-              <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                  FAQs
-                </p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
-                  Common questions
-                </h2>
-                <div className="mt-6 grid gap-4">
-                  {guide.faqs.map((faq) => (
-                    <div key={faq.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                      <h3 className="text-lg font-semibold leading-7 text-[#111827]">{faq.question}</h3>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">{faq.answer}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <GuideFaqAccordion faqs={faqItems} />
 
             {(relatedGuides.length > 0 || relatedPlaces.length > 0) ? (
               <section className="mt-10 grid gap-8">
@@ -366,40 +359,33 @@ function ArticleMeta({ guide, city }: { guide: Guide; city?: City }) {
   );
 }
 
-function ContentBlock({
-  text,
-  index,
-  tableOfContents,
-}: {
-  text: string;
-  index: number;
-  tableOfContents: Guide["tableOfContents"];
-}) {
-  if (text.startsWith("## ")) {
-    const heading = text.replace(/^##\s+/, "").trim();
+function ContentBlock({ block }: { block: GuideContentBlock }) {
+  if (block.kind === "heading") {
+    const HeadingTag = block.level === 2 ? "h2" : "h3";
+    const headingClassName =
+      block.level === 2
+        ? "group flex max-w-4xl scroll-mt-24 items-center gap-2 border-t border-slate-200 pt-8 text-3xl font-semibold tracking-tight text-[#111827] first:border-t-0 first:pt-0"
+        : "group flex max-w-4xl scroll-mt-24 items-center gap-2 pt-1 text-2xl font-semibold tracking-tight text-[#111827]";
+
     return (
-      <h2 id={headingId(heading, tableOfContents, index)} className="max-w-4xl scroll-mt-24 pt-2 text-3xl font-semibold tracking-tight text-[#111827]">
-        {heading}
-      </h2>
+      <HeadingTag id={block.id} className={headingClassName}>
+        <span>{block.title}</span>
+        <a
+          href={`#${block.id}`}
+          className="hidden rounded-full p-1 text-slate-300 transition hover:bg-slate-100 hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+          aria-label={`Link to ${block.title}`}
+        >
+          <Hash className="size-4" aria-hidden="true" />
+        </a>
+      </HeadingTag>
     );
   }
 
-  if (text.startsWith("### ")) {
-    const heading = text.replace(/^###\s+/, "").trim();
-    return (
-      <h3 id={headingId(heading, tableOfContents, index)} className="max-w-4xl scroll-mt-24 pt-1 text-2xl font-semibold tracking-tight text-[#111827]">
-        {heading}
-      </h3>
-    );
+  if (block.kind === "list") {
+    return <InlineCardListSection id={block.id} section={block.section} />;
   }
 
-  const listSection = parseListSection(text);
-
-  if (listSection) {
-    return <InlineCardListSection section={listSection} />;
-  }
-
-  return <p className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{text}</p>;
+  return <p className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{block.text}</p>;
 }
 
 function RelatedGuides({ guides }: { guides: Guide[] }) {
@@ -445,12 +431,21 @@ function RelatedPlaces({ places }: { places: RelatedPlace[] }) {
   );
 }
 
-function InlineCardListSection({ section }: { section: InlineListSection }) {
+function InlineCardListSection({ id, section }: { id: string; section: InlineListSection }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+    <section className="scroll-mt-24 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6" aria-labelledby={id}>
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Quick notes</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">{section.title}</h2>
+        <h2 id={id} className="group flex items-center gap-2 text-2xl font-semibold tracking-tight text-[#111827]">
+          <span>{section.title}</span>
+          <a
+            href={`#${id}`}
+            className="hidden rounded-full p-1 text-slate-300 transition hover:bg-white hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+            aria-label={`Link to ${section.title}`}
+          >
+            <Hash className="size-4" aria-hidden="true" />
+          </a>
+        </h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {section.items.map((item, index) => (
@@ -486,6 +481,147 @@ function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
       </div>
     </section>
   );
+}
+
+function buildGuideContentBlocks(content: string[], tableOfContents: Guide["tableOfContents"]): GuideContentBlock[] {
+  const idCounts = new Map<string, number>();
+  const blocks: GuideContentBlock[] = [];
+
+  content.forEach((text, index) => {
+    const trimmedText = text.trim();
+
+    if (!trimmedText || isFaqLikeContentBlock(trimmedText)) {
+      return;
+    }
+
+    const heading = headingFromText(trimmedText);
+
+    if (heading) {
+      const id = uniqueId(headingId(heading.title, tableOfContents, index), idCounts);
+      blocks.push({
+        kind: "heading",
+        key: `heading-${id}`,
+        id,
+        level: heading.level,
+        title: heading.title,
+      });
+      return;
+    }
+
+    const listSection = parseListSection(trimmedText);
+
+    if (listSection) {
+      const id = uniqueId(slugify(listSection.title) || `list-${index + 1}`, idCounts);
+      blocks.push({
+        kind: "list",
+        key: `list-${id}`,
+        id,
+        section: listSection,
+      });
+      return;
+    }
+
+    splitLongParagraph(trimmedText).forEach((paragraph, paragraphIndex) => {
+      blocks.push({
+        kind: "paragraph",
+        key: `paragraph-${index}-${paragraphIndex}`,
+        text: paragraph,
+      });
+    });
+  });
+
+  return blocks;
+}
+
+function buildTocItems(blocks: GuideContentBlock[], faqs: GuideFaqItem[]): GuideTocItem[] {
+  const items = blocks
+    .map((block): GuideTocItem | undefined => {
+      if (block.kind === "heading") {
+        return {
+          id: block.id,
+          title: block.title,
+          level: block.level,
+        };
+      }
+
+      if (block.kind === "list") {
+        return {
+          id: block.id,
+          title: block.section.title,
+          level: 2,
+        };
+      }
+
+      return undefined;
+    })
+    .filter((item): item is GuideTocItem => Boolean(item));
+
+  if (faqs.length > 0) {
+    items.push({
+      id: "guide-faq-heading",
+      title: "Common questions",
+      level: 2,
+    });
+  }
+
+  return items;
+}
+
+function headingFromText(text: string): { level: 2 | 3; title: string } | undefined {
+  if (text.startsWith("## ")) {
+    return {
+      level: 2,
+      title: text.replace(/^##\s+/, "").trim(),
+    };
+  }
+
+  if (text.startsWith("### ")) {
+    return {
+      level: 3,
+      title: text.replace(/^###\s+/, "").trim(),
+    };
+  }
+
+  return undefined;
+}
+
+function splitLongParagraph(text: string) {
+  if (text.length < 520) {
+    return [text];
+  }
+
+  const sentences = text.match(/[^.!?]+[.!?]+(?:\s|$)/g);
+
+  if (!sentences || sentences.length < 4) {
+    return [text];
+  }
+
+  const paragraphs: string[] = [];
+  let currentParagraph = "";
+
+  for (const sentence of sentences) {
+    const nextParagraph = `${currentParagraph}${sentence}`.trim();
+
+    if (nextParagraph.length > 360 && currentParagraph) {
+      paragraphs.push(currentParagraph.trim());
+      currentParagraph = sentence;
+    } else {
+      currentParagraph = nextParagraph;
+    }
+  }
+
+  if (currentParagraph.trim()) {
+    paragraphs.push(currentParagraph.trim());
+  }
+
+  return paragraphs.length > 1 ? paragraphs : [text];
+}
+
+function uniqueId(baseId: string, idCounts: Map<string, number>) {
+  const fallbackId = baseId || "section";
+  const count = idCounts.get(fallbackId) || 0;
+  idCounts.set(fallbackId, count + 1);
+  return count === 0 ? fallbackId : `${fallbackId}-${count + 1}`;
 }
 
 function resolveRelatedGuides(slugs: string[], guides: Guide[], currentGuideId: string) {
@@ -616,6 +752,8 @@ type InlineListSection = {
 const listSectionHeadingPattern =
   /^(travel tips|recommended attractions|recommended destinations|recommended places|best areas|what to eat|where to eat|highlights|places mentioned|places to visit|things to do)\b/i;
 
+const faqHeadingPattern = /^(#{2,3}\s*)?(faqs?|frequently asked questions)\b/i;
+
 function parseListSection(text: string): InlineListSection | undefined {
   const trimmedText = text.trim();
   const lines = trimmedText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -650,6 +788,117 @@ function parseListSection(text: string): InlineListSection | undefined {
 
   const items = splitInlineListItems(labelMatch[2]);
   return validInlineListSection(title, items);
+}
+
+function mergeFaqItems(...faqGroups: Array<Array<GuideFaq | GuideFaqItem>>): GuideFaqItem[] {
+  const faqByQuestion = new Map<string, GuideFaqItem>();
+
+  for (const group of faqGroups) {
+    for (const faq of group) {
+      const question = faq.question.trim();
+      const answer = faq.answer.trim();
+
+      if (!question || !answer) {
+        continue;
+      }
+
+      const normalizedQuestion = question.toLowerCase();
+
+      if (!faqByQuestion.has(normalizedQuestion)) {
+        faqByQuestion.set(normalizedQuestion, { question, answer });
+      }
+    }
+  }
+
+  return Array.from(faqByQuestion.values());
+}
+
+function extractFaqsFromContent(content: string[]): GuideFaqItem[] {
+  const faqs: GuideFaqItem[] = [];
+
+  for (const block of content) {
+    const text = block.trim();
+
+    if (!isFaqLikeContentBlock(text)) {
+      continue;
+    }
+
+    faqs.push(...parseFaqPairs(text));
+  }
+
+  return faqs;
+}
+
+function isFaqLikeContentBlock(text: string) {
+  if (faqHeadingPattern.test(text.trim())) {
+    return true;
+  }
+
+  return /(^|\n)\s*(q:|question:|###\s+.+\?)\s*/i.test(text) && /(^|\n)\s*(a:|answer:)\s*/i.test(text);
+}
+
+function parseFaqPairs(text: string): GuideFaqItem[] {
+  const cleanedText = text
+    .replace(/^#{2,3}\s*(faqs?|frequently asked questions)\s*:?\s*/i, "")
+    .replace(/^(faqs?|frequently asked questions)\s*:?\s*/i, "")
+    .trim();
+
+  return [
+    ...parseExplicitFaqPairs(cleanedText),
+    ...parseMarkdownQuestionPairs(cleanedText),
+  ];
+}
+
+function parseExplicitFaqPairs(text: string): GuideFaqItem[] {
+  const faqs: GuideFaqItem[] = [];
+  const pattern =
+    /(?:^|\n)\s*(?:q:|question:)\s*([^\n]+?)\s*\n+\s*(?:a:|answer:)\s*([\s\S]*?)(?=\n+\s*(?:q:|question:|###\s+.+\?)|\s*$)/gi;
+
+  for (const match of text.matchAll(pattern)) {
+    const question = match[1]?.trim() || "";
+    const answer = match[2]?.trim() || "";
+
+    if (question && answer) {
+      faqs.push({ question, answer });
+    }
+  }
+
+  return faqs;
+}
+
+function parseMarkdownQuestionPairs(text: string): GuideFaqItem[] {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const faqs: GuideFaqItem[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const questionMatch = lines[index].match(/^###\s+(.+\?)$/);
+
+    if (!questionMatch) {
+      continue;
+    }
+
+    const answerLines: string[] = [];
+
+    for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
+      if (/^###\s+.+\?$/.test(lines[nextIndex])) {
+        break;
+      }
+
+      answerLines.push(lines[nextIndex]);
+      index = nextIndex;
+    }
+
+    const answer = answerLines.join(" ").trim();
+
+    if (answer) {
+      faqs.push({
+        question: questionMatch[1].trim(),
+        answer,
+      });
+    }
+  }
+
+  return faqs;
 }
 
 function splitInlineListItems(value: string) {

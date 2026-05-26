@@ -59,15 +59,15 @@ export function DestinationCard({ destination, imageSizes = defaultDestinationCa
         <p className="line-clamp-3 text-sm leading-6 text-slate-600">
           {destination.summary || "A curated Top7Spots travel idea ready for deeper discovery."}
         </p>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-          <span className="text-xs font-medium text-slate-500">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <span className="shrink-0 text-xs font-medium text-slate-500">
             {destination.duration || "Flexible"}
           </span>
           <Link
             href={href}
-            className="flex items-center gap-1 rounded-full bg-[#0A2A66] px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:bg-[#1D4ED8] group-hover:translate-x-0.5"
+            className="flex min-w-0 items-center gap-1 rounded-full bg-[#0A2A66] px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:bg-[#1D4ED8] group-hover:translate-x-0.5"
           >
-            Explore {destination.name}
+            <span className="truncate">Explore {destination.name}</span>
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>

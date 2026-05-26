@@ -31,6 +31,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
+import { countryPath } from "@/lib/country-hubs";
 import {
   resolveGuideListingBlocks,
   type ResolvedGuideListingBlock,
@@ -91,6 +92,28 @@ type GuideContentBlock =
       section: InlineListSection;
     };
 
+type ContextualEntityType = "destination" | "attraction" | "restaurant" | "city" | "country" | "guide";
+
+type ContextualEntity = GuideEntityCardItem & {
+  entityType: ContextualEntityType;
+  aliases: string[];
+  citySlug?: string;
+  countrySlug?: string;
+  keywords: string[];
+};
+
+type ContextualEntitySection = {
+  title: string;
+  items: ContextualEntity[];
+};
+
+type EntityMention = {
+  entity: ContextualEntity;
+  start: number;
+  end: number;
+  text: string;
+};
+
 export function GuideDetailArticle({
   guide,
   city,
@@ -127,6 +150,21 @@ export function GuideDetailArticle({
     guide.content.length > 0 ? guide.content : ["More travel notes are being shaped for this guide."],
     guide.tableOfContents,
   );
+  const contextualEntities = buildContextualEntityIndex({
+    currentGuide: guide,
+    city,
+    cities,
+    destinations: listingDestinations ?? destinations,
+    attractions,
+    restaurants,
+    guides,
+  });
+  const contextualSections = buildContextualEntitySections({
+    blocks: contentBlocks,
+    entities: contextualEntities,
+    currentCitySlug: guide.citySlug || city?.slug,
+    currentCountrySlug: guide.countryId || city?.country,
+  });
   const faqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
   const tocItems = buildTocItems(contentBlocks, faqItems);
   const articleLayoutClass =
@@ -205,7 +243,12 @@ export function GuideDetailArticle({
               </p>
               <div className="mt-8 grid gap-8 md:gap-9">
                 {contentBlocks.map((block) => (
-                  <ContentBlock key={block.key} block={block} />
+                  <ArticleBlockGroup
+                    key={block.key}
+                    block={block}
+                    entities={contextualEntities}
+                    contextualSection={contextualSections.get(block.key)}
+                  />
                 ))}
               </div>
             </div>
@@ -359,7 +402,24 @@ function ArticleMeta({ guide, city }: { guide: Guide; city?: City }) {
   );
 }
 
-function ContentBlock({ block }: { block: GuideContentBlock }) {
+function ArticleBlockGroup({
+  block,
+  entities,
+  contextualSection,
+}: {
+  block: GuideContentBlock;
+  entities: ContextualEntity[];
+  contextualSection?: ContextualEntitySection;
+}) {
+  return (
+    <>
+      <ContentBlock block={block} entities={entities} />
+      {contextualSection ? <ContextualEntitySectionCards section={contextualSection} /> : null}
+    </>
+  );
+}
+
+function ContentBlock({ block, entities }: { block: GuideContentBlock; entities: ContextualEntity[] }) {
   if (block.kind === "heading") {
     const HeadingTag = block.level === 2 ? "h2" : "h3";
     const headingClassName =
@@ -385,7 +445,11 @@ function ContentBlock({ block }: { block: GuideContentBlock }) {
     return <InlineCardListSection id={block.id} section={block.section} />;
   }
 
-  return <p className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{block.text}</p>;
+  return (
+    <p className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">
+      {renderLinkedText(block.text, entities)}
+    </p>
+  );
 }
 
 function RelatedGuides({ guides }: { guides: Guide[] }) {
@@ -458,6 +522,62 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
   );
 }
 
+function ContextualEntitySectionCards({ section }: { section: ContextualEntitySection }) {
+  return (
+    <section className="rounded-3xl border border-blue-100 bg-blue-50/40 p-5 md:p-6" aria-label={section.title}>
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Connected travel ideas</p>
+        <h3 className="text-xl font-semibold tracking-tight text-[#111827]">{section.title}</h3>
+      </div>
+      <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:thin] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+        {section.items.map((item) => (
+          <GuideEntityCard
+            key={item.key}
+            item={item}
+            className="h-80 sm:h-80 sm:min-w-0"
+            imageSizes="(min-width: 1024px) 260px, (min-width: 640px) 45vw, 78vw"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function renderLinkedText(text: string, entities: ContextualEntity[]) {
+  const mentions = firstMentionPerEntity(findEntityMentions(text, entities));
+
+  if (mentions.length === 0) {
+    return text;
+  }
+
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  mentions.forEach((mention, index) => {
+    if (mention.start > cursor) {
+      nodes.push(text.slice(cursor, mention.start));
+    }
+
+    nodes.push(
+      <Link
+        key={`${mention.entity.key}-${mention.start}-${index}`}
+        href={mention.entity.href}
+        className="rounded-md bg-blue-50/70 px-1 py-0.5 font-medium text-[#1D4ED8] transition hover:bg-blue-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+        aria-label={`Open ${mention.entity.title}`}
+      >
+        {text.slice(mention.start, mention.end)}
+      </Link>,
+    );
+    cursor = mention.end;
+  });
+
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return nodes;
+}
+
 function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
   return (
     <section className="bg-white px-4 pb-14 pt-6 sm:px-6 lg:px-8">
@@ -481,6 +601,415 @@ function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
       </div>
     </section>
   );
+}
+
+function buildContextualEntityIndex({
+  currentGuide,
+  city,
+  cities,
+  destinations,
+  attractions,
+  restaurants,
+  guides,
+}: {
+  currentGuide: Guide;
+  city?: City;
+  cities: City[];
+  destinations: Destination[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  guides: Guide[];
+}) {
+  const cityBySlug = new Map(cities.map((item) => [item.slug, item]));
+  const entities: ContextualEntity[] = [];
+
+  destinations.forEach((destination) => {
+    const destinationCity = cityBySlug.get(destination.citySlug);
+
+    entities.push({
+      key: `destination-${destination.id}`,
+      href: getCanonicalDestinationPath(destination, destinationCity || city),
+      title: destination.name,
+      description: destination.summary || destination.location || destination.city,
+      image: destination.image,
+      type: destination.category || "Destination",
+      entityType: "destination",
+      citySlug: destination.citySlug,
+      countrySlug: destinationCity?.country,
+      aliases: entityAliases(destination.name, destination.slug, destination.location),
+      keywords: keywordList(destination.category, destination.summary, destination.description, destination.location),
+    });
+  });
+
+  attractions.forEach((attraction) => {
+    const attractionCity = cityBySlug.get(attraction.citySlug);
+
+    entities.push({
+      key: `attraction-${attraction.id}`,
+      href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+      title: attraction.name,
+      description: attraction.summary || attraction.description,
+      image: attraction.image,
+      type: attraction.category || attraction.type || "Attraction",
+      entityType: "attraction",
+      citySlug: attraction.citySlug,
+      countrySlug: attractionCity?.country,
+      aliases: entityAliases(attraction.name, attraction.slug, attraction.category),
+      keywords: keywordList(attraction.category, attraction.type, attraction.summary, attraction.description),
+    });
+  });
+
+  restaurants.forEach((restaurant) => {
+    const restaurantCity =
+      cityBySlug.get(restaurant.cityId) || cities.find((item) => item.id === restaurant.cityId);
+
+    entities.push({
+      key: `restaurant-${restaurant.id}`,
+      href: `/restaurants/${restaurant.slug}`,
+      title: restaurant.name,
+      description: restaurant.shortDescription || restaurant.address,
+      image: restaurant.image,
+      type: restaurant.cuisineType || restaurant.priceRange || "Restaurant",
+      entityType: "restaurant",
+      citySlug: restaurantCity?.slug || restaurant.cityId,
+      countrySlug: restaurant.countrySlug || restaurantCity?.country,
+      aliases: entityAliases(restaurant.name, restaurant.slug, restaurant.cuisineType),
+      keywords: keywordList(restaurant.cuisineType, restaurant.shortDescription, restaurant.longDescription, restaurant.tags.join(" ")),
+    });
+  });
+
+  cities.forEach((item) => {
+    entities.push({
+      key: `city-${item.id}`,
+      href: `/${item.slug}`,
+      title: item.name,
+      description: item.shortDescription || item.region || item.country,
+      image: item.cardImage || item.featuredImage || item.heroImage,
+      type: item.country || "City",
+      entityType: "city",
+      citySlug: item.slug,
+      countrySlug: item.country,
+      aliases: entityAliases(item.name, item.slug),
+      keywords: keywordList(item.region, item.country, item.shortDescription, item.longDescription),
+    });
+  });
+
+  buildCountryEntities(cities).forEach((countryEntity) => entities.push(countryEntity));
+
+  guides.forEach((item) => {
+    if (item.id === currentGuide.id || !isSafeGuideSlug(item.slug)) {
+      return;
+    }
+
+    entities.push({
+      ...guideToEntityCardItem(item),
+      entityType: "guide",
+      citySlug: item.citySlug,
+      countrySlug: item.countryId,
+      aliases: entityAliases(item.title, item.slug),
+      keywords: keywordList(item.category, item.excerpt, item.seoDescription),
+    });
+  });
+
+  return dedupeContextualEntities(entities);
+}
+
+function buildCountryEntities(cities: City[]): ContextualEntity[] {
+  const countryMap = new Map<string, ContextualEntity>();
+
+  cities.forEach((city) => {
+    const countrySlug = slugify(city.country);
+
+    if (!countrySlug || countryMap.has(countrySlug)) {
+      return;
+    }
+
+    countryMap.set(countrySlug, {
+      key: `country-${countrySlug}`,
+      href: countryPath(countrySlug),
+      title: city.country,
+      description: `Explore cities, destinations, and travel guides across ${city.country}.`,
+      image: city.featuredImage || city.heroImage || city.cardImage,
+      type: "Country",
+      entityType: "country",
+      countrySlug: city.country,
+      aliases: entityAliases(city.country, countrySlug, city.countryCode),
+      keywords: keywordList(city.country, city.region),
+    });
+  });
+
+  return Array.from(countryMap.values());
+}
+
+function buildContextualEntitySections({
+  blocks,
+  entities,
+  currentCitySlug,
+  currentCountrySlug,
+}: {
+  blocks: GuideContentBlock[];
+  entities: ContextualEntity[];
+  currentCitySlug?: string;
+  currentCountrySlug?: string;
+}) {
+  const sections = new Map<string, ContextualEntitySection>();
+  const usedEntityKeys = new Set<string>();
+  let currentSectionTitle = "";
+  let currentSectionText = "";
+  let currentSectionEndKey = "";
+  let hasMajorSection = false;
+
+  const flushSection = () => {
+    if (!currentSectionEndKey || !currentSectionText.trim()) {
+      return;
+    }
+
+    const items = scoreEntitiesForText({
+      text: `${currentSectionTitle}\n${currentSectionText}`,
+      sectionTitle: currentSectionTitle,
+      entities,
+      currentCitySlug,
+      currentCountrySlug,
+      usedEntityKeys,
+    }).slice(0, 6);
+
+    if (items.length > 0) {
+      items.forEach((item) => usedEntityKeys.add(item.key));
+      sections.set(currentSectionEndKey, {
+        title: contextualSectionTitle(currentSectionTitle, items),
+        items,
+      });
+    }
+  };
+
+  blocks.forEach((block) => {
+    if (block.kind === "heading" && block.level === 2) {
+      flushSection();
+      hasMajorSection = true;
+      currentSectionTitle = block.title;
+      currentSectionText = "";
+      currentSectionEndKey = "";
+      return;
+    }
+
+    if (hasMajorSection) {
+      currentSectionText = `${currentSectionText}\n${blockSearchText(block)}`;
+      currentSectionEndKey = block.key;
+    }
+
+    if (block.kind === "list") {
+      const listItems = scoreEntitiesForText({
+        text: blockSearchText(block),
+        sectionTitle: block.section.title,
+        entities,
+        currentCitySlug,
+        currentCountrySlug,
+        usedEntityKeys,
+      }).slice(0, 4);
+
+      if (listItems.length > 0) {
+        listItems.forEach((item) => usedEntityKeys.add(item.key));
+        sections.set(block.key, {
+          title: contextualSectionTitle(block.section.title, listItems),
+          items: listItems,
+        });
+      }
+    }
+  });
+
+  flushSection();
+
+  if (!hasMajorSection && blocks.length > 0) {
+    const text = blocks.map(blockSearchText).join("\n");
+    const items = scoreEntitiesForText({
+      text,
+      sectionTitle: "guide",
+      entities,
+      currentCitySlug,
+      currentCountrySlug,
+      usedEntityKeys,
+    }).slice(0, 6);
+    const placementBlock = [...blocks].reverse().find((block) => block.kind !== "heading");
+
+    if (items.length > 0 && placementBlock) {
+      sections.set(placementBlock.key, {
+        title: "Places mentioned in this guide",
+        items,
+      });
+    }
+  }
+
+  return sections;
+}
+
+function scoreEntitiesForText({
+  text,
+  sectionTitle,
+  entities,
+  currentCitySlug,
+  currentCountrySlug,
+  usedEntityKeys,
+}: {
+  text: string;
+  sectionTitle: string;
+  entities: ContextualEntity[];
+  currentCitySlug?: string;
+  currentCountrySlug?: string;
+  usedEntityKeys: Set<string>;
+}) {
+  const titleTokens = new Set(keywordList(sectionTitle));
+  const normalizedCurrentCountry = currentCountrySlug ? slugify(currentCountrySlug) : "";
+
+  return entities
+    .map((entity) => {
+      if (usedEntityKeys.has(entity.key)) {
+        return { entity, score: 0 };
+      }
+
+      const mentions = findEntityMentions(text, [entity]);
+
+      if (mentions.length === 0) {
+        return { entity, score: 0 };
+      }
+
+      const cityBonus = currentCitySlug && entity.citySlug === currentCitySlug ? 3 : 0;
+      const countryBonus =
+        normalizedCurrentCountry && entity.countrySlug && slugify(entity.countrySlug) === normalizedCurrentCountry ? 2 : 0;
+      const keywordBonus = entity.keywords.some((keyword) => titleTokens.has(keyword)) ? 2 : 0;
+      const typeBonus = sectionEntityTypeBonus(sectionTitle, entity.entityType);
+
+      return {
+        entity,
+        score: mentions.length * 5 + cityBonus + countryBonus + keywordBonus + typeBonus,
+      };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || entityTypePriority(a.entity.entityType) - entityTypePriority(b.entity.entityType))
+    .map((item) => item.entity);
+}
+
+function findEntityMentions(text: string, entities: ContextualEntity[]): EntityMention[] {
+  const mentions: EntityMention[] = [];
+
+  entities.forEach((entity) => {
+    entity.aliases.forEach((alias) => {
+      const matcher = entityAliasMatcher(alias);
+      let match = matcher.exec(text);
+
+      while (match) {
+        const prefix = match[1] || "";
+        const matchedText = match[2] || "";
+        const start = match.index + prefix.length;
+
+        mentions.push({
+          entity,
+          start,
+          end: start + matchedText.length,
+          text: matchedText,
+        });
+
+        match = matcher.exec(text);
+      }
+    });
+  });
+
+  return nonOverlappingMentions(mentions);
+}
+
+function nonOverlappingMentions(mentions: EntityMention[]) {
+  const selectedMentions: EntityMention[] = [];
+
+  mentions
+    .sort((a, b) => a.start - b.start || b.text.length - a.text.length || entityTypePriority(a.entity.entityType) - entityTypePriority(b.entity.entityType))
+    .forEach((mention) => {
+      const overlaps = selectedMentions.some(
+        (selected) => mention.start < selected.end && mention.end > selected.start,
+      );
+
+      if (!overlaps) {
+        selectedMentions.push(mention);
+      }
+    });
+
+  return selectedMentions.sort((a, b) => a.start - b.start);
+}
+
+function firstMentionPerEntity(mentions: EntityMention[]) {
+  const usedEntityKeys = new Set<string>();
+
+  return mentions.filter((mention) => {
+    if (usedEntityKeys.has(mention.entity.key)) {
+      return false;
+    }
+
+    usedEntityKeys.add(mention.entity.key);
+    return true;
+  });
+}
+
+function entityAliasMatcher(alias: string) {
+  return new RegExp(`(^|[^A-Za-z0-9])(${escapeRegExp(alias)})(?=$|[^A-Za-z0-9])`, "gi");
+}
+
+function sectionEntityTypeBonus(sectionTitle: string, entityType: ContextualEntityType) {
+  const title = sectionTitle.toLowerCase();
+
+  if (entityType === "restaurant" && /\b(food|eat|restaurant|cafe|dining|coffee)\b/.test(title)) {
+    return 5;
+  }
+
+  if ((entityType === "destination" || entityType === "attraction") && /\b(place|spot|attraction|visit|day|itinerary|route|beach|wadi|mountain|fort|souq)\b/.test(title)) {
+    return 4;
+  }
+
+  if (entityType === "guide" && /\b(tip|guide|plan|itinerary|travel)\b/.test(title)) {
+    return 3;
+  }
+
+  return 0;
+}
+
+function entityTypePriority(type: ContextualEntityType) {
+  const priority: Record<ContextualEntityType, number> = {
+    destination: 1,
+    attraction: 2,
+    restaurant: 3,
+    city: 4,
+    country: 5,
+    guide: 6,
+  };
+
+  return priority[type];
+}
+
+function contextualSectionTitle(sectionTitle: string, items: ContextualEntity[]) {
+  const title = sectionTitle.toLowerCase();
+
+  if (items.some((item) => item.entityType === "restaurant") || /\b(food|eat|restaurant|cafe|dining)\b/.test(title)) {
+    return "Where to eat nearby";
+  }
+
+  if (/\b(nearby|route|day|itinerary|stop|visit|beach|wadi|mountain|fort|souq)\b/.test(title)) {
+    return "Recommended spots nearby";
+  }
+
+  if (items.some((item) => item.entityType === "guide" || item.entityType === "city" || item.entityType === "country")) {
+    return "Explore more";
+  }
+
+  return "Places mentioned in this section";
+}
+
+function blockSearchText(block: GuideContentBlock) {
+  if (block.kind === "heading") {
+    return block.title;
+  }
+
+  if (block.kind === "list") {
+    return `${block.section.title}\n${block.section.items.join("\n")}`;
+  }
+
+  return block.text;
 }
 
 function buildGuideContentBlocks(content: string[], tableOfContents: Guide["tableOfContents"]): GuideContentBlock[] {
@@ -744,6 +1273,42 @@ function listingBlockItemToEntityCard(item: ResolvedGuideListingBlockItem): Guid
   };
 }
 
+function dedupeContextualEntities(entities: ContextualEntity[]) {
+  return Array.from(new Map(entities.filter((entity) => entity.href && entity.title).map((entity) => [entity.key, entity])).values());
+}
+
+function entityAliases(...values: Array<string | undefined>) {
+  const aliases = values
+    .flatMap((value) => {
+      const normalizedValue = String(value || "").trim();
+
+      if (!normalizedValue) {
+        return [];
+      }
+
+      return [normalizedValue, normalizedValue.replace(/-/g, " ")];
+    })
+    .map((value) => value.replace(/\s+/g, " ").trim())
+    .filter((value) => value.length >= 3 && !genericAliasWords.has(value.toLowerCase()));
+
+  return Array.from(new Set(aliases)).sort((a, b) => b.length - a.length);
+}
+
+function keywordList(...values: Array<string | string[] | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .flatMap((value) => String(value || "").toLowerCase().match(/[a-z0-9]+/g) || [])
+        .filter((word) => word.length >= 4 && !genericKeywordWords.has(word)),
+    ),
+  );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 type InlineListSection = {
   title: string;
   items: string[];
@@ -753,6 +1318,39 @@ const listSectionHeadingPattern =
   /^(travel tips|recommended attractions|recommended destinations|recommended places|best areas|what to eat|where to eat|highlights|places mentioned|places to visit|things to do)\b/i;
 
 const faqHeadingPattern = /^(#{2,3}\s*)?(faqs?|frequently asked questions)\b/i;
+
+const genericAliasWords = new Set([
+  "city",
+  "guide",
+  "travel",
+  "place",
+  "places",
+  "spot",
+  "spots",
+  "restaurant",
+  "restaurants",
+  "cafe",
+  "beach",
+  "mountain",
+  "country",
+]);
+
+const genericKeywordWords = new Set([
+  "with",
+  "from",
+  "this",
+  "that",
+  "your",
+  "guide",
+  "travel",
+  "place",
+  "places",
+  "city",
+  "country",
+  "destination",
+  "attraction",
+  "restaurant",
+]);
 
 function parseListSection(text: string): InlineListSection | undefined {
   const trimmedText = text.trim();

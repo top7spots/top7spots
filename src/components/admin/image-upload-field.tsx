@@ -37,6 +37,7 @@ export function ImageUploadField({
   const [notice, setNotice] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const displayImage = removed ? "" : previewUrl || savedImage;
+  const compressionKind = imageCompressionKind(fieldName, label);
 
   useEffect(() => {
     setSavedImage(currentImage || "");
@@ -99,7 +100,7 @@ export function ImageUploadField({
     setIsProcessing(true);
 
     try {
-      const result = await compressAdminImage(file);
+      const result = await compressAdminImage(file, { kind: compressionKind });
       if (inputRef.current) {
         inputRef.current.files = createFileList([result.file]);
       }
@@ -268,7 +269,7 @@ export function GalleryUploadField({
     setIsProcessing(true);
 
     try {
-      const results = await Promise.all(selected.map((file) => compressAdminImage(file)));
+      const results = await Promise.all(selected.map((file) => compressAdminImage(file, { kind: "standard" })));
       const processedFiles = results.map((result) => result.file);
       const previewUrls = processedFiles.map((file) => URL.createObjectURL(file));
 
@@ -369,4 +370,11 @@ function errorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : "Image compression failed. Try a smaller JPG, PNG, or WEBP image.";
+}
+
+function imageCompressionKind(fieldName: string, label: string) {
+  const text = `${fieldName} ${label}`.toLowerCase();
+  return text.includes("hero") || text.includes("banner") || text.includes("cover")
+    ? "hero"
+    : "standard";
 }

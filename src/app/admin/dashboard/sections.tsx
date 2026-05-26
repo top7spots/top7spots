@@ -1017,7 +1017,7 @@ function GuideForm({
           <Area label="Excerpt" name="excerpt" defaultValue={guide?.excerpt} />
           <Area label="Content paragraphs, one per line" name="content" defaultValue={lines(guide?.content)} rows={6} />
         </FormSection>
-        <FormSection title="Page blocks" columns={1}>
+        <FormSection title="Guide Page Builder" columns={1}>
           <GuideContentBlocksField
             defaultBlocks={guide?.contentBlocks}
             cities={cities.map((city) => ({

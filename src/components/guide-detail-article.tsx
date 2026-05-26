@@ -474,11 +474,11 @@ function GuidePageBlock({
     return <MapBlock block={block} />;
   }
 
-  if (block.type === "travel-tips" || block.type === "best-time-to-visit") {
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
     return <TipsBlock block={block} />;
   }
 
-  if (block.type === "car-rental-cta" || block.type === "newsletter-cta") {
+  if (block.type === "cta" || block.type === "car-rental-cta" || block.type === "newsletter-cta") {
     return <GuideCtaBlock block={block} />;
   }
 
@@ -547,7 +547,7 @@ function TipsBlock({ block }: { block: GuideCmsBlock }) {
 
   return (
     <section id={block.id} className="scroll-mt-24">
-      <BlockHeading block={block} fallbackTitle={block.type === "best-time-to-visit" ? "Best time to visit" : "Travel tips"} />
+      <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
       {block.body ? <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">{block.body}</p> : null}
       {tips.length > 0 ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -1687,7 +1687,27 @@ function selectedBlockFallbackTitle(type: GuideCmsBlock["type"]) {
 }
 
 function ctaFallbackTitle(type: GuideCmsBlock["type"]) {
-  return type === "newsletter-cta" ? "Get fresh travel ideas" : "Plan your rental car";
+  if (type === "newsletter-cta") {
+    return "Get fresh travel ideas";
+  }
+
+  if (type === "car-rental-cta") {
+    return "Plan your rental car";
+  }
+
+  return "Plan your trip";
+}
+
+function tipsFallbackTitle(type: GuideCmsBlock["type"]) {
+  if (type === "best-time-to-visit") {
+    return "Best time to visit";
+  }
+
+  if (type === "warnings") {
+    return "Good to know";
+  }
+
+  return "Travel tips";
 }
 
 function matchesEntityId(item: { id: string; slug?: string; name?: string; title?: string }, id: string) {

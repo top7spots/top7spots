@@ -261,7 +261,7 @@ export function GuideDetailArticle({
                 <HeroQuickChips guide={guide} city={city} />
               </div>
               {heroImage ? (
-                <div className="relative aspect-[4/3] min-h-72 overflow-hidden rounded-[1.75rem] bg-slate-200 shadow-2xl shadow-slate-200/80 lg:aspect-[5/4]">
+                <div className="relative h-72 w-full overflow-hidden rounded-[1.75rem] bg-slate-200 shadow-2xl shadow-slate-200/80 sm:aspect-[4/3] sm:h-auto sm:min-h-72 lg:aspect-[5/4]">
                   <Image
                     src={image}
                     alt={imageAlt}
@@ -276,12 +276,12 @@ export function GuideDetailArticle({
           </div>
         </section>
 
-        <article className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:grid-cols-[230px_minmax(0,1fr)_300px] xl:items-start">
+        <article className="mx-auto grid min-w-0 max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:grid-cols-[230px_minmax(0,1fr)_300px] xl:items-start">
           <StaticGuideArticleToc items={tocItems} />
           <div className="min-w-0 xl:col-start-2">
-            <div className="grid gap-8">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8">
               <WhyVisitSection guide={guide} city={city} description={heroDescription} />
-              <div className="grid gap-8 md:gap-10">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 md:gap-10">
                 {hasPageBlocks ? (
                   <GuidePageBlocks
                     guide={guide}
@@ -308,7 +308,7 @@ export function GuideDetailArticle({
             </div>
 
             {!hasPageBlocks && listingBlocks.length > 0 ? (
-              <section className="mt-10 grid gap-8" aria-label="Guide listing blocks">
+              <section className="mt-10 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8" aria-label="Guide listing blocks">
                 {listingBlocks.map((block) => (
                   <GuideListingBlockSection key={block.id} block={block} />
                 ))}
@@ -318,7 +318,7 @@ export function GuideDetailArticle({
             {!hasPageBlocks ? <ServerGuideFaqAccordion faqs={faqItems} /> : null}
 
             {(relatedGuides.length > 0 || relatedPlaces.length > 0) ? (
-              <section className="mt-10 grid gap-8">
+              <section className="mt-10 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8">
                 {relatedGuides.length > 0 ? (
                   <RelatedGuides guides={relatedGuides} />
                 ) : null}
@@ -390,7 +390,7 @@ function GuideCtaLink({ href, children }: { href: string; children: ReactNode })
   return (
     <Link
       href={href}
-      className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 hover:text-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+      className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/15 hover:text-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
     >
       {children}
     </Link>
@@ -424,7 +424,7 @@ function StaticGuideArticleToc({ items }: { items: GuideTocItem[] }) {
 
       <a
         href="#guide-toc-mobile"
-        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-950/20 transition hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] xl:hidden"
+        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-950/20 transition-colors hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] xl:hidden"
         aria-label="Jump to table of contents"
       >
         <ListTree className="size-4" aria-hidden="true" />
@@ -441,7 +441,7 @@ function StaticTocLinks({ items, className = "" }: { items: GuideTocItem[]; clas
         <Link
           key={item.id}
           href={`#${item.id}`}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold leading-5 transition ${
+          className={`rounded-xl px-3 py-2 text-sm font-semibold leading-5 transition-colors ${
             item.level === 3 ? "ml-3 text-xs" : ""
           } ${index === 0 ? "bg-blue-50 text-[#1D4ED8]" : "text-slate-600 hover:bg-slate-50 hover:text-[#111827]"}`}
         >
@@ -468,7 +468,7 @@ function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
       <div className="mt-6 grid gap-3">
         {validFaqs.map((faq, index) => (
           <details key={faq.question} open={index === 0} className="rounded-2xl border border-slate-200 bg-slate-50">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition-colors hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden">
               <span>{faq.question}</span>
               <ChevronDown className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
             </summary>
@@ -551,7 +551,7 @@ function WhyVisitSection({
     "Use this guide as a focused starting point for planning the best places, practical stops, and next steps.";
 
   return (
-    <section id="why-visit" className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <section id="why-visit" className="min-w-0 scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Why visit</p>
       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827] md:text-3xl">{title}</h2>
       <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">{text}</p>
@@ -575,7 +575,7 @@ function GuideSideRail({
   destinations: Destination[];
 }) {
   return (
-    <aside className="grid gap-4 xl:sticky xl:top-24 xl:col-start-3">
+    <aside className="grid min-w-0 gap-4 xl:sticky xl:top-24 xl:col-start-3">
       <QuickInfoSideCard guide={guide} city={city} block={quickInfoBlock} />
       {relatedGuides.length > 0 ? <RelatedGuidesSideCard guides={relatedGuides.slice(0, 3)} /> : null}
       {isCarRentalRelevant(guide, carRentalBlock) ? (
@@ -629,7 +629,7 @@ function RelatedGuidesSideCard({ guides }: { guides: Guide[] }) {
           <Link
             key={guide.id}
             href={guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
-            className="group rounded-2xl border border-slate-100 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50"
+            className="group rounded-2xl border border-slate-100 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-blue-50"
           >
             <p className="line-clamp-2 text-sm font-semibold leading-6 text-[#111827] group-hover:text-[#1D4ED8]">{guide.title}</p>
             {guide.category || guide.readTime ? (
@@ -670,7 +670,7 @@ function CarRentalSideCard({
       ) : null}
       <Link
         href={href}
-        className="mt-4 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition hover:bg-orange-100"
+        className="mt-4 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
       >
         {label}
       </Link>
@@ -903,7 +903,7 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
       {block.ctaHref ? (
         <Link
           href={block.ctaHref}
-          className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition hover:bg-orange-100"
+          className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
         >
           {block.ctaLabel || "Learn more"}
         </Link>
@@ -951,7 +951,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
         <span>{block.title}</span>
         <a
           href={`#${block.id}`}
-          className="hidden rounded-full p-1 text-slate-300 transition hover:bg-slate-100 hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+          className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
           aria-label={`Link to ${block.title}`}
         >
           <Hash className="size-4" aria-hidden="true" />
@@ -1023,7 +1023,7 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
           <span>{section.title}</span>
           <a
             href={`#${id}`}
-            className="hidden rounded-full p-1 text-slate-300 transition hover:bg-white hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+            className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-white hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
             aria-label={`Link to ${section.title}`}
           >
             <Hash className="size-4" aria-hidden="true" />
@@ -1081,7 +1081,7 @@ function renderLinkedText(text: string, entities: ContextualEntity[]) {
       <Link
         key={`${mention.entity.key}-${mention.start}-${index}`}
         href={mention.entity.href}
-        className="rounded-md bg-blue-50/70 px-1 py-0.5 font-medium text-[#1D4ED8] transition hover:bg-blue-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+        className="rounded-md bg-blue-50/70 px-1 py-0.5 font-medium text-[#1D4ED8] transition-colors hover:bg-blue-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
         aria-label={`Open ${mention.entity.title}`}
       >
         {text.slice(mention.start, mention.end)}

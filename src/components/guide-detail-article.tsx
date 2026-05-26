@@ -185,7 +185,7 @@ export function GuideDetailArticle({
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
                 Travel guide
               </p>
-              <div className="mt-8 grid gap-8">
+              <div className="mt-8 grid gap-8 md:gap-9">
                 {(guide.content.length > 0
                   ? guide.content
                   : ["More travel notes are being shaped for this guide."]
@@ -301,10 +301,13 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
 
   return (
     <section aria-labelledby={blockHeadingId} className="min-w-0">
-      <h2 id={blockHeadingId} className="text-2xl font-semibold tracking-tight text-[#111827]">
-        {block.title}
-      </h2>
-      <div className="-mx-4 mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">In this guide</p>
+        <h2 id={blockHeadingId} className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
+          {block.title}
+        </h2>
+      </div>
+      <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto scroll-smooth px-4 pb-3 [scrollbar-width:thin] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
         {block.items.map((item) => (
           <GuideEntityCard
             key={item.key}
@@ -375,7 +378,7 @@ function ContentBlock({
   if (text.startsWith("## ")) {
     const heading = text.replace(/^##\s+/, "").trim();
     return (
-      <h2 id={headingId(heading, tableOfContents, index)} className="scroll-mt-24 text-3xl font-semibold tracking-tight text-[#111827]">
+      <h2 id={headingId(heading, tableOfContents, index)} className="max-w-4xl scroll-mt-24 pt-2 text-3xl font-semibold tracking-tight text-[#111827]">
         {heading}
       </h2>
     );
@@ -384,7 +387,7 @@ function ContentBlock({
   if (text.startsWith("### ")) {
     const heading = text.replace(/^###\s+/, "").trim();
     return (
-      <h3 id={headingId(heading, tableOfContents, index)} className="scroll-mt-24 text-2xl font-semibold tracking-tight text-[#111827]">
+      <h3 id={headingId(heading, tableOfContents, index)} className="max-w-4xl scroll-mt-24 pt-1 text-2xl font-semibold tracking-tight text-[#111827]">
         {heading}
       </h3>
     );
@@ -396,7 +399,7 @@ function ContentBlock({
     return <InlineCardListSection section={listSection} />;
   }
 
-  return <p className="max-w-4xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{text}</p>;
+  return <p className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">{text}</p>;
 }
 
 function RelatedGuides({ guides }: { guides: Guide[] }) {
@@ -404,8 +407,11 @@ function RelatedGuides({ guides }: { guides: Guide[] }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Related guides</h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Keep reading</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">Related guides</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <GuideEntityCard key={item.key} item={item} className="w-auto" />
         ))}
@@ -426,8 +432,11 @@ function RelatedPlaces({ places }: { places: RelatedPlace[] }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Places mentioned in this guide</h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Explore nearby</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">Places mentioned in this guide</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <GuideEntityCard key={item.key} item={item} className="w-auto" />
         ))}
@@ -439,10 +448,13 @@ function RelatedPlaces({ places }: { places: RelatedPlace[] }) {
 function InlineCardListSection({ section }: { section: InlineListSection }) {
   return (
     <section className="rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
-      <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">{section.title}</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Quick notes</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">{section.title}</h2>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {section.items.map((item, index) => (
-          <div key={`${item}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={`${item}-${index}`} className="min-h-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold leading-6 text-[#111827]">{item}</p>
           </div>
         ))}
@@ -453,17 +465,21 @@ function InlineCardListSection({ section }: { section: InlineListSection }) {
 
 function SimilarGuidesCarousel({ guides }: { guides: Guide[] }) {
   return (
-    <section className="bg-white px-4 pb-14 pt-4 sm:px-6 lg:px-8">
+    <section className="bg-white px-4 pb-14 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
-          More travel guides you may like
-        </h2>
-        <div className="-mx-4 mt-5 flex snap-x gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
+        <div className="mb-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">Keep planning</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
+            More travel guides you may like
+          </h2>
+        </div>
+        <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto scroll-smooth px-4 pb-4 [scrollbar-width:thin] sm:mx-0 sm:px-0">
           {guides.map((guide) => (
             <GuideEntityCard
               key={guide.id}
               item={guideToEntityCardItem(guide)}
               imageSizes="(min-width: 1024px) 270px, 78vw"
+              className="grow-0 !w-[18rem] !max-w-[82vw] sm:!w-[18.5rem] sm:!min-w-[18.5rem] sm:!max-w-[18.5rem]"
             />
           ))}
         </div>
@@ -478,7 +494,9 @@ function resolveRelatedGuides(slugs: string[], guides: Guide[], currentGuideId: 
   }
 
   return slugs
-    .map((slug) => guides.find((guide) => guide.slug === slug && guide.id !== currentGuideId))
+    .map((slug) =>
+      guides.find((guide) => guide.slug === slug && guide.id !== currentGuideId && isSafeGuideSlug(guide.slug)),
+    )
     .filter((guide): guide is Guide => Boolean(guide));
 }
 
@@ -534,7 +552,7 @@ function resolveSimilarGuides(currentGuide: Guide, guides: Guide[], city?: City)
 
   const addGuides = (items: Guide[]) => {
     for (const guide of items) {
-      if (guide.id !== currentGuide.id && !selected.has(guide.id)) {
+      if (guide.id !== currentGuide.id && isSafeGuideSlug(guide.slug) && !selected.has(guide.id)) {
         selected.set(guide.id, guide);
       }
     }
@@ -575,6 +593,10 @@ function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
   };
 }
 
+function isSafeGuideSlug(slug: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+}
+
 function listingBlockItemToEntityCard(item: ResolvedGuideListingBlockItem): GuideEntityCardItem {
   return {
     key: item.key,
@@ -600,6 +622,11 @@ function parseListSection(text: string): InlineListSection | undefined {
 
   if (lines.length > 1) {
     const title = lines[0].replace(/:$/, "").trim();
+    const allLinesAreItems = lines.every((line) => /^([-*]|\d+[.)])\s+/.test(line));
+
+    if (allLinesAreItems) {
+      return validInlineListSection("Key points", lines.map(cleanListItem).filter(Boolean));
+    }
 
     if (!listSectionHeadingPattern.test(title)) {
       return undefined;

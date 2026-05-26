@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { GuideEntityCardImage } from "@/components/guides/guide-entity-card-image";
 import { resolveImagePath } from "@/lib/images";
 
 export type GuideEntityCardItem = {
@@ -31,22 +31,15 @@ export function GuideEntityCard({
   return (
     <Link
       href={item.href}
-      className={`group flex h-full min-h-[19rem] w-[17rem] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:w-auto ${className}`}
+      className={`group flex h-[23.5rem] w-[18rem] max-w-[82vw] shrink-0 snap-start scroll-ml-4 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm outline-none transition duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[#1D4ED8] sm:h-96 sm:w-auto sm:max-w-none ${className}`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        {image ? (
-          <Image
-            src={image}
-            alt={item.imageAlt || item.title}
-            fill
-            sizes={imageSizes}
-            className="object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 px-6 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-            {label || "Top7Spots"}
-          </div>
-        )}
+      <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44">
+        <GuideEntityCardImage
+          src={image}
+          alt={item.imageAlt || item.title}
+          label={label || "Top7Spots"}
+          sizes={imageSizes}
+        />
       </div>
       <div className="flex flex-1 flex-col p-4">
         {label ? (

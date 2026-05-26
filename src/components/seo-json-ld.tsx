@@ -45,6 +45,14 @@ type FAQItem = {
   answer: string;
 };
 
+type ItemListEntry = {
+  href: string;
+  title: string;
+  description?: string;
+  image?: string;
+  badge?: string;
+};
+
 export function JsonLd({ data }: JsonLdProps) {
   return (
     <script
@@ -255,9 +263,12 @@ export function buildGuideArticleJsonLd({
   return compactObject({
     "@context": "https://schema.org",
     "@type": "Article",
+    "@id": `${url}#article`,
     headline: guide.title,
+    name: guide.title,
     description: guide.seoDescription || guide.excerpt || undefined,
     image: image ? absoluteImageUrl(image) : undefined,
+    url,
     author: {
       "@type": guide.author ? "Person" : "Organization",
       name: guide.author || siteName,
@@ -267,9 +278,13 @@ export function buildGuideArticleJsonLd({
       name: siteName,
       logo: imageObject("/brand/top7spots-light.webp"),
     },
+    articleSection: guide.category || undefined,
     datePublished: guide.createdAt || undefined,
     dateModified: guide.updatedAt || guide.createdAt || undefined,
-    mainEntityOfPage: url,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
   });
 }
 
@@ -320,6 +335,47 @@ export function buildGuideFaqJsonLd(guide: Pick<Guide, "faqs">) {
         text: faq.answer,
       },
     })),
+  };
+}
+
+export function buildGuideItemListJsonLd({
+  canonicalPath,
+  name,
+  items,
+}: {
+  canonicalPath: string;
+  name: string;
+  items: ItemListEntry[];
+}) {
+  const validItems = items.filter((item) => item.href && item.title);
+
+  if (validItems.length === 0) {
+    return null;
+  }
+
+  const url = absoluteUrl(cleanPath(canonicalPath));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${url}#selected-places`,
+    name,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: validItems.length,
+    itemListElement: validItems.map((item, index) =>
+      compactObject({
+        "@type": "ListItem",
+        position: index + 1,
+        url: absoluteUrl(cleanPath(item.href)),
+        item: compactObject({
+          "@type": item.badge?.toLowerCase().includes("restaurant") ? "Restaurant" : "Place",
+          name: item.title,
+          description: item.description,
+          image: item.image ? absoluteImageUrl(item.image) : undefined,
+          url: absoluteUrl(cleanPath(item.href)),
+        }),
+      }),
+    ),
   };
 }
 

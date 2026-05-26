@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
   return seoMetadata({
     title: guide.seoTitle || guide.title,
     description: guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots.",
-    path: `/guides/${guide.slug}`,
+    path: guideCanonicalPath(guide),
     image: guide.coverImage || guide.image,
     keywords: guide.seoKeywords,
     type: "article",
@@ -51,7 +51,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     notFound();
   }
 
-  const canonicalPath = `/guides/${guide.slug}`;
+  const canonicalPath = guideCanonicalPath(guide);
   const parentCity =
     guide.targetType === "city" && guide.citySlug
       ? cities.find((city) => city.slug === guide.citySlug)
@@ -76,4 +76,10 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
       descriptionFallback="A practical travel guide from Top7Spots."
     />
   );
+}
+
+function guideCanonicalPath(guide: { targetType: string; citySlug?: string; slug: string }) {
+  return guide.targetType === "city" && guide.citySlug
+    ? `/${guide.citySlug}/guides/${guide.slug}`
+    : `/guides/${guide.slug}`;
 }

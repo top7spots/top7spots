@@ -22,6 +22,7 @@ import {
   buildGuideArticleJsonLd,
   buildGuideBreadcrumbJsonLd,
   buildGuideFaqJsonLd,
+  buildGuideItemListJsonLd,
   JsonLd,
 } from "@/components/seo-json-ld";
 import { Badge } from "@/components/ui/badge";
@@ -196,6 +197,20 @@ export function GuideDetailArticle({
   const tocItems = hasPageBlocks
     ? buildPageBlockTocItems(mainPageBlocks, listingBlocks, faqItems)
     : buildTocItems(contentBlocks, faqItems);
+  const contentListingBlocks = mainPageBlocks
+    .map((block) =>
+      listingBlockForContentBlock(block, {
+        guide,
+        listingBlocks,
+        cities,
+        destinations: listingDestinations ?? destinations,
+        attractions,
+        restaurants,
+        guides,
+      }),
+    )
+    .filter((block): block is ResolvedGuideListingBlock => Boolean(block));
+  const selectedItemListItems = guideItemListEntries([...listingBlocks, ...contentListingBlocks]);
   const jsonLd = [
     buildGuideArticleJsonLd({ guide, canonicalPath }),
     buildGuideBreadcrumbJsonLd({
@@ -205,12 +220,17 @@ export function GuideDetailArticle({
       includeCity: includeCityInBreadcrumbJson,
     }),
     buildGuideFaqJsonLd({ faqs: faqItems }),
+    buildGuideItemListJsonLd({
+      canonicalPath,
+      name: `${guide.title} selected places`,
+      items: selectedItemListItems,
+    }),
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
   return (
     <div className="min-h-screen bg-[#F6F8FB]">
       {jsonLd.map((data) => (
-        <JsonLd key={String(data["@type"])} data={data} />
+        <JsonLd key={String(data["@id"] || data["@type"])} data={data} />
       ))}
       <SiteHeader />
       <main>
@@ -1841,6 +1861,26 @@ function listingBlockItemToEntityCard(item: ResolvedGuideListingBlockItem): Guid
     image: item.image,
     type: item.badge || "Guide",
   };
+}
+
+function guideItemListEntries(blocks: ResolvedGuideListingBlock[]) {
+  const eligibleTypes = new Set<ResolvedGuideListingBlock["type"]>([
+    "destinations",
+    "restaurants",
+    "activities",
+  ]);
+
+  return blocks
+    .filter((block) => eligibleTypes.has(block.type))
+    .flatMap((block) => block.items)
+    .filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index)
+    .map((item) => ({
+      href: item.href,
+      title: item.title,
+      description: item.description,
+      image: item.image,
+      badge: item.badge,
+    }));
 }
 
 function listingBlockForContentBlock(

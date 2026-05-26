@@ -18,6 +18,7 @@ export type GuideListingBlockType =
   | "countries"
   | "guides"
   | "restaurants"
+  | "activities"
   | "custom";
 
 export type GuideListingBlockCustomItem = {
@@ -34,6 +35,46 @@ export type GuideListingBlock = {
   type: GuideListingBlockType;
   itemIds?: string[];
   customItems?: GuideListingBlockCustomItem[];
+};
+
+export type GuideContentBlockType =
+  | "hero"
+  | "overview"
+  | "selected-destinations"
+  | "selected-cities"
+  | "selected-countries"
+  | "selected-restaurants"
+  | "selected-activities"
+  | "quick-info"
+  | "map"
+  | "travel-tips"
+  | "best-time-to-visit"
+  | "car-rental-cta"
+  | "related-guides"
+  | "faq"
+  | "newsletter-cta";
+
+export type GuideQuickInfoItem = {
+  label: string;
+  value: string;
+};
+
+export type GuideContentBlock = {
+  id: string;
+  type: GuideContentBlockType;
+  title?: string;
+  eyebrow?: string;
+  body?: string;
+  image?: string;
+  imageAlt?: string;
+  itemIds?: string[];
+  quickInfo?: GuideQuickInfoItem[];
+  tips?: string[];
+  faqs?: GuideFaq[];
+  mapEmbedUrl?: string;
+  mapLabel?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 };
 
 export type City = {
@@ -117,6 +158,7 @@ export type Guide = {
   relatedPlaceSlugs: string[];
   tableOfContents: GuideTableOfContentsItem[];
   listingBlocks: GuideListingBlock[];
+  contentBlocks: GuideContentBlock[];
   createdAt: string;
   updatedAt: string;
 };

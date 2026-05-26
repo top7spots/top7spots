@@ -39,7 +39,15 @@ import {
 } from "@/lib/guide-listing-blocks";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
-import type { Attraction, City, Destination, Guide, GuideFaq, Restaurant } from "@/lib/types";
+import type {
+  Attraction,
+  City,
+  Destination,
+  Guide,
+  GuideContentBlock as GuideCmsBlock,
+  GuideFaq,
+  Restaurant,
+} from "@/lib/types";
 
 type BreadcrumbItem = {
   label: string;
@@ -72,7 +80,7 @@ type RelatedPlace = {
   image?: string;
 };
 
-type GuideContentBlock =
+type GuideArticleContentBlock =
   | {
       kind: "heading";
       key: string;
@@ -130,8 +138,13 @@ export function GuideDetailArticle({
   attractions,
   descriptionFallback,
 }: GuideDetailArticleProps) {
-  const image = resolveImagePath(guide.coverImage || guide.image);
-  const imageAlt = guide.coverImageAlt || guide.title;
+  const heroBlock = guide.contentBlocks.find((block) => block.type === "hero");
+  const pageBlocks = guide.contentBlocks.filter((block) => block.type !== "hero");
+  const heroTitle = heroBlock?.title || guide.title;
+  const heroDescription = heroBlock?.body || guide.excerpt || descriptionFallback;
+  const heroImage = heroBlock?.image || guide.coverImage || guide.image;
+  const image = resolveImagePath(heroImage);
+  const imageAlt = heroBlock?.imageAlt || guide.coverImageAlt || guide.title;
   const relatedGuides = resolveRelatedGuides(guide.relatedGuideSlugs, guides, guide.id);
   const relatedPlaces = resolveRelatedPlaces(guide.relatedPlaceSlugs, destinations, attractions, city);
   const similarGuides = resolveSimilarGuides(guide, guides, city).slice(0, 10);
@@ -141,12 +154,14 @@ export function GuideDetailArticle({
     destinations: listingDestinations ?? destinations,
     guides,
     restaurants,
+    attractions,
     currentGuideId: guide.id,
   });
+  const hasPageBlocks = pageBlocks.length > 0;
   const ctaDestinations = destinations
     .filter((destination) => !guide.relatedPlaceSlugs.includes(destination.slug))
     .slice(0, 4);
-  const contentBlocks = buildGuideContentBlocks(
+  const contentBlocks = buildGuideArticleContentBlocks(
     guide.content.length > 0 ? guide.content : ["More travel notes are being shaped for this guide."],
     guide.tableOfContents,
   );
@@ -206,17 +221,17 @@ export function GuideDetailArticle({
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-end">
               <div>
                 <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#1D4ED8] hover:bg-blue-50">
-                  {guide.category || "Travel guide"}
+                  {heroBlock?.eyebrow || guide.category || "Travel guide"}
                 </Badge>
                 <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#111827] md:text-6xl">
-                  {guide.title}
+                  {heroTitle}
                 </h1>
                 <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
-                  {guide.excerpt || descriptionFallback}
+                  {heroDescription}
                 </p>
                 <ArticleMeta guide={guide} city={city} />
               </div>
-              {(guide.coverImage || guide.image) ? (
+              {heroImage ? (
                 <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                   <Image
                     src={image}
@@ -242,18 +257,32 @@ export function GuideDetailArticle({
                 Travel guide
               </p>
               <div className="mt-8 grid gap-8 md:gap-9">
-                {contentBlocks.map((block) => (
-                  <ArticleBlockGroup
-                    key={block.key}
-                    block={block}
-                    entities={contextualEntities}
-                    contextualSection={contextualSections.get(block.key)}
+                {hasPageBlocks ? (
+                  <GuidePageBlocks
+                    guide={guide}
+                    blocks={pageBlocks}
+                    listingBlocks={listingBlocks}
+                    cities={cities}
+                    destinations={listingDestinations ?? destinations}
+                    attractions={attractions}
+                    restaurants={restaurants}
+                    guides={guides}
+                    fallbackFaqs={faqItems}
                   />
-                ))}
+                ) : (
+                  contentBlocks.map((block) => (
+                    <ArticleBlockGroup
+                      key={block.key}
+                      block={block}
+                      entities={contextualEntities}
+                      contextualSection={contextualSections.get(block.key)}
+                    />
+                  ))
+                )}
               </div>
             </div>
 
-            {listingBlocks.length > 0 ? (
+            {!hasPageBlocks && listingBlocks.length > 0 ? (
               <section className="mt-10 grid gap-8" aria-label="Guide listing blocks">
                 {listingBlocks.map((block) => (
                   <GuideListingBlockSection key={block.id} block={block} />
@@ -261,7 +290,7 @@ export function GuideDetailArticle({
               </section>
             ) : null}
 
-            <GuideFaqAccordion faqs={faqItems} />
+            {!hasPageBlocks ? <GuideFaqAccordion faqs={faqItems} /> : null}
 
             {(relatedGuides.length > 0 || relatedPlaces.length > 0) ? (
               <section className="mt-10 grid gap-8">
@@ -356,6 +385,231 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
   );
 }
 
+function GuidePageBlocks({
+  guide,
+  blocks,
+  listingBlocks,
+  cities,
+  destinations,
+  attractions,
+  restaurants,
+  guides,
+  fallbackFaqs,
+}: {
+  guide: Guide;
+  blocks: GuideCmsBlock[];
+  listingBlocks: ResolvedGuideListingBlock[];
+  cities: City[];
+  destinations: Destination[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  guides: Guide[];
+  fallbackFaqs: GuideFaqItem[];
+}) {
+  return (
+    <>
+      {blocks.map((block) => (
+        <GuidePageBlock
+          key={block.id}
+          guide={guide}
+          block={block}
+          listingBlocks={listingBlocks}
+          cities={cities}
+          destinations={destinations}
+          attractions={attractions}
+          restaurants={restaurants}
+          guides={guides}
+          fallbackFaqs={fallbackFaqs}
+        />
+      ))}
+    </>
+  );
+}
+
+function GuidePageBlock({
+  guide,
+  block,
+  listingBlocks,
+  cities,
+  destinations,
+  attractions,
+  restaurants,
+  guides,
+  fallbackFaqs,
+}: {
+  guide: Guide;
+  block: GuideCmsBlock;
+  listingBlocks: ResolvedGuideListingBlock[];
+  cities: City[];
+  destinations: Destination[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  guides: Guide[];
+  fallbackFaqs: GuideFaqItem[];
+}) {
+  if (block.type === "faq") {
+    const faqs = block.faqs?.length ? block.faqs : fallbackFaqs;
+    return <GuideFaqAccordion faqs={faqs} />;
+  }
+
+  const listingBlock = listingBlockForContentBlock(block, {
+    guide,
+    listingBlocks,
+    cities,
+    destinations,
+    attractions,
+    restaurants,
+    guides,
+  });
+
+  if (listingBlock) {
+    return <GuideListingBlockSection block={listingBlock} />;
+  }
+
+  if (block.type === "quick-info") {
+    return <QuickInfoBlock block={block} />;
+  }
+
+  if (block.type === "map") {
+    return <MapBlock block={block} />;
+  }
+
+  if (block.type === "travel-tips" || block.type === "best-time-to-visit") {
+    return <TipsBlock block={block} />;
+  }
+
+  if (block.type === "car-rental-cta" || block.type === "newsletter-cta") {
+    return <GuideCtaBlock block={block} />;
+  }
+
+  return <EditorialBlock block={block} />;
+}
+
+function EditorialBlock({ block }: { block: GuideCmsBlock }) {
+  const image = resolveImagePath(block.image || "");
+
+  return (
+    <section id={block.id} className="scroll-mt-24">
+      {block.eyebrow ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{block.eyebrow}</p>
+      ) : null}
+      {block.title ? (
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">{block.title}</h2>
+      ) : null}
+      {block.body ? (
+        <div className="mt-4 grid gap-4">
+          {block.body.split(/\n\s*\n/).map((paragraph, index) => (
+            <p key={index} className="max-w-3xl text-base leading-8 text-slate-600 md:text-lg md:leading-9">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {block.image ? (
+        <div className="relative mt-6 min-h-80 overflow-hidden rounded-3xl bg-slate-100">
+          <Image
+            src={image}
+            alt={block.imageAlt || block.title || "Guide image"}
+            fill
+            sizes="(min-width: 1024px) 760px, 100vw"
+            className="object-cover"
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function QuickInfoBlock({ block }: { block: GuideCmsBlock }) {
+  const items = block.quickInfo || [];
+
+  if (items.length === 0) {
+    return <EditorialBlock block={block} />;
+  }
+
+  return (
+    <section id={block.id} className="scroll-mt-24 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:p-6">
+      <BlockHeading block={block} fallbackTitle="Quick info" />
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{item.label}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]">{item.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TipsBlock({ block }: { block: GuideCmsBlock }) {
+  const tips = block.tips || [];
+
+  return (
+    <section id={block.id} className="scroll-mt-24">
+      <BlockHeading block={block} fallbackTitle={block.type === "best-time-to-visit" ? "Best time to visit" : "Travel tips"} />
+      {block.body ? <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">{block.body}</p> : null}
+      {tips.length > 0 ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {tips.map((tip) => (
+            <div key={tip} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-6 text-[#111827]">
+              {tip}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function MapBlock({ block }: { block: GuideCmsBlock }) {
+  if (!block.mapEmbedUrl) {
+    return <EditorialBlock block={block} />;
+  }
+
+  return (
+    <section id={block.id} className="scroll-mt-24">
+      <BlockHeading block={block} fallbackTitle="Map" />
+      <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
+        <iframe
+          src={block.mapEmbedUrl}
+          title={block.mapLabel || block.title || "Guide map"}
+          className="h-[24rem] w-full"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+    </section>
+  );
+}
+
+function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
+  return (
+    <section id={block.id} className="scroll-mt-24 rounded-3xl bg-[#0A2A66] p-6 text-white md:p-8">
+      {block.eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-200">{block.eyebrow}</p> : null}
+      <h2 className="mt-2 text-2xl font-semibold tracking-tight">{block.title || ctaFallbackTitle(block.type)}</h2>
+      {block.body ? <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">{block.body}</p> : null}
+      {block.ctaHref ? (
+        <Link
+          href={block.ctaHref}
+          className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition hover:bg-orange-100"
+        >
+          {block.ctaLabel || "Learn more"}
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
+function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallbackTitle: string }) {
+  return (
+    <div>
+      {block.eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">{block.eyebrow}</p> : null}
+      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">{block.title || fallbackTitle}</h2>
+    </div>
+  );
+}
+
 function ArticleMeta({ guide, city }: { guide: Guide; city?: City }) {
   const date = formatDate(guide.updatedAt || guide.createdAt);
   const meta: Array<{ label: string; icon: ReactNode }> = [
@@ -407,7 +661,7 @@ function ArticleBlockGroup({
   entities,
   contextualSection,
 }: {
-  block: GuideContentBlock;
+  block: GuideArticleContentBlock;
   entities: ContextualEntity[];
   contextualSection?: ContextualEntitySection;
 }) {
@@ -419,7 +673,7 @@ function ArticleBlockGroup({
   );
 }
 
-function ContentBlock({ block, entities }: { block: GuideContentBlock; entities: ContextualEntity[] }) {
+function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; entities: ContextualEntity[] }) {
   if (block.kind === "heading") {
     const HeadingTag = block.level === 2 ? "h2" : "h3";
     const headingClassName =
@@ -747,7 +1001,7 @@ function buildContextualEntitySections({
   currentCitySlug,
   currentCountrySlug,
 }: {
-  blocks: GuideContentBlock[];
+  blocks: GuideArticleContentBlock[];
   entities: ContextualEntity[];
   currentCitySlug?: string;
   currentCountrySlug?: string;
@@ -1000,7 +1254,7 @@ function contextualSectionTitle(sectionTitle: string, items: ContextualEntity[])
   return "Places mentioned in this section";
 }
 
-function blockSearchText(block: GuideContentBlock) {
+function blockSearchText(block: GuideArticleContentBlock) {
   if (block.kind === "heading") {
     return block.title;
   }
@@ -1012,9 +1266,9 @@ function blockSearchText(block: GuideContentBlock) {
   return block.text;
 }
 
-function buildGuideContentBlocks(content: string[], tableOfContents: Guide["tableOfContents"]): GuideContentBlock[] {
+function buildGuideArticleContentBlocks(content: string[], tableOfContents: Guide["tableOfContents"]): GuideArticleContentBlock[] {
   const idCounts = new Map<string, number>();
-  const blocks: GuideContentBlock[] = [];
+  const blocks: GuideArticleContentBlock[] = [];
 
   content.forEach((text, index) => {
     const trimmedText = text.trim();
@@ -1062,7 +1316,7 @@ function buildGuideContentBlocks(content: string[], tableOfContents: Guide["tabl
   return blocks;
 }
 
-function buildTocItems(blocks: GuideContentBlock[], faqs: GuideFaqItem[]): GuideTocItem[] {
+function buildTocItems(blocks: GuideArticleContentBlock[], faqs: GuideFaqItem[]): GuideTocItem[] {
   const items = blocks
     .map((block): GuideTocItem | undefined => {
       if (block.kind === "heading") {
@@ -1271,6 +1525,180 @@ function listingBlockItemToEntityCard(item: ResolvedGuideListingBlockItem): Guid
     image: item.image,
     type: item.badge || "Guide",
   };
+}
+
+function listingBlockForContentBlock(
+  block: GuideCmsBlock,
+  context: {
+    guide: Guide;
+    listingBlocks: ResolvedGuideListingBlock[];
+    cities: City[];
+    destinations: Destination[];
+    attractions: Attraction[];
+    restaurants: Restaurant[];
+    guides: Guide[];
+  },
+): ResolvedGuideListingBlock | undefined {
+  const existingBlock = context.listingBlocks.find((listingBlock) => listingBlock.id === block.id);
+
+  if (existingBlock) {
+    return existingBlock;
+  }
+
+  const title = block.title || selectedBlockFallbackTitle(block.type);
+  const itemIds = block.itemIds || [];
+
+  if (!title || itemIds.length === 0) {
+    return undefined;
+  }
+
+  const items = selectedBlockItems(block, context);
+
+  if (items.length === 0) {
+    return undefined;
+  }
+
+  return {
+    id: block.id,
+    title,
+    type: selectedBlockListingType(block.type),
+    items,
+  };
+}
+
+function selectedBlockItems(
+  block: GuideCmsBlock,
+  context: {
+    guide: Guide;
+    cities: City[];
+    destinations: Destination[];
+    attractions: Attraction[];
+    restaurants: Restaurant[];
+    guides: Guide[];
+  },
+): ResolvedGuideListingBlockItem[] {
+  const itemIds = block.itemIds || [];
+
+  if (block.type === "selected-destinations") {
+    return itemIds
+      .map((id) => context.destinations.find((item) => matchesEntityId(item, id)))
+      .filter((item): item is Destination => Boolean(item))
+      .map((destination) => ({
+        key: `destination-${destination.id}`,
+        href: getCanonicalDestinationPath(destination),
+        title: destination.name,
+        description: destination.summary || destination.location || destination.city,
+        image: destination.image,
+        badge: destination.category || "Destination",
+      }));
+  }
+
+  if (block.type === "selected-cities") {
+    return itemIds
+      .map((id) => context.cities.find((item) => matchesEntityId(item, id)))
+      .filter((item): item is City => Boolean(item))
+      .map((city) => ({
+        key: `city-${city.id}`,
+        href: `/${city.slug}`,
+        title: city.name,
+        description: city.shortDescription || city.region || city.country,
+        image: city.cardImage || city.featuredImage || city.heroImage,
+        badge: city.country || "City",
+      }));
+  }
+
+  if (block.type === "selected-countries") {
+    return itemIds
+      .map((id) => context.cities.find((city) => slugify(city.country) === slugify(id)))
+      .filter((item): item is City => Boolean(item))
+      .map((city) => ({
+        key: `country-${slugify(city.country)}`,
+        href: countryPath(city.country),
+        title: city.country,
+        description: `Explore cities, destinations, and travel guides across ${city.country}.`,
+        image: city.featuredImage || city.heroImage || city.cardImage,
+        badge: "Country",
+      }));
+  }
+
+  if (block.type === "selected-restaurants") {
+    return itemIds
+      .map((id) => context.restaurants.find((item) => matchesEntityId(item, id)))
+      .filter((item): item is Restaurant => Boolean(item))
+      .map((restaurant) => ({
+        key: `restaurant-${restaurant.id}`,
+        href: `/restaurants/${restaurant.slug}`,
+        title: restaurant.name,
+        description: restaurant.shortDescription || restaurant.address,
+        image: restaurant.image,
+        badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+      }));
+  }
+
+  if (block.type === "selected-activities") {
+    return itemIds
+      .map((id) => context.attractions.find((item) => matchesEntityId(item, id)))
+      .filter((item): item is Attraction => Boolean(item))
+      .map((attraction) => ({
+        key: `activity-${attraction.id}`,
+        href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+        title: attraction.name,
+        description: attraction.summary || attraction.description,
+        image: attraction.image,
+        badge: attraction.category || attraction.type || "Activity",
+      }));
+  }
+
+  if (block.type === "related-guides") {
+    return itemIds
+      .map((id) => context.guides.find((item) => matchesEntityId(item, id)))
+      .filter((item): item is Guide => Boolean(item))
+      .filter((guide) => guide.id !== context.guide.id)
+      .map((guide) => ({
+        key: `guide-${guide.id}`,
+        href: guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+        title: guide.title,
+        description: guide.excerpt || guide.seoDescription,
+        image: guide.coverImage || guide.image,
+        badge: guide.category || "Guide",
+      }));
+  }
+
+  return [];
+}
+
+function selectedBlockListingType(type: GuideCmsBlock["type"]): ResolvedGuideListingBlock["type"] {
+  if (type === "selected-destinations") return "destinations";
+  if (type === "selected-cities") return "cities";
+  if (type === "selected-countries") return "countries";
+  if (type === "selected-restaurants") return "restaurants";
+  if (type === "selected-activities") return "activities";
+  return "guides";
+}
+
+function selectedBlockFallbackTitle(type: GuideCmsBlock["type"]) {
+  if (type === "selected-destinations") return "Selected destinations";
+  if (type === "selected-cities") return "Selected cities";
+  if (type === "selected-countries") return "Selected countries";
+  if (type === "selected-restaurants") return "Selected restaurants";
+  if (type === "selected-activities") return "Selected activities";
+  if (type === "related-guides") return "Related guides";
+  return "";
+}
+
+function ctaFallbackTitle(type: GuideCmsBlock["type"]) {
+  return type === "newsletter-cta" ? "Get fresh travel ideas" : "Plan your rental car";
+}
+
+function matchesEntityId(item: { id: string; slug?: string; name?: string; title?: string }, id: string) {
+  const normalizedId = slugify(id);
+  return (
+    item.id === id ||
+    slugify(item.id) === normalizedId ||
+    (item.slug ? slugify(item.slug) === normalizedId : false) ||
+    (item.name ? slugify(item.name) === normalizedId : false) ||
+    (item.title ? slugify(item.title) === normalizedId : false)
+  );
 }
 
 function dedupeContextualEntities(entities: ContextualEntity[]) {

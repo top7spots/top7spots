@@ -9,6 +9,7 @@ import type {
   GuideListingBlockCustomItem,
   GuideListingBlockType,
   Restaurant,
+  Attraction,
 } from "@/lib/types";
 
 const guideListingBlockTypes: GuideListingBlockType[] = [
@@ -17,6 +18,7 @@ const guideListingBlockTypes: GuideListingBlockType[] = [
   "countries",
   "guides",
   "restaurants",
+  "activities",
   "custom",
 ];
 
@@ -42,6 +44,7 @@ type ResolveGuideListingBlockItemsInput = {
   destinations: Destination[];
   guides: Guide[];
   restaurants?: Restaurant[];
+  attractions?: Attraction[];
   currentGuideId?: string;
 };
 
@@ -64,6 +67,7 @@ export function resolveGuideListingBlocks(input: {
   destinations: Destination[];
   guides: Guide[];
   restaurants?: Restaurant[];
+  attractions?: Attraction[];
   currentGuideId?: string;
 }) {
   return input.blocks
@@ -77,6 +81,7 @@ export function resolveGuideListingBlocks(input: {
         destinations: input.destinations,
         guides: input.guides,
         restaurants: input.restaurants,
+        attractions: input.attractions,
         currentGuideId: input.currentGuideId,
       }),
     }))
@@ -89,6 +94,7 @@ export function resolveGuideListingBlockItems({
   destinations,
   guides,
   restaurants = [],
+  attractions = [],
   currentGuideId,
 }: ResolveGuideListingBlockItemsInput): ResolvedGuideListingBlockItem[] {
   if (block.type === "custom") {
@@ -190,12 +196,28 @@ export function resolveGuideListingBlockItems({
     );
   }
 
+  if (block.type === "activities") {
+    return uniqueByKey(
+      itemIds
+        .map((id) => attractions.find((attraction) => matchesEntityId(attraction, id)))
+        .filter((attraction): attraction is Attraction => Boolean(attraction))
+        .map((attraction) => ({
+          key: `activity-${attraction.id}`,
+          href: getListingBlockHref("activities", attraction),
+          title: attraction.name,
+          description: attraction.summary || attraction.description,
+          image: attraction.image,
+          badge: attraction.category || attraction.type || "Activity",
+        })),
+    );
+  }
+
   return [];
 }
 
 export function getListingBlockHref(
   type: GuideListingBlockType,
-  item: Destination | City | Guide | Restaurant | string | GuideListingBlockCustomItem,
+  item: Destination | City | Guide | Restaurant | Attraction | string | GuideListingBlockCustomItem,
 ) {
   if (type === "destinations" && isDestination(item)) {
     return getCanonicalDestinationPath(item);
@@ -217,6 +239,10 @@ export function getListingBlockHref(
 
   if (type === "restaurants" && isRestaurant(item)) {
     return `/restaurants/${item.slug}`;
+  }
+
+  if (type === "activities" && isAttraction(item)) {
+    return `/${item.citySlug}/attractions/${item.slug}`;
   }
 
   if (type === "custom" && isCustomItem(item)) {
@@ -350,6 +376,10 @@ function isGuide(value: unknown): value is Guide {
 
 function isRestaurant(value: unknown): value is Restaurant {
   return isRecord(value) && typeof value.id === "string" && typeof value.name === "string" && "cuisineType" in value;
+}
+
+function isAttraction(value: unknown): value is Attraction {
+  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string" && "citySlug" in value && "recommendedTime" in value;
 }
 
 function isCustomItem(value: unknown): value is GuideListingBlockCustomItem {

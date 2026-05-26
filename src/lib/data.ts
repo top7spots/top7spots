@@ -13,6 +13,7 @@ import type {
   Restaurant,
 } from "@/lib/types";
 import { slugify } from "@/lib/format";
+import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
@@ -65,6 +66,7 @@ const structuredGuideRowKeys = [
   "related_place_slugs",
   "table_of_contents",
   "listing_blocks",
+  "content_blocks",
 ] as const;
 
 const guideOwnershipRowKeys = ["target_type", "country_id", "destination_id"] as const;
@@ -315,6 +317,7 @@ function mapGuide(row: GuideRow): Guide {
     relatedPlaceSlugs: stringListValue(getField(row, "related_place_slugs", "relatedPlaceSlugs")),
     tableOfContents: tableOfContentsValue(getField(row, "table_of_contents", "tableOfContents")),
     listingBlocks: normalizeGuideListingBlocks(getField(row, "listing_blocks", "listingBlocks")),
+    contentBlocks: normalizeGuideContentBlocks(getField(row, "content_blocks", "contentBlocks")),
     createdAt: stringField(row, "created_at", "createdAt"),
     updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
@@ -481,6 +484,7 @@ function toGuideRow(item: Guide): GuideRow {
     related_place_slugs: item.relatedPlaceSlugs || [],
     table_of_contents: item.tableOfContents || [],
     listing_blocks: item.listingBlocks || [],
+    content_blocks: item.contentBlocks || [],
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   };
@@ -924,6 +928,8 @@ export async function upsertItem<T extends AdminCollection>(
     const fallbackRow = { ...guideRow };
     const hasListingBlocks =
       Array.isArray(guideRow.listing_blocks) && guideRow.listing_blocks.length > 0;
+    const hasContentBlocks =
+      Array.isArray(guideRow.content_blocks) && guideRow.content_blocks.length > 0;
 
     for (let attempt = 0; error && attempt < structuredGuideRowKeys.length; attempt += 1) {
       const missingColumn = missingStructuredGuideColumn(error);
@@ -935,6 +941,12 @@ export async function upsertItem<T extends AdminCollection>(
       if (missingColumn === "listing_blocks" && hasListingBlocks) {
         throw new Error(
           "Failed to save guides: apply the Phase 6C listing_blocks schema migration before saving guide listing blocks.",
+        );
+      }
+
+      if (missingColumn === "content_blocks" && hasContentBlocks) {
+        throw new Error(
+          "Failed to save guides: apply the guide content_blocks schema migration before saving block-based guide pages.",
         );
       }
 

@@ -80,6 +80,7 @@ create table if not exists public.guides (
   related_place_slugs text[] not null default '{}',
   table_of_contents jsonb not null default '[]'::jsonb,
   listing_blocks jsonb not null default '[]'::jsonb,
+  content_blocks jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (city_slug, slug)
@@ -99,6 +100,7 @@ alter table public.guides add column if not exists related_guide_slugs text[] no
 alter table public.guides add column if not exists related_place_slugs text[] not null default '{}';
 alter table public.guides add column if not exists table_of_contents jsonb not null default '[]'::jsonb;
 alter table public.guides add column if not exists listing_blocks jsonb not null default '[]'::jsonb;
+alter table public.guides add column if not exists content_blocks jsonb not null default '[]'::jsonb;
 alter table public.destinations add column if not exists faqs jsonb not null default '[]'::jsonb;
 
 create table if not exists public.attractions (

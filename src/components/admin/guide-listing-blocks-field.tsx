@@ -20,6 +20,7 @@ type GuideListingBlocksFieldProps = {
   countries: SelectableItem[];
   guides: SelectableItem[];
   restaurants: SelectableItem[];
+  activities?: SelectableItem[];
 };
 
 type EditableGuideListingBlock = GuideListingBlock & {
@@ -32,6 +33,7 @@ const blockTypes: Array<{ value: GuideListingBlockType; label: string }> = [
   { value: "countries", label: "Countries" },
   { value: "guides", label: "Guides" },
   { value: "restaurants", label: "Restaurants" },
+  { value: "activities", label: "Activities" },
   { value: "custom", label: "Custom links" },
 ];
 
@@ -44,6 +46,7 @@ export function GuideListingBlocksField({
   countries,
   guides,
   restaurants,
+  activities = [],
 }: GuideListingBlocksFieldProps) {
   const [blocks, setBlocks] = useState<EditableGuideListingBlock[]>(() =>
     defaultBlocks.map((block) => ({
@@ -54,8 +57,8 @@ export function GuideListingBlocksField({
   );
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<string[]>([]);
   const selectorItems = useMemo(
-    () => ({ destinations, cities, countries, guides, restaurants }),
-    [destinations, cities, countries, guides, restaurants],
+    () => ({ destinations, cities, countries, guides, restaurants, activities }),
+    [destinations, cities, countries, guides, restaurants, activities],
   );
   const serializedBlocks = useMemo(() => JSON.stringify(toPayload(blocks, selectorItems)), [blocks, selectorItems]);
 
@@ -571,6 +574,7 @@ function itemsForType(
     countries: SelectableItem[];
     guides: SelectableItem[];
     restaurants: SelectableItem[];
+    activities: SelectableItem[];
   },
 ) {
   if (type === "destinations") {
@@ -593,6 +597,10 @@ function itemsForType(
     return items.restaurants;
   }
 
+  if (type === "activities") {
+    return items.activities;
+  }
+
   return [];
 }
 
@@ -604,6 +612,7 @@ function toPayload(
     countries: SelectableItem[];
     guides: SelectableItem[];
     restaurants: SelectableItem[];
+    activities: SelectableItem[];
   },
 ): GuideListingBlock[] {
   return blocks

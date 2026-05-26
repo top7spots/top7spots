@@ -33,6 +33,7 @@ import {
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { DestinationAiContentImport } from "@/components/admin/destination-ai-content-import";
+import { GuideContentBlocksField } from "@/components/admin/guide-content-blocks-field";
 import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
@@ -423,6 +424,7 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
         destinations={data.destinations}
         guides={data.guides}
         restaurants={data.restaurants}
+        attractions={data.attractions}
         guide={guide}
         backHref={adminHref("guides")}
       />
@@ -963,6 +965,7 @@ function GuideForm({
   destinations,
   guides,
   restaurants,
+  attractions,
   guide,
   backHref,
 }: {
@@ -971,6 +974,7 @@ function GuideForm({
   destinations: Destination[];
   guides: Guide[];
   restaurants: Restaurant[];
+  attractions: Attraction[];
   guide?: Guide;
   backHref: string;
 }) {
@@ -1012,6 +1016,43 @@ function GuideForm({
         <FormSection title="Content" columns={1}>
           <Area label="Excerpt" name="excerpt" defaultValue={guide?.excerpt} />
           <Area label="Content paragraphs, one per line" name="content" defaultValue={lines(guide?.content)} rows={6} />
+        </FormSection>
+        <FormSection title="Page blocks" columns={1}>
+          <GuideContentBlocksField
+            defaultBlocks={guide?.contentBlocks}
+            cities={cities.map((city) => ({
+              id: city.id,
+              label: city.name,
+              meta: [city.country, city.region].filter(Boolean).join(" - "),
+            }))}
+            countries={countryOptions(cities).map((country) => ({
+              id: country.id,
+              label: country.label,
+              meta: country.meta,
+            }))}
+            destinations={destinations.map((destination) => ({
+              id: destination.id,
+              label: destination.name,
+              meta: [destination.city, destination.category].filter(Boolean).join(" - "),
+            }))}
+            guides={guides
+              .filter((item) => item.id !== guide?.id)
+              .map((item) => ({
+                id: item.id,
+                label: item.title,
+                meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+              }))}
+            restaurants={restaurantOptions(restaurants, cities).map((restaurant) => ({
+              id: restaurant.id,
+              label: restaurant.label,
+              meta: restaurant.meta,
+            }))}
+            activities={attractions.map((attraction) => ({
+              id: attraction.id,
+              label: attraction.name,
+              meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+            }))}
+          />
         </FormSection>
         <FormSection title="FAQs" columns={1}>
           <Area
@@ -1066,6 +1107,14 @@ function GuideForm({
                 badge: item.category || "Guide",
               }))}
             restaurants={restaurantOptions(restaurants, cities)}
+            activities={attractions.map((attraction) => ({
+              id: attraction.id,
+              label: attraction.name,
+              meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+              description: attraction.summary || attraction.description,
+              image: attraction.image,
+              badge: attraction.category || attraction.type || "Activity",
+            }))}
           />
         </FormSection>
         <FormSection title="SEO" columns={1}>

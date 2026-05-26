@@ -186,6 +186,7 @@ function guideRow(guide) {
     seo_title: guide.seoTitle || `${guide.title} | Top7Spots`,
     seo_description: guide.seoDescription || seoDescription(guide.excerpt),
     listing_blocks: Array.isArray(guide.listingBlocks) ? guide.listingBlocks : [],
+    content_blocks: Array.isArray(guide.contentBlocks) ? guide.contentBlocks : [],
     created_at: guide.createdAt || now(),
     updated_at: now(),
   };

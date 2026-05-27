@@ -42,6 +42,21 @@ function logCitySaveError(stage: string, error: unknown, context: Record<string,
   });
 }
 
+function uploadedFileInfo(formData: FormData, fieldName: string) {
+  const file = formData.get(`${fieldName}File`);
+
+  if (typeof File === "undefined" || !(file instanceof File) || file.size === 0) {
+    return { hasUploadedFile: false };
+  }
+
+  return {
+    hasUploadedFile: true,
+    fileName: file.name,
+    fileType: file.type,
+    fileSize: file.size,
+  };
+}
+
 async function imageFromForm(
   formData: FormData,
   fieldName: "heroImage" | "cardImage" | "featuredImage",
@@ -53,20 +68,11 @@ async function imageFromForm(
     featuredImage: `${slug}-featured`,
   };
 
-  try {
-    return await getImagePathFromForm(formData, {
-      fieldName,
-      folder: "cities",
-      fallbackName: fallbackByField[fieldName],
-    });
-  } catch (error) {
-    logCitySaveError("image-upload", error, {
-      fieldName,
-      slug,
-      hasUploadedFile: Boolean(formData.get(`${fieldName}File`)),
-    });
-    return value(formData, fieldName);
-  }
+  return getImagePathFromForm(formData, {
+    fieldName,
+    folder: "cities",
+    fallbackName: fallbackByField[fieldName],
+  });
 }
 
 export function citySaveErrorRedirectPath(formData: FormData, message: string) {
@@ -121,9 +127,29 @@ export async function saveCityFromForm(formData: FormData): Promise<SaveCityResu
     };
   }
 
-  const heroImage = await imageFromForm(formData, "heroImage", slug);
-  const cardImage = await imageFromForm(formData, "cardImage", slug);
-  const featuredImage = await imageFromForm(formData, "featuredImage", slug);
+  let heroImage: string;
+  let cardImage: string;
+  let featuredImage: string;
+
+  try {
+    heroImage = await imageFromForm(formData, "heroImage", slug);
+    cardImage = await imageFromForm(formData, "cardImage", slug);
+    featuredImage = await imageFromForm(formData, "featuredImage", slug);
+  } catch (error) {
+    logCitySaveError("image-upload", error, {
+      id,
+      slug,
+      heroImage: uploadedFileInfo(formData, "heroImage"),
+      cardImage: uploadedFileInfo(formData, "cardImage"),
+      featuredImage: uploadedFileInfo(formData, "featuredImage"),
+    });
+    return {
+      ok: false,
+      id,
+      message: error instanceof Error ? error.message : "City image upload failed.",
+    };
+  }
+
   const item: City = {
     id,
     name,

@@ -849,7 +849,7 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
 function CityForm({ title, city, backHref }: { title: string; city?: City; backHref: string }) {
   return (
     <EditShell title={title} backHref={backHref}>
-      <form action="/api/admin/cities" method="post" className="grid gap-6">
+      <form action="/api/admin/cities" method="post" encType="multipart/form-data" className="grid gap-6">
         <input type="hidden" name="id" value={city?.id ?? ""} />
         <input type="hidden" name="existingSlug" value={city?.slug ?? ""} />
         <HiddenTimestamps createdAt={city?.createdAt} />

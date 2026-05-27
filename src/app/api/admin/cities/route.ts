@@ -4,6 +4,11 @@ import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-sa
 
 export const dynamic = "force-dynamic";
 
+function hasUploadedFile(formData: FormData, fieldName: string) {
+  const file = formData.get(`${fieldName}File`);
+  return typeof File !== "undefined" && file instanceof File && file.size > 0;
+}
+
 export async function POST(request: Request) {
   const requestUrl = new URL(request.url);
 
@@ -34,6 +39,11 @@ export async function POST(request: Request) {
     path: requestUrl.pathname,
     hasName: Boolean(String(formData.get("name") ?? "").trim()),
     id: String(formData.get("id") ?? "").trim() || null,
+    uploadedFiles: {
+      heroImage: hasUploadedFile(formData, "heroImage"),
+      cardImage: hasUploadedFile(formData, "cardImage"),
+      featuredImage: hasUploadedFile(formData, "featuredImage"),
+    },
   });
 
   const result = await saveCityFromForm(formData);

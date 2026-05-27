@@ -65,6 +65,7 @@ export default async function CityPage({ params }: CityPageProps) {
   const longDescription = city.longDescription.trim();
   const similarCities = selectSimilarCities(city, publishedCities, 10);
   const countryHref = city.country ? countryPath(city.country) : "";
+  const cityHeroImage = city.heroImage || city.featuredImage || city.cardImage;
   const destinationCountLabel = `${cityDestinations.length} ${
     cityDestinations.length === 1 ? "destination" : "destinations"
   }`;
@@ -85,7 +86,7 @@ export default async function CityPage({ params }: CityPageProps) {
           city.shortDescription ||
           `Discover curated travel spots, guides, and attractions in ${city.name}, ${city.country}.`
         }
-        image={city.heroImage || city.featuredImage || city.cardImage}
+        image={cityHeroImage}
         path={`/${city.slug}`}
         city={city.name}
         country={city.country}
@@ -125,9 +126,9 @@ export default async function CityPage({ params }: CityPageProps) {
                 </div>
               </div>
               <div className="relative min-h-64 overflow-hidden bg-slate-200 lg:min-h-full">
-                {city.heroImage ? (
+                {cityHeroImage ? (
                   <Image
-                    src={resolveImagePath(city.heroImage)}
+                    src={resolveImagePath(cityHeroImage)}
                     alt={`${city.name}, ${city.country}`}
                     fill
                     priority

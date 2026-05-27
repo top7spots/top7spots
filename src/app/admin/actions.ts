@@ -162,6 +162,10 @@ function redirectWithSaveError(section: AdminCollection, error: unknown, id?: st
   redirect(`/admin/dashboard?section=${section}${mode}&saveError=${encodeURIComponent(message)}`);
 }
 
+function redirectToAdminSection(section: AdminCollection): never {
+  redirect(`/admin/dashboard?section=${section}`);
+}
+
 function revalidateCoreRoutes(citySlug?: string, itemSlug?: string, type?: "destinations" | "guides") {
   revalidatePath("/");
 
@@ -225,7 +229,7 @@ export async function saveCityAction(formData: FormData) {
     redirect(citySaveErrorRedirectPath(formData, result.message));
   }
 
-  redirect("/admin/dashboard?section=cities&updated=cities");
+  redirectToAdminSection("cities");
 }
 
 export async function deleteCityAction(formData: FormData) {
@@ -306,7 +310,7 @@ export async function saveDestinationAction(formData: FormData) {
 
   revalidateCoreRoutes(item.citySlug, item.slug, "destinations");
   revalidatePath("/destinations");
-  redirect("/admin/dashboard?section=destinations&updated=destinations");
+  redirectToAdminSection("destinations");
 }
 
 export async function deleteDestinationAction(formData: FormData) {
@@ -408,7 +412,7 @@ export async function saveGuideAction(formData: FormData) {
 
   await revalidateGuideRoutes(item);
   revalidatePath("/guides");
-  redirect("/admin/dashboard?section=guides&updated=guides");
+  redirectToAdminSection("guides");
 }
 
 export async function deleteGuideAction(formData: FormData) {
@@ -470,7 +474,7 @@ export async function saveAttractionAction(formData: FormData) {
   }
 
   revalidateCoreRoutes(item.citySlug);
-  redirect("/admin/dashboard?section=attractions&updated=attractions");
+  redirectToAdminSection("attractions");
 }
 
 export async function deleteAttractionAction(formData: FormData) {
@@ -537,7 +541,7 @@ export async function saveRestaurantAction(formData: FormData) {
 
   revalidateCoreRoutes(citySlug);
   revalidatePath(`/restaurants/${item.slug}`);
-  redirect("/admin/dashboard?section=restaurants&updated=restaurants");
+  redirectToAdminSection("restaurants");
 }
 
 export async function saveHomepageReviewAction(formData: FormData) {
@@ -570,7 +574,7 @@ export async function saveHomepageReviewAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
-  redirect("/admin/dashboard?section=homepage_reviews&updated=homepage_reviews");
+  redirectToAdminSection("homepage_reviews");
 }
 
 export async function saveHomepageFaqAction(formData: FormData) {
@@ -603,5 +607,5 @@ export async function saveHomepageFaqAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
-  redirect("/admin/dashboard?section=homepage_faqs&updated=homepage_faqs");
+  redirectToAdminSection("homepage_faqs");
 }

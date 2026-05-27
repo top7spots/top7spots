@@ -587,7 +587,7 @@ function RestaurantsSection({ data, searchParams }: AdminCrudProps) {
     <ManagementShell
       title="Restaurants"
       description="Manage lightweight food and dining entities for guides and future SEO pages."
-      addHref={adminHref("restaurants", { action: "new" })}
+      addHref={adminHref("restaurants", { mode: "add" })}
       addLabel="Add New Restaurant"
       filters={
         <ContentFilters
@@ -623,7 +623,7 @@ function RestaurantsSection({ data, searchParams }: AdminCrudProps) {
                 key="actions"
                 collection="restaurants"
                 viewHref={`/restaurants/${item.slug}`}
-                editHref={adminHref("restaurants", { action: "edit", id: item.id })}
+                editHref={adminHref("restaurants", { mode: "edit", id: item.id })}
                 redirectTo="/admin/dashboard?section=restaurants&deleted=restaurants"
                 hidden={{ id: item.id, slug: item.slug }}
               />,

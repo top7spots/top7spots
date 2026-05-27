@@ -52,5 +52,5 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL(citySaveErrorRedirectPath(formData, result.message), requestUrl), 303);
   }
 
-  return NextResponse.redirect(new URL("/admin/dashboard?section=cities&updated=cities", requestUrl), 303);
+  return NextResponse.redirect(new URL("/admin/dashboard?section=cities", requestUrl), 303);
 }

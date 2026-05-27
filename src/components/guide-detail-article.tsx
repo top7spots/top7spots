@@ -89,6 +89,15 @@ type GuideArticleContentBlock =
       key: string;
       id: string;
       section: InlineListSection;
+    }
+  | {
+      kind: "bullets";
+      key: string;
+      items: string[];
+    }
+  | {
+      kind: "divider";
+      key: string;
     };
 
 type ContextualEntityType = "destination" | "attraction" | "restaurant" | "city" | "country" | "guide";
@@ -736,13 +745,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
         <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">{block.title}</h2>
       ) : null}
       {block.body ? (
-        <div className="mt-5 grid gap-5">
-          {block.body.split(/\n\s*\n/).map((paragraph, index) => (
-            <p key={index} className="max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <MarkdownContent content={block.body} className="mt-5" />
       ) : null}
       {block.image ? (
         <div className="relative mt-6 aspect-[16/10] min-h-72 overflow-hidden rounded-3xl bg-slate-100">
@@ -787,7 +790,7 @@ function TipsBlock({ block }: { block: GuideCmsBlock }) {
   return (
     <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-[#FCFDFF] p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-8">
       <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
-      {block.body ? <p className="mt-5 max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg">{block.body}</p> : null}
+      {block.body ? <MarkdownContent content={block.body} className="mt-5" /> : null}
       {tips.length > 0 ? (
         <div className="mt-5 grid gap-3">
           {tips.map((tip) => (
@@ -827,7 +830,7 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
     <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] bg-[#0A2A66] p-6 text-white shadow-[0_18px_45px_rgba(10,42,102,0.18)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-8">
       {block.eyebrow ? <p className="text-sm font-medium text-orange-200">{block.eyebrow}</p> : null}
       <h2 className="mt-2 text-3xl font-semibold tracking-tight">{block.title || ctaFallbackTitle(block.type)}</h2>
-      {block.body ? <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">{block.body}</p> : null}
+      {block.body ? <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">{renderInlineContent(block.body)}</p> : null}
       {block.ctaHref ? (
         <Link
           href={block.ctaHref}
@@ -892,9 +895,23 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
     return <InlineCardListSection id={block.id} section={block.section} />;
   }
 
+  if (block.kind === "bullets") {
+    return (
+      <ul className="max-w-[48rem] list-disc space-y-2 pl-6 text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+        {block.items.map((item, index) => (
+          <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (block.kind === "divider") {
+    return <hr className="my-2 border-slate-200" />;
+  }
+
   return (
     <p className="max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
-      {renderLinkedText(block.text, entities)}
+      {renderInlineContent(block.text, entities)}
     </p>
   );
 }
@@ -947,11 +964,164 @@ function ContextualEntitySectionCards({ section }: { section: ContextualEntitySe
   );
 }
 
-function renderLinkedText(text: string, entities: ContextualEntity[]) {
-  const mentions = firstMentionPerEntity(findEntityMentions(text, entities));
+type ParsedMarkdownBlock =
+  | { kind: "heading"; key: string; level: 2 | 3; text: string }
+  | { kind: "paragraph"; key: string; text: string }
+  | { kind: "list"; key: string; items: string[] }
+  | { kind: "divider"; key: string };
+
+function MarkdownContent({
+  content,
+  className = "",
+  entities = [],
+}: {
+  content: string;
+  className?: string;
+  entities?: ContextualEntity[];
+}) {
+  const blocks = parseMarkdownBlocks(content);
+
+  return (
+    <div className={`grid gap-5 ${className}`}>
+      {blocks.map((block) => {
+        if (block.kind === "heading") {
+          const HeadingTag = block.level === 2 ? "h2" : "h3";
+          const headingClassName =
+            block.level === 2
+              ? "mt-2 max-w-5xl scroll-mt-24 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl"
+              : "max-w-4xl scroll-mt-24 text-2xl font-semibold tracking-tight text-[#111827]";
+
+          return (
+            <HeadingTag key={block.key} className={headingClassName}>
+              {renderInlineContent(block.text, entities)}
+            </HeadingTag>
+          );
+        }
+
+        if (block.kind === "list") {
+          return (
+            <ul key={block.key} className="max-w-[48rem] list-disc space-y-2 pl-6 text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+              {block.items.map((item, index) => (
+                <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        if (block.kind === "divider") {
+          return <hr key={block.key} className="border-slate-200" />;
+        }
+
+        return (
+          <p key={block.key} className="max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+            {renderInlineContent(block.text, entities)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function parseMarkdownBlocks(content: string): ParsedMarkdownBlock[] {
+  const blocks: ParsedMarkdownBlock[] = [];
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  let paragraphLines: string[] = [];
+  let listItems: string[] = [];
+
+  const flushParagraph = () => {
+    const text = paragraphLines.join(" ").replace(/\s+/g, " ").trim();
+
+    if (text) {
+      blocks.push({ kind: "paragraph", key: `paragraph-${blocks.length}`, text });
+    }
+
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      blocks.push({ kind: "list", key: `list-${blocks.length}`, items: listItems });
+    }
+
+    listItems = [];
+  };
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+    const heading = headingFromText(trimmedLine);
+
+    if (!trimmedLine) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    if (/^-{3,}$/.test(trimmedLine)) {
+      flushParagraph();
+      flushList();
+      blocks.push({ kind: "divider", key: `divider-${blocks.length}` });
+      return;
+    }
+
+    if (heading) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        kind: "heading",
+        key: `heading-${blocks.length}`,
+        level: heading.level,
+        text: heading.title,
+      });
+      return;
+    }
+
+    const bulletMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
+
+    if (bulletMatch) {
+      flushParagraph();
+      listItems.push(bulletMatch[1].trim());
+      return;
+    }
+
+    flushList();
+    paragraphLines.push(trimmedLine);
+  });
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
+}
+
+function renderInlineContent(text: string, entities: ContextualEntity[] = []): ReactNode[] {
+  const nodes: ReactNode[] = [];
+
+  text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .filter((part) => part.length > 0)
+    .forEach((part, index) => {
+      const boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
+
+      if (boldMatch) {
+        nodes.push(
+          <strong key={`bold-${index}`} className="font-semibold text-[#111827]">
+            {boldMatch[1]}
+          </strong>,
+        );
+        return;
+      }
+
+      nodes.push(...renderEntityLinks(part, entities, `text-${index}`));
+    });
+
+  return nodes;
+}
+
+function renderEntityLinks(text: string, entities: ContextualEntity[], keyPrefix: string): ReactNode[] {
+  const mentions = entities.length > 0 ? firstMentionPerEntity(findEntityMentions(text, entities)) : [];
 
   if (mentions.length === 0) {
-    return text;
+    return [text];
   }
 
   const nodes: ReactNode[] = [];
@@ -964,7 +1134,7 @@ function renderLinkedText(text: string, entities: ContextualEntity[]) {
 
     nodes.push(
       <Link
-        key={`${mention.entity.key}-${mention.start}-${index}`}
+        key={`${keyPrefix}-${mention.entity.key}-${mention.start}-${index}`}
         href={mention.entity.href}
         className="rounded-md bg-blue-50/70 px-1 py-0.5 font-medium text-[#1D4ED8] transition-colors hover:bg-blue-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
         aria-label={`Open ${mention.entity.title}`}
@@ -1450,10 +1620,22 @@ function blockSearchText(block: GuideArticleContentBlock) {
     return `${block.section.title}\n${block.section.items.join("\n")}`;
   }
 
+  if (block.kind === "bullets") {
+    return block.items.join("\n");
+  }
+
+  if (block.kind === "divider") {
+    return "";
+  }
+
   return block.text;
 }
 
 function buildGuideArticleContentBlocks(content: string[], tableOfContents: Guide["tableOfContents"]): GuideArticleContentBlock[] {
+  if (containsMarkdown(content)) {
+    return buildMarkdownArticleContentBlocks(content, tableOfContents);
+  }
+
   const idCounts = new Map<string, number>();
   const blocks: GuideArticleContentBlock[] = [];
 
@@ -1492,6 +1674,60 @@ function buildGuideArticleContentBlocks(content: string[], tableOfContents: Guid
     }
 
     splitLongParagraph(trimmedText).forEach((paragraph, paragraphIndex) => {
+      blocks.push({
+        kind: "paragraph",
+        key: `paragraph-${index}-${paragraphIndex}`,
+        text: paragraph,
+      });
+    });
+  });
+
+  return blocks;
+}
+
+function containsMarkdown(content: string[]) {
+  return content.some((item) => /(^|\n)\s*(#{2,3}\s+|[-*]\s+|---+\s*$)|\*\*[^*]+\*\*/m.test(item));
+}
+
+function buildMarkdownArticleContentBlocks(
+  content: string[],
+  tableOfContents: Guide["tableOfContents"],
+): GuideArticleContentBlock[] {
+  const idCounts = new Map<string, number>();
+  const blocks: GuideArticleContentBlock[] = [];
+  const markdownBlocks = parseMarkdownBlocks(content.join("\n"));
+
+  markdownBlocks.forEach((block, index) => {
+    if (block.kind === "heading") {
+      const id = uniqueId(headingId(block.text, tableOfContents, index), idCounts);
+      blocks.push({
+        kind: "heading",
+        key: `heading-${id}`,
+        id,
+        level: block.level,
+        title: block.text,
+      });
+      return;
+    }
+
+    if (block.kind === "list") {
+      blocks.push({
+        kind: "bullets",
+        key: `bullets-${index}`,
+        items: block.items,
+      });
+      return;
+    }
+
+    if (block.kind === "divider") {
+      blocks.push({
+        kind: "divider",
+        key: `divider-${index}`,
+      });
+      return;
+    }
+
+    splitLongParagraph(block.text).forEach((paragraph, paragraphIndex) => {
       blocks.push({
         kind: "paragraph",
         key: `paragraph-${index}-${paragraphIndex}`,

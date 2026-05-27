@@ -1558,7 +1558,7 @@ function EntityCell({ image, title, subtitle }: { image?: string; title: string;
     <div className="flex min-w-64 items-center gap-3">
       <div className="relative size-14 overflow-hidden rounded-xl bg-slate-100">
         {image ? (
-          <Image src={image} alt={title} fill sizes="56px" className="object-cover" />
+          <Image src={image} alt={title} fill sizes="56px" unoptimized className="object-cover" />
         ) : (
           <div className="flex size-full items-center justify-center text-slate-400">
             <ImageIcon className="size-5" />

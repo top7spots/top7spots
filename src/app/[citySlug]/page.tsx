@@ -169,7 +169,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 <DestinationCard
                   key={destination.id}
                   destination={destination}
-                  imageSizes="(min-width: 1280px) 453px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)"
+                  imageSizes="(max-width: 768px) 100vw, 360px"
                 />
               ))}
             </div>
@@ -284,6 +284,7 @@ function SimilarCityCard({ city }: { city: City }) {
             alt={`${city.name}, ${city.country}`}
             fill
             sizes="340px"
+            unoptimized
             className="object-cover transition duration-700 ease-out group-hover:scale-110"
           />
         ) : null}

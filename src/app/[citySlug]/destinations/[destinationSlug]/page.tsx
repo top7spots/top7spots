@@ -250,7 +250,8 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
                     src={galleryImage}
                     alt={`${destination.name} travel view in ${city.name} ${index + 1}`}
                     fill
-                    sizes="(min-width: 1024px) 35vw, 50vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 35vw"
+                    unoptimized
                     className="object-cover"
                   />
                   {index === 1 ? (

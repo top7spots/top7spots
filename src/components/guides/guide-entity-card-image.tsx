@@ -19,6 +19,7 @@ export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCard
       alt={alt}
       fill
       sizes={sizes}
+      unoptimized
       className="object-cover"
     />
   );

@@ -50,10 +50,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const heroImage = "/uploads/global/home-hero.webp";
-const featuredCityImageSizes =
-  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
-const weeklyDestinationImageSizes =
-  "(min-width: 1280px) 630px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const featuredCityImageSizes = "(max-width: 768px) 100vw, 360px";
+const weeklyDestinationImageSizes = "(max-width: 768px) 100vw, 50vw";
 const optimizedHomepageCityImages: Record<string, string> = {
   "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.jpg":
     "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.webp",
@@ -862,6 +860,7 @@ function CityCard({ city }: { city: City }) {
             alt={`${city.name}, ${city.country}`}
             fill
             sizes={featuredCityImageSizes}
+            unoptimized
             quality={68}
             className="object-cover transition duration-700 ease-out group-hover:scale-110"
           />
@@ -915,6 +914,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
           alt={`${destination.name}${context ? `, ${context}` : ""}`}
           fill
           sizes={weeklyDestinationImageSizes}
+          unoptimized
           quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />

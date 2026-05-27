@@ -278,6 +278,7 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
           alt={destination.name}
           fill
           sizes="112px"
+          unoptimized
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>
@@ -311,6 +312,7 @@ function CompactAttractionLink({ attraction }: { attraction: Attraction }) {
           alt={attraction.name}
           fill
           sizes="112px"
+          unoptimized
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>

@@ -465,7 +465,7 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
             key={item.key}
             item={item}
             index={index}
-            imageSizes="(min-width: 1024px) 360px, 100vw"
+            imageSizes="(max-width: 768px) 100vw, 50vw"
           />
         ))}
       </div>
@@ -493,6 +493,7 @@ function GuideListingRowCard({
             alt={item.title}
             fill
             sizes={imageSizes}
+            unoptimized
             className="object-cover"
           />
         ) : (
@@ -753,7 +754,8 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
             fill
-            sizes="(min-width: 1024px) 760px, 100vw"
+            sizes="(max-width: 768px) 100vw, 760px"
+            unoptimized
             className="object-cover"
           />
         </div>
@@ -956,7 +958,7 @@ function ContextualEntitySectionCards({ section }: { section: ContextualEntitySe
             key={item.key}
             item={item}
             className="!w-full !max-w-none h-[26.5rem] sm:h-[26.5rem] sm:min-w-0"
-            imageSizes="(min-width: 1024px) 300px, (min-width: 640px) 46vw, 86vw"
+            imageSizes="(max-width: 768px) 100vw, 360px"
           />
         ))}
       </div>
@@ -1184,7 +1186,8 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
             src={image}
             alt={guide.coverImageAlt || `${guide.title} travel guide`}
             fill
-            sizes="(min-width: 1024px) 180px, 100vw"
+            sizes="(max-width: 768px) 100vw, 180px"
+            unoptimized
             className="object-cover"
           />
         ) : (

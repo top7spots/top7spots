@@ -13,8 +13,7 @@ type GuideCardProps = {
   imageSizes?: string;
 };
 
-const defaultGuideCardImageSizes =
-  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const defaultGuideCardImageSizes = "(max-width: 768px) 100vw, 360px";
 
 export function GuideCard({
   guide,
@@ -38,6 +37,7 @@ export function GuideCard({
           alt={imageAlt}
           fill
           sizes={imageSizes}
+          unoptimized
           quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
@@ -101,6 +101,7 @@ export function CompactGuideCard({ guide, href: hrefOverride }: CompactGuideCard
           alt={imageAlt}
           fill
           sizes="112px"
+          unoptimized
           quality={62}
           className="object-cover transition duration-500 group-hover:scale-105"
         />

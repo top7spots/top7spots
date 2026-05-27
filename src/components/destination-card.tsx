@@ -12,8 +12,7 @@ type DestinationCardProps = {
   imageSizes?: string;
 };
 
-const defaultDestinationCardImageSizes =
-  "(min-width: 1280px) 305px, (min-width: 768px) calc((100vw - 3rem) / 2), calc(100vw - 2rem)";
+const defaultDestinationCardImageSizes = "(max-width: 768px) 100vw, 360px";
 
 export function DestinationCard({ destination, imageSizes = defaultDestinationCardImageSizes }: DestinationCardProps) {
   const image = resolveImagePath(destination.image);
@@ -35,6 +34,7 @@ export function DestinationCard({ destination, imageSizes = defaultDestinationCa
           alt={imageAlt}
           fill
           sizes={imageSizes}
+          unoptimized
           quality={68}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />

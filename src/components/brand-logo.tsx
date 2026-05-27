@@ -31,6 +31,7 @@ export function BrandLogo({
         height={113}
         priority={priority}
         sizes="(min-width: 1024px) 118px, (min-width: 640px) 108px, 98px"
+        unoptimized
         className={cn("h-10 w-auto shrink-0 object-contain sm:h-11", imageClassName)}
       />
     </Link>

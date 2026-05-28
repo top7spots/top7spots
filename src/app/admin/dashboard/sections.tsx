@@ -30,6 +30,7 @@ import {
   saveHomepageFaqAction,
   saveHomepageReviewAction,
   saveRestaurantAction,
+  saveSiteSettingsAction,
   saveSitePageAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
@@ -55,6 +56,7 @@ import type {
   HomepageFaq,
   HomepageReview,
   Restaurant,
+  SiteSettings,
   SitePage,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -86,6 +88,7 @@ type AdminCrudProps = {
     homepageReviews: HomepageReview[];
     homepageFaqs: HomepageFaq[];
     sitePages: SitePage[];
+    siteSettings: SiteSettings;
   };
   searchParams: SearchParams;
 };
@@ -894,31 +897,54 @@ function MediaSection() {
 }
 
 function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
+  const settings = data.siteSettings;
+
   return (
-    <div className="grid gap-6">
+    <form action={saveSiteSettingsAction} className="grid gap-6">
       <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle>Site settings</CardTitle>
+          <CardTitle>Website Settings</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <ReadOnlySetting label="Site name" value="Top7Spots" />
           <ReadOnlySetting label="Domain" value="top7spots.com" />
-          <ReadOnlySetting label="Admin email" value="admin@top7spots.com" />
           <ReadOnlySetting label="Default city" value={data.cities[0]?.name || "Muscat"} />
+          <Field label="Contact email" name="contactEmail" type="email" defaultValue={settings.contactEmail} />
         </CardContent>
       </Card>
-      <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle>SEO and social placeholders</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <ReadOnlySetting label="Default SEO title" value="Top7Spots | Discover The World's Best Travel Spots" />
-          <ReadOnlySetting label="Default SEO description" value="Curated travel cities, hidden gems, beaches, mountains, road trips, and unforgettable experiences." />
-          <ReadOnlySetting label="Instagram" value="Coming soon" />
-          <ReadOnlySetting label="YouTube" value="Coming soon" />
-        </CardContent>
-      </Card>
-    </div>
+
+      <FormSection title="Footer Settings" columns={1}>
+        <Area
+          label="Footer description"
+          name="footerDescription"
+          defaultValue={settings.footerDescription}
+          rows={5}
+        />
+        <Area
+          label="Footer trust text"
+          name="footerTrustText"
+          defaultValue={settings.footerTrustText}
+          rows={3}
+        />
+        <Field label="Copyright text" name="copyrightText" defaultValue={settings.copyrightText} />
+        <Toggle
+          label="Enable newsletter signup"
+          name="newsletterEnabled"
+          defaultChecked={settings.newsletterEnabled}
+        />
+      </FormSection>
+
+      <FormSection title="Social Links">
+        <Field label="Instagram URL" name="instagramUrl" type="url" defaultValue={settings.instagramUrl} />
+        <Field label="Facebook URL" name="facebookUrl" type="url" defaultValue={settings.facebookUrl} />
+        <Field label="YouTube URL" name="youtubeUrl" type="url" defaultValue={settings.youtubeUrl} />
+        <Field label="Pinterest URL" name="pinterestUrl" type="url" defaultValue={settings.pinterestUrl} />
+        <Field label="TikTok URL" name="tiktokUrl" type="url" defaultValue={settings.tiktokUrl} />
+        <Field label="Twitter / X URL" name="twitterUrl" type="url" defaultValue={settings.twitterUrl} />
+      </FormSection>
+
+      <FormActions backHref={adminHref("settings")} label="Save settings" />
+    </form>
   );
 }
 

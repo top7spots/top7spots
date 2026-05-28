@@ -188,6 +188,12 @@ create table if not exists public.contact_messages (
   created_at timestamptz default now()
 );
 
+create table if not exists public.site_settings (
+  key text primary key,
+  value text not null default '',
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists cities_status_display_order_idx on public.cities (status, display_order);
 create index if not exists destinations_city_status_display_order_idx on public.destinations (city_slug, status, display_order);
 create index if not exists guides_city_status_display_order_idx on public.guides (city_slug, status, display_order);
@@ -203,6 +209,7 @@ create index if not exists homepage_reviews_published_sort_order_idx on public.h
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);
 create index if not exists site_pages_status_slug_idx on public.site_pages (status, slug);
 create index if not exists contact_messages_status_created_at_idx on public.contact_messages (status, created_at);
+create index if not exists site_settings_updated_at_idx on public.site_settings (updated_at);
 
 alter table public.cities enable row level security;
 alter table public.destinations enable row level security;
@@ -213,6 +220,7 @@ alter table public.homepage_reviews enable row level security;
 alter table public.homepage_faqs enable row level security;
 alter table public.site_pages enable row level security;
 alter table public.contact_messages enable row level security;
+alter table public.site_settings enable row level security;
 
 drop policy if exists "Public cities are readable" on public.cities;
 drop policy if exists "Published destinations are readable" on public.destinations;
@@ -222,6 +230,7 @@ drop policy if exists "Published restaurants are readable" on public.restaurants
 drop policy if exists "Published homepage reviews are readable" on public.homepage_reviews;
 drop policy if exists "Published homepage FAQs are readable" on public.homepage_faqs;
 drop policy if exists "Published site pages are readable" on public.site_pages;
+drop policy if exists "Site settings are readable" on public.site_settings;
 
 create policy "Public cities are readable"
   on public.cities for select
@@ -262,6 +271,11 @@ create policy "Published site pages are readable"
   on public.site_pages for select
   to anon
   using (status = 'published');
+
+create policy "Site settings are readable"
+  on public.site_settings for select
+  to anon
+  using (true);
 
 insert into public.site_pages (id, title, slug, content, meta_title, meta_description, status)
 values
@@ -320,6 +334,36 @@ values
     'published'
   )
 on conflict (slug) do nothing;
+
+insert into public.site_settings (key, value)
+values
+  (
+    'contact_email',
+    'info@top7spots.com'
+  ),
+  (
+    'footer_description',
+    'Top7Spots is a premium travel discovery platform for curated destinations, hidden gems, road trips, luxury stays, beaches, mountains, and unforgettable places around the world.'
+  ),
+  (
+    'footer_trust_text',
+    'Helping travelers discover the world through curated destinations and practical travel guides.'
+  ),
+  (
+    'copyright_text',
+    'Copyright 2026 Top7Spots. All rights reserved.'
+  ),
+  (
+    'newsletter_enabled',
+    'false'
+  ),
+  ('instagram_url', ''),
+  ('facebook_url', ''),
+  ('youtube_url', ''),
+  ('pinterest_url', ''),
+  ('tiktok_url', ''),
+  ('twitter_url', '')
+on conflict (key) do nothing;
 
 insert into storage.buckets (id, name, public)
 values ('top7spots-media', 'top7spots-media', true)

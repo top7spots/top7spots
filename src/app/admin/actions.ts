@@ -8,6 +8,7 @@ import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upser
 import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
+import { saveSiteSettings } from "@/lib/site-settings";
 import type {
   AdminCollection,
   Attraction,
@@ -20,6 +21,7 @@ import type {
   HomepageFaq,
   HomepageReview,
   Restaurant,
+  SiteSettings,
   SitePage,
 } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
@@ -646,4 +648,31 @@ export async function saveSitePageAction(formData: FormData) {
   revalidatePath(`/${item.slug}`);
   revalidatePath("/admin/dashboard");
   redirectToAdminSection("site_pages");
+}
+
+export async function saveSiteSettingsAction(formData: FormData) {
+  const settings: SiteSettings = {
+    instagramUrl: value(formData, "instagramUrl"),
+    facebookUrl: value(formData, "facebookUrl"),
+    youtubeUrl: value(formData, "youtubeUrl"),
+    pinterestUrl: value(formData, "pinterestUrl"),
+    tiktokUrl: value(formData, "tiktokUrl"),
+    twitterUrl: value(formData, "twitterUrl"),
+    contactEmail: value(formData, "contactEmail") || "info@top7spots.com",
+    footerDescription: value(formData, "footerDescription"),
+    footerTrustText: value(formData, "footerTrustText"),
+    copyrightText: value(formData, "copyrightText"),
+    newsletterEnabled: checkboxValue(formData, "newsletterEnabled"),
+  };
+
+  try {
+    await saveSiteSettings(settings);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Settings could not be saved.";
+    redirect(`/admin/dashboard?section=settings&saveError=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/dashboard");
+  redirect("/admin/dashboard?section=settings&updated=settings");
 }

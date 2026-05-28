@@ -16,6 +16,7 @@ import type {
 import { slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
 type CollectionMap = {
@@ -949,6 +950,7 @@ export async function getAdminData() {
     homepageReviews,
     homepageFaqs,
     sitePages,
+    siteSettings,
   ] = await Promise.all([
     getCities(),
     getDestinations(),
@@ -959,6 +961,7 @@ export async function getAdminData() {
     getHomepageReviews(),
     getHomepageFaqs(),
     getSitePages(),
+    getSiteSettings(),
   ]);
 
   return {
@@ -971,6 +974,7 @@ export async function getAdminData() {
     homepageReviews,
     homepageFaqs,
     sitePages,
+    siteSettings,
   };
 }
 

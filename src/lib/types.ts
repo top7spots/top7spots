@@ -238,6 +238,20 @@ export type SitePage = {
   updatedAt: string;
 };
 
+export type SiteSettings = {
+  instagramUrl: string;
+  facebookUrl: string;
+  youtubeUrl: string;
+  pinterestUrl: string;
+  tiktokUrl: string;
+  twitterUrl: string;
+  contactEmail: string;
+  footerDescription: string;
+  footerTrustText: string;
+  copyrightText: string;
+  newsletterEnabled: boolean;
+};
+
 export type AdminCollection =
   | "cities"
   | "destinations"

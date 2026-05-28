@@ -11,6 +11,7 @@ import type {
   HomepageFaq,
   HomepageReview,
   Restaurant,
+  SitePage,
 } from "@/lib/types";
 import { slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
@@ -25,6 +26,7 @@ type CollectionMap = {
   restaurants: Restaurant;
   homepage_reviews: HomepageReview;
   homepage_faqs: HomepageFaq;
+  site_pages: SitePage;
 };
 
 type CityRow = Record<string, unknown>;
@@ -34,6 +36,7 @@ type AttractionRow = Record<string, unknown>;
 type RestaurantRow = Record<string, unknown>;
 type HomepageReviewRow = Record<string, unknown>;
 type HomepageFaqRow = Record<string, unknown>;
+type SitePageRow = Record<string, unknown>;
 
 type RowMap = {
   cities: CityRow;
@@ -43,6 +46,7 @@ type RowMap = {
   restaurants: RestaurantRow;
   homepage_reviews: HomepageReviewRow;
   homepage_faqs: HomepageFaqRow;
+  site_pages: SitePageRow;
 };
 
 const tableNames: Record<AdminCollection, string> = {
@@ -53,6 +57,7 @@ const tableNames: Record<AdminCollection, string> = {
   restaurants: "restaurants",
   homepage_reviews: "homepage_reviews",
   homepage_faqs: "homepage_faqs",
+  site_pages: "site_pages",
 };
 
 const structuredGuideRowKeys = [
@@ -398,6 +403,22 @@ function mapHomepageFaq(row: HomepageFaqRow): HomepageFaq {
   };
 }
 
+function mapSitePage(row: SitePageRow): SitePage {
+  const title = stringField(row, "title");
+
+  return {
+    id: stringField(row, "id"),
+    title,
+    slug: slugify(stringField(row, "slug") || title),
+    content: stringField(row, "content"),
+    metaTitle: stringField(row, "meta_title", "metaTitle"),
+    metaDescription: stringField(row, "meta_description", "metaDescription"),
+    status: status(stringField(row, "status")),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  };
+}
+
 function toCityRow(item: City): CityRow {
   return {
     id: item.id,
@@ -572,6 +593,20 @@ function toHomepageFaqRow(item: HomepageFaq): HomepageFaqRow {
   };
 }
 
+function toSitePageRow(item: SitePage): SitePageRow {
+  return {
+    id: item.id,
+    title: item.title,
+    slug: slugify(item.slug || item.title),
+    content: item.content,
+    meta_title: item.metaTitle,
+    meta_description: item.metaDescription,
+    status: item.status,
+    created_at: item.createdAt,
+    updated_at: item.updatedAt,
+  };
+}
+
 async function readRows<T extends AdminCollection>(collection: T): Promise<RowMap[T][]> {
   if (!hasSupabaseConfig()) {
     console.error(
@@ -612,7 +647,12 @@ async function readRows<T extends AdminCollection>(collection: T): Promise<RowMa
 }
 
 function isOptionalHomepageCollection(collection: AdminCollection) {
-  return collection === "homepage_reviews" || collection === "homepage_faqs" || collection === "restaurants";
+  return (
+    collection === "homepage_reviews" ||
+    collection === "homepage_faqs" ||
+    collection === "restaurants" ||
+    collection === "site_pages"
+  );
 }
 
 function isMissingTableError(error: { code?: string; message?: string }) {
@@ -649,7 +689,11 @@ async function readCollection<T extends AdminCollection>(
     return (rows as HomepageReviewRow[]).map(mapHomepageReview).sort(bySortOrder) as CollectionMap[T][];
   }
 
-  return (rows as HomepageFaqRow[]).map(mapHomepageFaq).sort(bySortOrder) as CollectionMap[T][];
+  if (collection === "homepage_faqs") {
+    return (rows as HomepageFaqRow[]).map(mapHomepageFaq).sort(bySortOrder) as CollectionMap[T][];
+  }
+
+  return (rows as SitePageRow[]).map(mapSitePage).sort(byDisplayOrder) as CollectionMap[T][];
 }
 
 function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap[T]): RowMap[T] {
@@ -677,7 +721,11 @@ function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap
     return toHomepageReviewRow(item as HomepageReview) as RowMap[T];
   }
 
-  return toHomepageFaqRow(item as HomepageFaq) as RowMap[T];
+  if (collection === "homepage_faqs") {
+    return toHomepageFaqRow(item as HomepageFaq) as RowMap[T];
+  }
+
+  return toSitePageRow(item as SitePage) as RowMap[T];
 }
 
 export async function getCities() {
@@ -870,8 +918,38 @@ export async function getPublishedHomepageFaqs() {
   return faqs.filter((faq) => faq.isPublished);
 }
 
+export async function getSitePages() {
+  return readCollection("site_pages");
+}
+
+export async function getPublishedSitePages() {
+  const pages = await getSitePages();
+  return pages.filter((page) => page.status === "published");
+}
+
+export async function getSitePageBySlug(slug: string) {
+  const normalizedSlug = slugify(slug);
+  const pages = await getSitePages();
+  return pages.find((page) => page.slug === normalizedSlug);
+}
+
+export async function getPublishedSitePageBySlug(slug: string) {
+  const page = await getSitePageBySlug(slug);
+  return page?.status === "published" ? page : undefined;
+}
+
 export async function getAdminData() {
-  const [cities, destinations, guides, attractions, restaurants, restaurantTableMissing, homepageReviews, homepageFaqs] = await Promise.all([
+  const [
+    cities,
+    destinations,
+    guides,
+    attractions,
+    restaurants,
+    restaurantTableMissing,
+    homepageReviews,
+    homepageFaqs,
+    sitePages,
+  ] = await Promise.all([
     getCities(),
     getDestinations(),
     getGuides(),
@@ -880,6 +958,7 @@ export async function getAdminData() {
     isRestaurantTableMissing(),
     getHomepageReviews(),
     getHomepageFaqs(),
+    getSitePages(),
   ]);
 
   return {
@@ -891,6 +970,7 @@ export async function getAdminData() {
     restaurantTableMissing,
     homepageReviews,
     homepageFaqs,
+    sitePages,
   };
 }
 

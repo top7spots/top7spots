@@ -20,6 +20,7 @@ import type {
   HomepageFaq,
   HomepageReview,
   Restaurant,
+  SitePage,
 } from "@/lib/types";
 import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
 
@@ -608,4 +609,41 @@ export async function saveHomepageFaqAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
   redirectToAdminSection("homepage_faqs");
+}
+
+export async function saveSitePageAction(formData: FormData) {
+  const title = value(formData, "title");
+  const slug = slugify(value(formData, "slug") || title);
+  const content = String(formData.get("content") ?? "").trim();
+  const id = value(formData, "id") || slug || idFrom("page", title);
+
+  if (!title || !slug || !content) {
+    redirectWithSaveError(
+      "site_pages",
+      new Error("A title, slug, and page content are required."),
+      value(formData, "id"),
+    );
+  }
+
+  const item: SitePage = {
+    id,
+    title,
+    slug,
+    content,
+    metaTitle: value(formData, "metaTitle"),
+    metaDescription: value(formData, "metaDescription"),
+    status: statusValue(formData),
+    createdAt: timestamp(formData),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertItem("site_pages", item);
+  } catch (error) {
+    redirectWithSaveError("site_pages", error, item.id);
+  }
+
+  revalidatePath(`/${item.slug}`);
+  revalidatePath("/admin/dashboard");
+  redirectToAdminSection("site_pages");
 }

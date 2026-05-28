@@ -1,3 +1,5 @@
+create extension if not exists pgcrypto;
+
 create table if not exists public.cities (
   id text primary key,
   name text not null,
@@ -164,6 +166,28 @@ create table if not exists public.homepage_faqs (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.site_pages (
+  id text primary key,
+  title text not null,
+  slug text not null unique,
+  content text not null default '',
+  meta_title text,
+  meta_description text,
+  status text not null default 'draft' check (status in ('draft', 'published')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  subject text,
+  message text not null,
+  status text default 'unread',
+  created_at timestamptz default now()
+);
+
 create index if not exists cities_status_display_order_idx on public.cities (status, display_order);
 create index if not exists destinations_city_status_display_order_idx on public.destinations (city_slug, status, display_order);
 create index if not exists guides_city_status_display_order_idx on public.guides (city_slug, status, display_order);
@@ -177,6 +201,8 @@ create index if not exists restaurants_country_idx on public.restaurants (countr
 create index if not exists restaurants_published_idx on public.restaurants (published);
 create index if not exists homepage_reviews_published_sort_order_idx on public.homepage_reviews (is_published, sort_order);
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);
+create index if not exists site_pages_status_slug_idx on public.site_pages (status, slug);
+create index if not exists contact_messages_status_created_at_idx on public.contact_messages (status, created_at);
 
 alter table public.cities enable row level security;
 alter table public.destinations enable row level security;
@@ -185,6 +211,8 @@ alter table public.attractions enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.homepage_reviews enable row level security;
 alter table public.homepage_faqs enable row level security;
+alter table public.site_pages enable row level security;
+alter table public.contact_messages enable row level security;
 
 drop policy if exists "Public cities are readable" on public.cities;
 drop policy if exists "Published destinations are readable" on public.destinations;
@@ -193,6 +221,7 @@ drop policy if exists "Published attractions are readable" on public.attractions
 drop policy if exists "Published restaurants are readable" on public.restaurants;
 drop policy if exists "Published homepage reviews are readable" on public.homepage_reviews;
 drop policy if exists "Published homepage FAQs are readable" on public.homepage_faqs;
+drop policy if exists "Published site pages are readable" on public.site_pages;
 
 create policy "Public cities are readable"
   on public.cities for select
@@ -228,6 +257,69 @@ create policy "Published homepage FAQs are readable"
   on public.homepage_faqs for select
   to anon
   using (is_published = true);
+
+create policy "Published site pages are readable"
+  on public.site_pages for select
+  to anon
+  using (status = 'published');
+
+insert into public.site_pages (id, title, slug, content, meta_title, meta_description, status)
+values
+  (
+    'about',
+    'About Top7Spots',
+    'about',
+    'Top7Spots is a curated travel discovery platform built to help travelers find standout destinations, city guides, attractions, and practical trip ideas around the world.',
+    'About Top7Spots',
+    'Learn about Top7Spots and how we curate travel discovery pages, guides, and destination ideas.',
+    'published'
+  ),
+  (
+    'contact',
+    'Contact Top7Spots',
+    'contact',
+    'Have a question, correction, partnership idea, or destination suggestion? Send a message and the Top7Spots team will review it.',
+    'Contact Top7Spots',
+    'Contact Top7Spots for questions, corrections, partnerships, and destination suggestions.',
+    'published'
+  ),
+  (
+    'privacy-policy',
+    'Privacy Policy',
+    'privacy-policy',
+    'This privacy policy explains how Top7Spots may collect, use, and protect information when you use our website. Update this page from the admin CMS with your full legal policy before relying on it in production.',
+    'Privacy Policy | Top7Spots',
+    'Read the Top7Spots privacy policy.',
+    'published'
+  ),
+  (
+    'terms-and-conditions',
+    'Terms & Conditions',
+    'terms-and-conditions',
+    'These terms and conditions outline the rules for using Top7Spots. Update this page from the admin CMS with your full legal terms before relying on it in production.',
+    'Terms & Conditions | Top7Spots',
+    'Read the Top7Spots terms and conditions.',
+    'published'
+  ),
+  (
+    'cookie-policy',
+    'Cookie Policy',
+    'cookie-policy',
+    'This cookie policy explains how Top7Spots may use cookies and similar technologies. Update this page from the admin CMS with your complete cookie policy before relying on it in production.',
+    'Cookie Policy | Top7Spots',
+    'Read the Top7Spots cookie policy.',
+    'published'
+  ),
+  (
+    'disclaimer',
+    'Disclaimer',
+    'disclaimer',
+    'Top7Spots provides travel information for general discovery and planning. Details can change, so travelers should verify important information before booking or visiting.',
+    'Disclaimer | Top7Spots',
+    'Read the Top7Spots travel information disclaimer.',
+    'published'
+  )
+on conflict (slug) do nothing;
 
 insert into storage.buckets (id, name, public)
 values ('top7spots-media', 'top7spots-media', true)

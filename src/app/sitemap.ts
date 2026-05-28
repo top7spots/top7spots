@@ -4,6 +4,7 @@ import {
   getPublishedCities,
   getPublishedDestinations,
   getPublishedGuides,
+  getPublishedSitePages,
 } from "@/lib/data";
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
@@ -25,11 +26,12 @@ function lastModified(...dates: Array<string | undefined>) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [cities, destinations, guides, attractions] = await Promise.all([
+  const [cities, destinations, guides, attractions, sitePages] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
     getPublishedAttractions(),
+    getPublishedSitePages(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
   const cityContent = new Map(
@@ -67,6 +69,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.85,
     },
+    ...sitePages.map((page) => ({
+      url: absoluteUrl(`/${slugify(page.slug)}`),
+      lastModified: lastModified(page.updatedAt, page.createdAt),
+      changeFrequency: "monthly" as const,
+      priority: page.slug === "about" || page.slug === "contact" ? 0.65 : 0.45,
+    })),
     ...cities.map((city) => ({
       url: absoluteUrl(`/${slugify(city.slug)}`),
       lastModified: lastModified(city.updatedAt, city.createdAt),

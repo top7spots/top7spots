@@ -226,6 +226,18 @@ export type HomepageFaq = {
   updatedAt: string;
 };
 
+export type SitePage = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  metaTitle: string;
+  metaDescription: string;
+  status: ContentStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AdminCollection =
   | "cities"
   | "destinations"
@@ -233,4 +245,5 @@ export type AdminCollection =
   | "attractions"
   | "restaurants"
   | "homepage_reviews"
-  | "homepage_faqs";
+  | "homepage_faqs"
+  | "site_pages";

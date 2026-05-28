@@ -12,6 +12,7 @@ const adminCollections: AdminCollection[] = [
   "restaurants",
   "homepage_reviews",
   "homepage_faqs",
+  "site_pages",
 ];
 
 export async function POST(request: Request) {
@@ -98,5 +99,9 @@ function revalidateDeletedContent(collection: AdminCollection, formData: FormDat
 
   if (collection === "restaurants" && slug) {
     revalidatePath(`/restaurants/${slug}`);
+  }
+
+  if (collection === "site_pages" && slug) {
+    revalidatePath(`/${slug}`);
   }
 }

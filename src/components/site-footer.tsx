@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const categories = ["Beaches", "Mountains", "Luxury", "Hidden Gems", "Road Trips"];
+const trustLinks = [
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-and-conditions", label: "Terms & Conditions" },
+  { href: "/cookie-policy", label: "Cookie Policy" },
+  { href: "/disclaimer", label: "Disclaimer" },
+];
 
 export function SiteFooter() {
   return (
@@ -32,6 +40,11 @@ export function SiteFooter() {
             <Link href="/" className="hover:text-white">Discover</Link>
             <Link href="/destinations" className="hover:text-white">Destinations</Link>
             <Link href="/guides" className="hover:text-white">Travel guides</Link>
+            {trustLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="hover:text-white">
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -69,7 +82,7 @@ export function SiteFooter() {
             </span>
             <span className="flex items-center gap-2">
               <Mail className="size-4" aria-hidden="true" />
-              hello@top7spots.com
+              info@top7spots.com
             </span>
           </div>
         </div>

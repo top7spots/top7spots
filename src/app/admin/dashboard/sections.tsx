@@ -30,6 +30,7 @@ import {
   saveHomepageFaqAction,
   saveHomepageReviewAction,
   saveRestaurantAction,
+  saveSitePageAction,
 } from "@/app/admin/actions";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { DestinationAiContentImport } from "@/components/admin/destination-ai-content-import";
@@ -54,6 +55,7 @@ import type {
   HomepageFaq,
   HomepageReview,
   Restaurant,
+  SitePage,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +68,7 @@ type AdminSection =
   | "restaurants"
   | "homepage_reviews"
   | "homepage_faqs"
+  | "site_pages"
   | "categories"
   | "media"
   | "settings";
@@ -82,6 +85,7 @@ type AdminCrudProps = {
     restaurantTableMissing?: boolean;
     homepageReviews: HomepageReview[];
     homepageFaqs: HomepageFaq[];
+    sitePages: SitePage[];
   };
   searchParams: SearchParams;
 };
@@ -95,6 +99,7 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
   { section: "restaurants", label: "Restaurants", icon: <Utensils className="size-4" /> },
   { section: "homepage_reviews", label: "Homepage Reviews", icon: <Quote className="size-4" /> },
   { section: "homepage_faqs", label: "Homepage FAQs", icon: <FileText className="size-4" /> },
+  { section: "site_pages", label: "Site Pages", icon: <FileText className="size-4" /> },
   { section: "categories", label: "Categories / Filters", icon: <SlidersHorizontal className="size-4" /> },
   { section: "media", label: "Media Library", icon: <Library className="size-4" /> },
   { section: "settings", label: "Settings", icon: <Settings className="size-4" /> },
@@ -185,6 +190,9 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
         {activeSection === "homepage_faqs" ? (
           <HomepageFaqsSection data={data} searchParams={searchParams} />
         ) : null}
+        {activeSection === "site_pages" ? (
+          <SitePagesSection data={data} searchParams={searchParams} />
+        ) : null}
         {activeSection === "categories" ? <CategoriesSection /> : null}
         {activeSection === "media" ? <MediaSection /> : null}
         {activeSection === "settings" ? <SettingsSection data={data} /> : null}
@@ -199,7 +207,8 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     data.destinations.filter(isDraft).length +
     data.guides.filter(isDraft).length +
     data.attractions.filter(isDraft).length +
-    data.restaurants.filter((item) => !item.published).length;
+    data.restaurants.filter((item) => !item.published).length +
+    data.sitePages.filter(isDraft).length;
   const stats = [
     { label: "Total cities", value: data.cities.length, icon: <Building2 className="size-5" /> },
     { label: "Published cities", value: data.cities.filter(isPublished).length, icon: <Globe2 className="size-5" /> },
@@ -209,6 +218,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     { label: "Total restaurants", value: data.restaurants.length, icon: <Utensils className="size-5" /> },
     { label: "Homepage reviews", value: data.homepageReviews.length, icon: <Quote className="size-5" /> },
     { label: "Homepage FAQs", value: data.homepageFaqs.length, icon: <FileText className="size-5" /> },
+    { label: "Site pages", value: data.sitePages.length, icon: <FileText className="size-5" /> },
     { label: "Draft content", value: draftCount, icon: <FileText className="size-5" /> },
   ];
 
@@ -240,6 +250,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
           <QuickAction href={adminHref("restaurants", { mode: "add" })} label="Add restaurant" />
           <QuickAction href={adminHref("homepage_reviews", { mode: "add" })} label="Add homepage review" />
           <QuickAction href={adminHref("homepage_faqs", { mode: "add" })} label="Add homepage FAQ" />
+          <QuickAction href={adminHref("site_pages", { mode: "add" })} label="Add site page" />
         </CardContent>
       </Card>
     </div>
@@ -764,6 +775,71 @@ function HomepageFaqsSection({ data, searchParams }: AdminCrudProps) {
         />
       ) : (
         <EmptyState title="No homepage FAQs found" text="Add FAQs to replace the homepage fallback accordion." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function SitePagesSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getParam(searchParams.mode);
+  const id = getParam(searchParams.id);
+  const page = data.sitePages.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && page);
+  const q = getParam(searchParams.q).toLowerCase();
+  const status = getParam(searchParams.status);
+  const filtered = data.sitePages.filter((item) => {
+    const matchesQuery = searchBlob(item.title, item.slug, item.content, item.metaTitle).includes(q);
+    return matchesQuery && matchesStatus(item.status, status);
+  });
+
+  if (isForm) {
+    return (
+      <SitePageForm
+        title={page ? `Edit ${page.title}` : "Add site page"}
+        page={page}
+        backHref={adminHref("site_pages")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Website Settings / Site Pages"
+      description="Manage trust pages, legal pages, and their SEO metadata."
+      addHref={adminHref("site_pages", { mode: "add" })}
+      addLabel="Add Site Page"
+      filters={
+        <CommonFilters
+          section="site_pages"
+          searchLabel="Search page"
+          status={status}
+          q={getParam(searchParams.q)}
+        />
+      }
+    >
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Page", "Slug", "Status", "Updated", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <TextEntityCell key="entity" title={item.title} text={item.metaDescription || item.content} />,
+              `/${item.slug}`,
+              <StatusBadge key="status" status={item.status} />,
+              formatDate(item.updatedAt),
+              <RowActions
+                key="actions"
+                collection="site_pages"
+                viewHref={`/${item.slug}`}
+                editHref={adminHref("site_pages", { mode: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=site_pages&deleted=site_pages"
+                hidden={{ id: item.id, slug: item.slug }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No site pages found" text="Add the trust and legal pages shown in the footer." />
       )}
     </ManagementShell>
   );
@@ -1358,6 +1434,48 @@ function HomepageFaqForm({
           <Field label="Sort order" name="sortOrder" type="number" defaultValue={faq?.sortOrder ?? 0} />
         </FormSection>
         <FormActions backHref={backHref} label="Save FAQ" />
+      </form>
+    </EditShell>
+  );
+}
+
+function SitePageForm({
+  title,
+  page,
+  backHref,
+}: {
+  title: string;
+  page?: SitePage;
+  backHref: string;
+}) {
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveSitePageAction} className="grid gap-6">
+        <input type="hidden" name="id" value={page?.id ?? ""} />
+        <HiddenTimestamps createdAt={page?.createdAt} />
+        <FormSection title="Page content" columns={1}>
+          <Field label="Title" name="title" defaultValue={page?.title} placeholder="About Top7Spots" />
+          <Field
+            label="Slug"
+            name="slug"
+            defaultValue={page?.slug}
+            placeholder="about"
+            helperText="Use URL-safe slugs such as about, contact, privacy-policy, terms-and-conditions, cookie-policy, or disclaimer."
+          />
+          <Area
+            label="Content"
+            name="content"
+            defaultValue={page?.content}
+            placeholder={"Write the public page copy here.\n\nUse blank lines to separate paragraphs."}
+            rows={14}
+          />
+        </FormSection>
+        <FormSection title="SEO">
+          <Field label="Meta title" name="metaTitle" defaultValue={page?.metaTitle} />
+          <Field label="Meta description" name="metaDescription" defaultValue={page?.metaDescription} />
+          <StatusSelect defaultValue={page?.status ?? "published"} />
+        </FormSection>
+        <FormActions backHref={backHref} label="Save page" />
       </form>
     </EditShell>
   );

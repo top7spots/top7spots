@@ -13,6 +13,7 @@ export const defaultSiteSettings: SiteSettings = {
   pinterestUrl: "",
   tiktokUrl: "",
   twitterUrl: "",
+  linkedinUrl: "",
   contactEmail: "info@top7spots.com",
   footerDescription:
     "Top7Spots is a premium travel discovery platform for curated destinations, hidden gems, road trips, luxury stays, beaches, mountains, and unforgettable places around the world.",
@@ -29,6 +30,7 @@ const settingKeyMap = {
   pinterestUrl: "pinterest_url",
   tiktokUrl: "tiktok_url",
   twitterUrl: "twitter_url",
+  linkedinUrl: "linkedin_url",
   contactEmail: "contact_email",
   footerDescription: "footer_description",
   footerTrustText: "footer_trust_text",

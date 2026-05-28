@@ -1,15 +1,11 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
-  AtSign,
   BookOpen,
-  Camera,
+  Circle,
   Compass,
   Mail,
   MapPin,
-  MessageCircle,
-  Music2,
-  Pin,
   Play,
   Send,
   ShieldCheck,
@@ -41,19 +37,15 @@ const categories = [
 type SocialLink = {
   key: keyof Pick<
     SiteSettings,
-    "instagramUrl" | "facebookUrl" | "youtubeUrl" | "pinterestUrl" | "tiktokUrl" | "twitterUrl"
+    "youtubeUrl" | "pinterestUrl"
   >;
   label: string;
   icon: LucideIcon;
 };
 
 const socialLinks: SocialLink[] = [
-  { key: "instagramUrl", label: "Instagram", icon: Camera },
-  { key: "facebookUrl", label: "Facebook", icon: MessageCircle },
   { key: "youtubeUrl", label: "YouTube", icon: Play },
-  { key: "pinterestUrl", label: "Pinterest", icon: Pin },
-  { key: "tiktokUrl", label: "TikTok", icon: Music2 },
-  { key: "twitterUrl", label: "Twitter / X", icon: AtSign },
+  { key: "pinterestUrl", label: "Pinterest", icon: Circle },
 ];
 
 export async function SiteFooter() {

@@ -245,6 +245,7 @@ export type SiteSettings = {
   pinterestUrl: string;
   tiktokUrl: string;
   twitterUrl: string;
+  linkedinUrl: string;
   contactEmail: string;
   footerDescription: string;
   footerTrustText: string;

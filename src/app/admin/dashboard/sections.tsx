@@ -941,6 +941,7 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
         <Field label="Pinterest URL" name="pinterestUrl" type="url" defaultValue={settings.pinterestUrl} />
         <Field label="TikTok URL" name="tiktokUrl" type="url" defaultValue={settings.tiktokUrl} />
         <Field label="Twitter / X URL" name="twitterUrl" type="url" defaultValue={settings.twitterUrl} />
+        <Field label="LinkedIn URL" name="linkedinUrl" type="url" defaultValue={settings.linkedinUrl} />
       </FormSection>
 
       <FormActions backHref={adminHref("settings")} label="Save settings" />

@@ -362,7 +362,8 @@ values
   ('youtube_url', ''),
   ('pinterest_url', ''),
   ('tiktok_url', ''),
-  ('twitter_url', '')
+  ('twitter_url', ''),
+  ('linkedin_url', '')
 on conflict (key) do nothing;
 
 insert into storage.buckets (id, name, public)

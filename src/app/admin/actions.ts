@@ -658,6 +658,7 @@ export async function saveSiteSettingsAction(formData: FormData) {
     pinterestUrl: value(formData, "pinterestUrl"),
     tiktokUrl: value(formData, "tiktokUrl"),
     twitterUrl: value(formData, "twitterUrl"),
+    linkedinUrl: value(formData, "linkedinUrl"),
     contactEmail: value(formData, "contactEmail") || "info@top7spots.com",
     footerDescription: value(formData, "footerDescription"),
     footerTrustText: value(formData, "footerTrustText"),

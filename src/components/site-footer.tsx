@@ -1,15 +1,15 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
-  Circle,
   Compass,
   Mail,
   MapPin,
-  Play,
   Send,
   ShieldCheck,
 } from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaPinterestP, FaTiktok, FaYoutube } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { BrandLogo } from "@/components/brand-logo";
 import { getSiteSettings } from "@/lib/site-settings";
 import type { SiteSettings } from "@/lib/types";
@@ -37,15 +37,26 @@ const categories = [
 type SocialLink = {
   key: keyof Pick<
     SiteSettings,
-    "youtubeUrl" | "pinterestUrl"
+    | "instagramUrl"
+    | "facebookUrl"
+    | "youtubeUrl"
+    | "pinterestUrl"
+    | "tiktokUrl"
+    | "twitterUrl"
+    | "linkedinUrl"
   >;
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
 };
 
 const socialLinks: SocialLink[] = [
-  { key: "youtubeUrl", label: "YouTube", icon: Play },
-  { key: "pinterestUrl", label: "Pinterest", icon: Circle },
+  { key: "instagramUrl", label: "Instagram", icon: FaInstagram },
+  { key: "facebookUrl", label: "Facebook", icon: FaFacebookF },
+  { key: "youtubeUrl", label: "YouTube", icon: FaYoutube },
+  { key: "pinterestUrl", label: "Pinterest", icon: FaPinterestP },
+  { key: "tiktokUrl", label: "TikTok", icon: FaTiktok },
+  { key: "twitterUrl", label: "Twitter / X", icon: FaXTwitter },
+  { key: "linkedinUrl", label: "LinkedIn", icon: FaLinkedinIn },
 ];
 
 export async function SiteFooter() {

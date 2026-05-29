@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { OrganizationJsonLd } from "@/components/seo-json-ld";
 import {
   absoluteImageUrl,
@@ -60,6 +61,22 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <OrganizationJsonLd />
+        <Script
+          id="travelpayouts-drive"
+          strategy="afterInteractive"
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          seraph-accel-crit="1"
+          data-no-defer="1"
+        >
+          {`(function () {
+  var script = document.createElement("script");
+  script.async = 1;
+  script.src = "https://emrldtp.cc/NTM0Mjk3.js?t=534297";
+  document.head.appendChild(script);
+})();`}
+        </Script>
         {children}
       </body>
     </html>

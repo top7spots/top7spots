@@ -305,6 +305,39 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="border-b border-slate-200 bg-blue-50/70">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 rounded-xl border border-blue-100 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between md:p-6">
+              <div className="flex max-w-3xl items-start gap-4">
+                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-[#0A2A66] text-white shadow-sm">
+                  <Car className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
+                    Travel partner
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
+                    Car Rental Deals Worldwide
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                    Need a rental car for your next trip? Compare prices from hundreds of trusted
+                    car rental companies and find the best deals with DiscoverCars.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="https://www.discovercars.com/?a_aid=kulpin"
+                target="_blank"
+                rel="sponsored noopener noreferrer"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#C2410C] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-950/10 transition duration-300 hover:-translate-y-0.5 hover:bg-[#9A3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C2410C]"
+              >
+                Compare Car Rental Prices
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section className="border-b border-slate-200 bg-white py-14">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
             <div>

@@ -23,7 +23,7 @@ const discoverCarsWidgetAttributes = {
   "data-location": "",
   "data-lang": "en",
   "data-currency": "usd",
-  "data-utm-source": "kulpin",
+  "data-utm-source": "top7spots",
   "data-utm-medium": "widget",
   "data-aff-code": "a_aid",
   "data-aff-channel": "homepage",

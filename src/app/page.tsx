@@ -279,7 +279,7 @@ export default async function Home() {
                     Compare prices from hundreds of trusted car rental providers worldwide and find
                     the best deal for your trip with{" "}
                     <a
-                      href="https://www.discovercars.com/?a_aid=kulpin"
+                      href="https://www.discovercars.com/?a_aid=top7spots&chan=homepage"
                       target="_blank"
                       rel="sponsored noopener noreferrer"
                       className="font-semibold text-[#1D4ED8] underline decoration-blue-300 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
@@ -306,7 +306,7 @@ export default async function Home() {
                 </div>
               </div>
               <a
-                href="https://www.discovercars.com/?a_aid=kulpin"
+                href="https://www.discovercars.com/?a_aid=top7spots&chan=homepage"
                 target="_blank"
                 rel="sponsored noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#C2410C] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#9A3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C2410C] md:w-auto"

@@ -61,22 +61,24 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <OrganizationJsonLd />
-        <Script
-          id="travelpayouts-drive"
-          strategy="afterInteractive"
-          data-noptimize="1"
-          data-cfasync="false"
-          data-wpfc-render="false"
-          seraph-accel-crit="1"
-          data-no-defer="1"
-        >
-          {`(function () {
+        {process.env.NEXT_PUBLIC_TRAVELPAYOUTS_ENABLED === "true" ? (
+          <Script
+            id="travelpayouts-drive"
+            strategy="afterInteractive"
+            data-noptimize="1"
+            data-cfasync="false"
+            data-wpfc-render="false"
+            seraph-accel-crit="1"
+            data-no-defer="1"
+          >
+            {`(function () {
   var script = document.createElement("script");
   script.async = 1;
   script.src = "https://emrldtp.cc/NTM0Mjk3.js?t=534297";
   document.head.appendChild(script);
 })();`}
-        </Script>
+          </Script>
+        ) : null}
         {children}
       </body>
     </html>

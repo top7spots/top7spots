@@ -47,7 +47,7 @@ function hasSafeImageSource(src: string) {
 
 export function GuideEntityCard({
   item,
-  imageSizes = "(max-width: 768px) 100vw, 360px",
+  imageSizes = "(min-width: 1024px) 360px, (min-width: 640px) calc((100vw - 3rem) / 2), 86vw",
   className = "",
 }: GuideEntityCardProps) {
   const resolvedImage = item.image ? resolveImagePath(item.image) : "";

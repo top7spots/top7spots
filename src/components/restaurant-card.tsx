@@ -18,8 +18,9 @@ export function RestaurantCard({ restaurant, city }: { restaurant: Restaurant; c
             src={image}
             alt={restaurant.name}
             fill
-            sizes="(max-width: 768px) 100vw, 360px"
-            unoptimized
+            sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
+            quality={68}
+            loading="lazy"
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (

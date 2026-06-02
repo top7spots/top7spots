@@ -493,7 +493,8 @@ function GuideListingRowCard({
             alt={item.title}
             fill
             sizes={imageSizes}
-            unoptimized
+            quality={68}
+            loading="lazy"
             className="object-cover"
           />
         ) : (
@@ -754,8 +755,9 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
             fill
-            sizes="(max-width: 768px) 100vw, 760px"
-            unoptimized
+            sizes="(min-width: 768px) 760px, calc(100vw - 4rem)"
+            quality={68}
+            loading="lazy"
             className="object-cover"
           />
         </div>
@@ -1186,8 +1188,9 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
             src={image}
             alt={guide.coverImageAlt || `${guide.title} travel guide`}
             fill
-            sizes="(max-width: 768px) 100vw, 180px"
-            unoptimized
+            sizes="(min-width: 640px) 180px, calc(100vw - 3rem)"
+            quality={65}
+            loading="lazy"
             className="object-cover"
           />
         ) : (

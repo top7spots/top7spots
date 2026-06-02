@@ -132,7 +132,7 @@ function resizeDimensions(width: number, height: number, maxWidth: number) {
 function compressionProfile(kind: ImageCompressionKind): CompressionProfile {
   if (kind === "hero") {
     return {
-      targetBytes: 180 * 1024,
+      targetBytes: 150 * 1024,
       attempts: [
         { width: 1600, quality: 0.78 },
         { width: 1600, quality: 0.72 },
@@ -143,7 +143,7 @@ function compressionProfile(kind: ImageCompressionKind): CompressionProfile {
   }
 
   return {
-    targetBytes: 110 * 1024,
+    targetBytes: 95 * 1024,
     attempts: [
       { width: 1200, quality: 0.76 },
       { width: 1200, quality: 0.7 },

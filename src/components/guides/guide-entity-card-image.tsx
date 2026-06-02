@@ -19,7 +19,8 @@ export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCard
       alt={alt}
       fill
       sizes={sizes}
-      unoptimized
+      quality={65}
+      loading="lazy"
       className="object-cover"
     />
   );

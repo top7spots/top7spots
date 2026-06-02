@@ -66,8 +66,9 @@ function CompactDestinationCarouselCard({ destination }: { destination: Destinat
           src={image}
           alt={imageAlt}
           fill
-          sizes="(max-width: 768px) 76vw, 300px"
-          unoptimized
+          sizes="(max-width: 639px) 76vw, 300px"
+          quality={65}
+          loading="lazy"
           className="object-cover transition duration-500 ease-out group-hover:scale-105"
         />
         <span className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#0A2A66] shadow-sm backdrop-blur">

@@ -170,6 +170,9 @@ export function ImageUploadField({
       ) : null}
       {notice ? <p className="text-xs font-medium text-emerald-700">{notice}</p> : null}
       {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+      <p className="text-xs text-slate-500">
+        Re-upload older JPG images to apply the latest WebP compression and long-lived cache settings.
+      </p>
       {displayImage ? (
         <div className="flex flex-wrap gap-2">
           <Button
@@ -362,6 +365,9 @@ export function GalleryUploadField({
       ) : null}
       {notice ? <p className="text-xs font-medium text-emerald-700">{notice}</p> : null}
       {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+      <p className="text-xs text-slate-500">
+        Re-upload older gallery JPGs to apply the latest WebP compression and long-lived cache settings.
+      </p>
     </div>
   );
 }

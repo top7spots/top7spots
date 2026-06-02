@@ -24,8 +24,9 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
           src={image}
           alt={imageAlt}
           fill
-          sizes="(max-width: 768px) 100vw, 360px"
-          unoptimized
+          sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
+          quality={68}
+          loading="lazy"
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent" />

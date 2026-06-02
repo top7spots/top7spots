@@ -52,6 +52,7 @@ async function uploadLocalImage(image) {
   const contentType =
     extension === ".png" ? "image/png" : extension === ".webp" ? "image/webp" : "image/jpeg";
   const { error } = await supabase.storage.from(bucket).upload(relativePath, bytes, {
+    cacheControl: "31536000",
     contentType,
     upsert: true,
   });

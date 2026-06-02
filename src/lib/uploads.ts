@@ -62,6 +62,7 @@ async function saveUploadedImage(file: File, folder: UploadFolder, fallbackName?
   const storagePath = `${folder}/${filename}`;
   const bytes = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(supabaseStorageBucket).upload(storagePath, bytes, {
+    cacheControl: "31536000",
     contentType: file.type,
     upsert: false,
   });

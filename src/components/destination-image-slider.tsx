@@ -61,7 +61,7 @@ export function DestinationImageSlider({ destinationName, images }: DestinationI
           fill
           priority={activeIndex === 0}
           loading={activeIndex === 0 ? "eager" : "lazy"}
-          sizes="(min-width: 1280px) 48rem, (min-width: 1024px) 62vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+          sizes="(min-width: 1280px) 760px, (min-width: 1024px) 62vw, 100vw"
           className="object-cover"
         />
 

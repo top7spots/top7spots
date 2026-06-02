@@ -29,7 +29,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
-        <BrandLogo priority imageClassName="h-9 w-auto sm:h-10 lg:h-11" />
+        <BrandLogo useHeaderAsset imageClassName="h-9 w-auto sm:h-10 lg:h-11" />
 
         <div className="hidden flex-1 justify-center px-3 md:flex lg:px-5">
           <SearchBox
@@ -72,7 +72,7 @@ export async function SiteHeader() {
           <SheetContent side="right" className="z-[70] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto bg-[#0A2A66] text-white">
             <SheetHeader>
               <SheetTitle>
-                <BrandLogo variant="dark" imageClassName="h-12 w-auto" />
+                <BrandLogo variant="dark" useHeaderAsset imageClassName="h-12 w-auto" />
               </SheetTitle>
             </SheetHeader>
             <nav className="mt-8 grid gap-2 overflow-y-auto px-3 pb-6">

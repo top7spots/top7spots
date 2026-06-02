@@ -5,23 +5,17 @@ import {
   ArrowLeft,
   ArrowRight,
   Calendar,
-  Clock,
-  MapPin,
-  ShieldCheck,
-  Sparkles,
-  Star,
 } from "lucide-react";
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { DestinationDetailHero } from "@/components/destination-detail-hero";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCarouselSection } from "@/components/destination-carousel-section";
-import { DestinationImageSlider } from "@/components/destination-image-slider";
 import { FaqSection } from "@/components/faq-section";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
@@ -189,56 +183,20 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               <ArrowLeft className="size-4" aria-hidden="true" />
               Back to destinations
             </Link>
-            <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-end">
-              <div>
-                <Badge className="rounded-full bg-orange-50 px-3 py-1 text-[#FF6B00] hover:bg-orange-50">
-                  {category}
-                </Badge>
-                <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#111827] md:text-6xl">
-                  {destination.name}
-                </h1>
-                <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
-                  {destination.summary ||
-                    "A curated Top7Spots travel idea with practical planning notes and inspiration."}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium text-slate-600">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
-                    <MapPin className="size-4 text-[#1D4ED8]" aria-hidden="true" />
-                    {location}
-                  </span>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
-                    <Clock className="size-4 text-[#1D4ED8]" aria-hidden="true" />
-                    {destination.duration || "Flexible"}
-                  </span>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
-                    <Star className="size-4 fill-[#FF6B00] text-[#FF6B00]" aria-hidden="true" />
-                    Curated Top7Spots pick
-                  </span>
-                </div>
-              </div>
-              <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70">
-                <p className="text-sm font-semibold text-[#0A2A66]">Trip snapshot</p>
-                <div className="mt-4 grid gap-3 text-sm text-slate-600">
-                  <span className="flex items-center gap-3">
-                    <Calendar className="size-5 text-[#1D4ED8]" aria-hidden="true" />
-                    Best time: {destination.bestSeason || "Year-round"}
-                  </span>
-                  <span className="flex items-center gap-3">
-                    <Sparkles className="size-5 text-[#FF6B00]" aria-hidden="true" />
-                    Curated for discovery
-                  </span>
-                  <span className="flex items-center gap-3">
-                    <ShieldCheck className="size-5 text-[#1D4ED8]" aria-hidden="true" />
-                    Practical tips included
-                  </span>
-                </div>
-              </aside>
-            </div>
+            <DestinationDetailHero
+              bestSeason={destination.bestSeason || "Year-round"}
+              category={category}
+              destinationName={destination.name}
+              duration={destination.duration || "Flexible"}
+              images={galleryImages}
+              location={location}
+              snapshotLabel="Curated for discovery"
+              summary={
+                destination.summary ||
+                "A curated Top7Spots travel idea with practical planning notes and inspiration."
+              }
+            />
           </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <DestinationImageSlider destinationName={destination.name} images={galleryImages} />
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

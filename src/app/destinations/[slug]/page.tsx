@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   Calendar,
-  Camera,
   Clock,
   MapPin,
   ShieldCheck,
@@ -17,6 +15,7 @@ import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCarouselSection } from "@/components/destination-carousel-section";
+import { DestinationImageSlider } from "@/components/destination-image-slider";
 import { FaqSection } from "@/components/faq-section";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
@@ -34,7 +33,7 @@ import {
   getPublishedCities,
   getPublishedGuides,
 } from "@/lib/data";
-import { resolveImagePath } from "@/lib/images";
+import { getDestinationGalleryImages } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -80,7 +79,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     notFound();
   }
 
-  const image = resolveImagePath(destination.image);
+  const galleryImages = getDestinationGalleryImages(destination.image, destination.galleryImages);
   const category = destination.category || "Travel spot";
   const location = [destination.city, destination.region].filter(Boolean).join(", ") || "Global";
   const parentCity = destination.citySlug
@@ -122,15 +121,6 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         attraction.city.toLowerCase() === destination.city.toLowerCase(),
     ) || [];
   const attractionIdeas = nearbyAttractions.length > 0 ? nearbyAttractions : attractions;
-  const secondaryGalleryImage = relatedDestinations.find((item) => item.image)?.image;
-  const tertiaryGalleryImage = attractionIdeas.find((item) => item.image)?.image;
-  const galleryImages = Array.from(
-    new Set(
-      [secondaryGalleryImage, tertiaryGalleryImage, image].filter(
-        (galleryImage): galleryImage is string => Boolean(galleryImage),
-      ),
-    ),
-  );
   const overviewParagraphs = splitParagraphs(
     destination.description ||
       "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route.",
@@ -248,38 +238,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         </section>
 
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-3 overflow-hidden rounded-3xl md:grid-cols-[1.45fr_0.8fr]">
-            <div className="relative min-h-[360px] overflow-hidden bg-slate-200 md:min-h-[560px]">
-              <Image
-                src={image}
-                alt={`${destination.name}${destination.city ? ` in ${destination.city}` : ""}`}
-                fill
-                priority
-                sizes="(min-width: 1024px) 65vw, 100vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
-              {galleryImages.map((galleryImage, index) => (
-                <div key={`${galleryImage}-${index}`} className="relative min-h-44 overflow-hidden bg-slate-200">
-                  <Image
-                    src={galleryImage}
-                    alt={`${destination.name} travel view ${index + 1}`}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 35vw"
-                    unoptimized
-                    className="object-cover"
-                  />
-                  {index === 1 ? (
-                    <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-[#0A2A66] shadow-sm">
-                      <Camera className="size-4" aria-hidden="true" />
-                      Image gallery
-                    </span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
+          <DestinationImageSlider destinationName={destination.name} images={galleryImages} />
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

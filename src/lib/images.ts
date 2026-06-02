@@ -9,6 +9,15 @@ export function resolveImagePath(image?: string) {
   return normalized || fallbackImage;
 }
 
+export function getDestinationGalleryImages(mainImage?: string, galleryImages: string[] = []) {
+  const images = [mainImage, ...galleryImages]
+    .map((image) => String(image ?? "").trim())
+    .filter(Boolean)
+    .map(resolveImagePath);
+
+  return images.length > 0 ? Array.from(new Set(images)) : [fallbackImage];
+}
+
 export function isRemoteImage(image?: string) {
   return Boolean(image && /^https?:\/\//i.test(image));
 }

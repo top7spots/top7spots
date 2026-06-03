@@ -1149,9 +1149,8 @@ function GuideForm({
             placeholder="Rental car parked near Muscat International Airport"
           />
         </FormSection>
-        <FormSection title="Content" columns={1}>
+        <FormSection title="Guide summary" columns={1}>
           <Area label="Excerpt" name="excerpt" defaultValue={guide?.excerpt} />
-          <Area label="Content paragraphs, one per line" name="content" defaultValue={lines(guide?.content)} rows={6} />
         </FormSection>
         <FormSection title="Guide Page Builder" columns={1}>
           <GuideContentBlocksField
@@ -1188,28 +1187,6 @@ function GuideForm({
               label: attraction.name,
               meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
             }))}
-          />
-        </FormSection>
-        <FormSection title="FAQs" columns={1}>
-          <Area
-            label="FAQ blocks"
-            name="faqs"
-            defaultValue={formatFaqText(guide?.faqs)}
-            placeholder={
-              "Question: Can tourists rent a car in Oman?\nAnswer: Yes, tourists can rent a car in Oman with a valid driving license, passport, and required documents.\n\nQuestion: Is a deposit required?\nAnswer: Most rental companies require a refundable security deposit."
-            }
-            rows={8}
-          />
-        </FormSection>
-        <FormSection title="Table of contents" columns={1}>
-          <Area
-            label="Table of contents"
-            name="tableOfContents"
-            defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
-            placeholder={
-              "Why rent a car in Muscat | why-rent-a-car-in-muscat\nDocuments needed | documents-needed\nDeposit and insurance | deposit-and-insurance"
-            }
-            rows={5}
           />
         </FormSection>
         <FormSection title="Listing blocks" columns={1}>
@@ -1253,6 +1230,7 @@ function GuideForm({
             }))}
           />
         </FormSection>
+        <LegacyGuideFallbackFields guide={guide} />
         <FormSection title="SEO" columns={1}>
           <Field label="SEO title" name="seoTitle" defaultValue={guide?.seoTitle} />
           <Field label="SEO description" name="seoDescription" defaultValue={guide?.seoDescription} />
@@ -1279,6 +1257,58 @@ function GuideForm({
         <FormActions backHref={backHref} label="Save guide" />
       </form>
     </EditShell>
+  );
+}
+
+function LegacyGuideFallbackFields({ guide }: { guide?: Guide }) {
+  const hasLegacyData = Boolean(
+    guide?.content?.length ||
+      guide?.faqs?.length ||
+      guide?.tableOfContents?.length,
+  );
+  const hasBuilderData = Boolean(guide?.contentBlocks?.length);
+
+  return (
+    <FormSection title="Legacy fallback content" columns={1}>
+      <details
+        open={hasLegacyData && !hasBuilderData}
+        className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-[#0A2A66]">
+          Edit preserved paragraph, FAQ, and table-of-contents fallbacks
+        </summary>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          New guides should use the page builder above. These fields remain available so older
+          guides keep rendering safely and existing FAQ metadata is not lost.
+        </p>
+        <div className="mt-4 grid gap-4">
+          <Area
+            label="Legacy content paragraphs, one per line"
+            name="content"
+            defaultValue={lines(guide?.content)}
+            rows={6}
+          />
+          <Area
+            label="Legacy FAQ blocks"
+            name="faqs"
+            defaultValue={formatFaqText(guide?.faqs)}
+            placeholder={
+              "Question: Can tourists rent a car in Oman?\nAnswer: Yes, tourists can rent a car in Oman with a valid driving license, passport, and required documents.\n\nQuestion: Is a deposit required?\nAnswer: Most rental companies require a refundable security deposit."
+            }
+            rows={8}
+          />
+          <Area
+            label="Legacy table of contents"
+            name="tableOfContents"
+            defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
+            placeholder={
+              "Why rent a car in Muscat | why-rent-a-car-in-muscat\nDocuments needed | documents-needed\nDeposit and insurance | deposit-and-insurance"
+            }
+            rows={5}
+          />
+        </div>
+      </details>
+    </FormSection>
   );
 }
 

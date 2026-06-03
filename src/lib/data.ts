@@ -103,6 +103,15 @@ function sortGuidesNewestFirst(guides: Guide[]) {
   });
 }
 
+function nullableString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function bySortOrder<T extends { sortOrder?: number; name?: string; question?: string }>(a: T, b: T) {
   const orderA = a.sortOrder ?? 999;
   const orderB = b.sortOrder ?? 999;
@@ -482,9 +491,9 @@ function toGuideRow(item: Guide): GuideRow {
     id: item.id,
     target_type: item.targetType,
     country_id: item.countryId || "",
-    city_id: item.cityId,
+    city_id: nullableString(item.cityId),
     city_slug: slugify(item.citySlug),
-    destination_id: item.destinationId || "",
+    destination_id: nullableString(item.destinationId),
     slug: slugify(item.slug || item.title),
     title: item.title,
     excerpt: item.excerpt,

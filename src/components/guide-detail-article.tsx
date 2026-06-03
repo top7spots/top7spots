@@ -179,7 +179,11 @@ export function GuideDetailArticle({
     currentCitySlug: guide.citySlug || city?.slug,
     currentCountrySlug: guide.countryId || city?.country,
   });
-  const faqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
+  const legacyFaqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
+  const blockFaqItems = mergeFaqItems(
+    mainPageBlocks.flatMap((block) => (block.type === "faq" ? block.faqs || [] : [])),
+  );
+  const faqJsonLdItems = mergeFaqItems(blockFaqItems, legacyFaqItems);
   const contentListingBlocks = mainPageBlocks
     .map((block) =>
       listingBlockForContentBlock(block, {
@@ -210,7 +214,7 @@ export function GuideDetailArticle({
       city,
       includeCity: includeCityInBreadcrumbJson,
     }),
-    buildGuideFaqJsonLd({ faqs: faqItems }),
+    buildGuideFaqJsonLd({ faqs: faqJsonLdItems }),
     buildGuideItemListJsonLd({
       canonicalPath,
       name: `${guide.title} selected places`,
@@ -297,7 +301,7 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={faqItems}
+                    fallbackFaqs={legacyFaqItems}
                   />
                   {!useTwoColumnContent && supportPageBlocks.length > 0 ? (
                     <GuidePageBlocks
@@ -309,7 +313,7 @@ export function GuideDetailArticle({
                       attractions={attractions}
                       restaurants={restaurants}
                       guides={guides}
-                      fallbackFaqs={faqItems}
+                      fallbackFaqs={legacyFaqItems}
                     />
                   ) : null}
                 </div>
@@ -323,7 +327,7 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={faqItems}
+                    fallbackFaqs={legacyFaqItems}
                   />
                 ) : null}
               </div>
@@ -338,7 +342,7 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={faqItems}
+                    fallbackFaqs={legacyFaqItems}
                   />
                 </div>
               ) : null}
@@ -357,7 +361,7 @@ export function GuideDetailArticle({
               {listingBlocks.map((block) => (
                 <GuideListingBlockSection key={block.id} block={block} />
               ))}
-              <ServerGuideFaqAccordion faqs={faqItems} />
+              <ServerGuideFaqAccordion faqs={legacyFaqItems} />
             </div>
           )}
         </article>

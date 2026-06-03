@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Globe2, Menu } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowRight, BookOpen, Building2, ChevronDown, Compass, Globe2, MapPin, Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { SearchBox } from "@/components/search-box";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,14 @@ import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
 import { getGuideHref } from "@/lib/guide-routes";
 import type { City, Destination, Guide } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-export async function SiteHeader() {
+type SiteHeaderProps = {
+  variant?: "default" | "homepage";
+};
+
+export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) {
+  const isHomepage = variant === "homepage";
   const [cities, destinations, guides] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
@@ -28,28 +35,49 @@ export async function SiteHeader() {
   const guideGroups = groupGuidesByCity(guides, cityBySlug);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+    <header
+      className={cn(
+        "top-0 z-40",
+        isHomepage
+          ? "absolute inset-x-0 border-b border-white/10 bg-white/[0.04] text-white backdrop-blur-md"
+          : "sticky border-b border-slate-200 bg-white/95 backdrop-blur-xl",
+      )}
+    >
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
-        <BrandLogo useHeaderAsset imageClassName="h-9 w-auto sm:h-10 lg:h-11" />
+        <BrandLogo
+          variant={isHomepage ? "dark" : "light"}
+          useHeaderAsset
+          imageClassName="h-9 w-auto sm:h-10 lg:h-11"
+        />
 
-        <div className="hidden flex-1 justify-center px-3 md:flex lg:px-5">
-          <SearchBox
-            containerClassName="relative w-full max-w-xl"
-            placeholder="Search cities, spots, guides..."
-          />
-        </div>
+        {!isHomepage ? (
+          <div className="hidden flex-1 justify-center px-3 md:flex lg:px-5">
+            <SearchBox
+              containerClassName="relative w-full max-w-xl"
+              placeholder="Search cities, spots, guides..."
+            />
+          </div>
+        ) : (
+          <div className="hidden flex-1 lg:block" />
+        )}
 
         <DesktopNavigation
           cityGroups={cityGroups}
           destinationGroups={destinationGroups}
           guideGroups={guideGroups}
+          variant={variant}
         />
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className={cn("items-center gap-2", isHomepage ? "flex" : "hidden md:flex")}>
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 rounded-full border-slate-200"
+            className={cn(
+              "gap-2 rounded-full",
+              isHomepage
+                ? "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                : "border-slate-200",
+            )}
             aria-label="Select language, English"
           >
             <Globe2 className="size-4" aria-hidden="true" />
@@ -63,7 +91,12 @@ export async function SiteHeader() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full lg:hidden"
+                className={cn(
+                  "rounded-full lg:hidden",
+                  isHomepage
+                    ? "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                    : "",
+                )}
                 aria-label="Open menu"
               />
             }
@@ -193,51 +226,72 @@ function DesktopNavigation({
   cityGroups,
   destinationGroups,
   guideGroups,
+  variant = "default",
 }: {
   cityGroups: ReturnType<typeof groupCitiesByCountry>;
   destinationGroups: ReturnType<typeof groupDestinationsByCity>;
   guideGroups: ReturnType<typeof groupGuidesByCity>;
+  variant?: SiteHeaderProps["variant"];
 }) {
+  const isHomepage = variant === "homepage";
+  const navItemClassName = cn(
+    "relative inline-flex items-center gap-1.5 px-3 py-5 transition after:absolute after:bottom-3 after:left-3 after:right-3 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-[#FF6B00] after:content-[''] after:transition-transform group-hover:after:scale-x-100 group-focus-within:after:scale-x-100 focus-visible:outline-none focus-visible:after:scale-x-100",
+    isHomepage ? "text-white/90 hover:text-white" : "text-slate-700 hover:text-[#0A2A66]",
+  );
+  const panelClassName =
+    "invisible absolute top-full z-50 translate-y-3 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 text-slate-900 opacity-0 shadow-[0_24px_70px_rgb(15_23_42_/_18%)] ring-1 ring-white/80 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100";
+
   return (
-    <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
+    <nav className={cn("hidden items-center gap-1 text-sm font-semibold lg:flex", isHomepage ? "text-white" : "text-slate-700")}>
       <div className="group relative">
-        <Link href="/#all-cities" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+        <Link href="/#all-cities" className={navItemClassName}>
           Cities
           <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
         </Link>
         {cityGroups.length > 0 ? (
-          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
+          <div className={cn(panelClassName, "left-1/2 w-[640px] -translate-x-1/2")}>
+            <MegaMenuIntro
+              icon={<Building2 className="size-5" aria-hidden="true" />}
+              title="Explore cities"
+              subtitle="Start with popular travel hubs and curated city guides."
+            />
+            <div className="mt-5 grid grid-cols-2 gap-4">
               {cityGroups.slice(0, 6).map((group) => (
                 <div key={group.country}>
-                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8] transition hover:text-[#0A2A66]">
                     {group.country}
                   </Link>
-                  <div className="mt-2 grid gap-1.5">
+                  <div className="mt-3 grid gap-2">
                     {group.cities.slice(0, 5).map((city) => (
-                      <Link key={city.id} href={`/${city.slug}`} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
+                      <MegaMenuRow key={city.id} href={`/${city.slug}`} icon={<MapPin className="size-3.5" aria-hidden="true" />}>
                         {city.name}
-                      </Link>
+                      </MegaMenuRow>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
+            <MegaMenuFooter href="/#all-cities" label="View all cities" />
           </div>
         ) : null}
       </div>
       <div className="group relative">
-        <Link href="/destinations" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+        <Link href="/destinations" className={navItemClassName}>
           Destinations
           <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
         </Link>
         {destinationGroups.length > 0 ? (
-          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
+          <div className={cn(panelClassName, "left-1/2 w-[660px] -translate-x-1/2")}>
+            <MegaMenuIntro
+              icon={<Compass className="size-5" aria-hidden="true" />}
+              title="Explore destinations"
+              subtitle="Browse curated spots grouped by city and country context."
+            />
+            <div className="mt-5 grid grid-cols-2 gap-4">
               {destinationGroups.slice(0, 6).map((group) => (
                 <div key={group.label}>
                   {group.href ? (
-                    <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                    <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8] transition hover:text-[#0A2A66]">
                       {group.label}
                     </Link>
                   ) : (
@@ -245,62 +299,122 @@ function DesktopNavigation({
                       {group.label}
                     </p>
                   )}
-                  <div className="mt-2 grid gap-1.5">
+                  <div className="mt-3 grid gap-2">
                     {group.destinations.slice(0, 4).map((destination) => (
-                      <Link
+                      <MegaMenuRow
                         key={destination.id}
                         href={getCanonicalDestinationPath(destination, group.city)}
-                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                        icon={<Compass className="size-3.5" aria-hidden="true" />}
                       >
                         {destination.name}
-                      </Link>
+                      </MegaMenuRow>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <Link href="/destinations" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
-              View all destinations
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
+            <MegaMenuFooter href="/destinations" label="View all destinations" />
           </div>
         ) : null}
       </div>
       <div className="group relative">
-        <Link href="/guides" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
+        <Link href="/guides" className={navItemClassName}>
           Travel Guides
           <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
         </Link>
         {guideGroups.length > 0 ? (
-          <div className="invisible absolute right-0 top-full z-50 w-[520px] translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
+          <div className={cn(panelClassName, "right-0 w-[620px]")}>
+            <MegaMenuIntro
+              icon={<BookOpen className="size-5" aria-hidden="true" />}
+              title="Travel guides"
+              subtitle="Read practical planning notes connected to the places you are exploring."
+            />
+            <div className="mt-5 grid grid-cols-2 gap-4">
               {guideGroups.slice(0, 6).map((group) => (
                 <div key={group.city.id}>
-                  <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                  <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8] transition hover:text-[#0A2A66]">
                     {group.city.name}
                   </Link>
-                  <div className="mt-2 grid gap-1.5">
+                  <div className="mt-3 grid gap-2">
                     {group.guides.slice(0, 3).map((guide) => (
-                      <Link
+                      <MegaMenuRow
                         key={guide.id}
                         href={getGuideHref(guide)}
-                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
+                        icon={<BookOpen className="size-3.5" aria-hidden="true" />}
                       >
                         {guide.title}
-                      </Link>
+                      </MegaMenuRow>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <Link href="/guides" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
-              View all guides
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
+            <MegaMenuFooter href="/guides" label="View all guides" />
           </div>
         ) : null}
       </div>
     </nav>
+  );
+}
+
+function MegaMenuIntro({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
+      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#1D4ED8]">
+        {icon}
+      </span>
+      <div>
+        <p className="text-base font-semibold tracking-tight text-[#0A2A66]">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function MegaMenuRow({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group/item flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm font-semibold text-[#0A2A66] transition hover:border-blue-200 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-[#1D4ED8] shadow-sm">
+          {icon}
+        </span>
+        <span className="line-clamp-1">{children}</span>
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-slate-400 transition group-hover/item:translate-x-0.5 group-hover/item:text-[#FF6B00]" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function MegaMenuFooter({ href, label }: { href: string; label: string }) {
+  return (
+    <div className="mt-5 border-t border-slate-100 pt-4">
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#0A2A66] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1D4ED8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+      >
+        {label}
+        <ArrowRight className="size-4" aria-hidden="true" />
+      </Link>
+    </div>
   );
 }
 

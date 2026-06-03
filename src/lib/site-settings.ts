@@ -1,12 +1,23 @@
 import "server-only";
 
 import { revalidateTag, unstable_cache } from "next/cache";
+import {
+  homeHeroDefaultOverlayOpacity,
+  homeHeroFallbackAlt,
+  homeHeroFallbackImage,
+  normalizeHomeHeroOverlayOpacity,
+  normalizeHomeHeroOverlayStyle,
+} from "@/lib/home-hero-settings";
 import { getSupabaseAdminClient, hasSupabaseConfig } from "@/lib/supabase";
 import type { SiteSettings } from "@/lib/types";
 
 const siteSettingsTag = "site-settings";
 
 export const defaultSiteSettings: SiteSettings = {
+  homeHeroImage: homeHeroFallbackImage,
+  homeHeroImageAlt: homeHeroFallbackAlt,
+  homeHeroOverlayOpacity: String(homeHeroDefaultOverlayOpacity),
+  homeHeroOverlayStyle: "blue-dark",
   instagramUrl: "",
   facebookUrl: "",
   youtubeUrl: "",
@@ -24,6 +35,10 @@ export const defaultSiteSettings: SiteSettings = {
 };
 
 const settingKeyMap = {
+  homeHeroImage: "home_hero_image",
+  homeHeroImageAlt: "home_hero_image_alt",
+  homeHeroOverlayOpacity: "home_hero_overlay_opacity",
+  homeHeroOverlayStyle: "home_hero_overlay_style",
   instagramUrl: "instagram_url",
   facebookUrl: "facebook_url",
   youtubeUrl: "youtube_url",
@@ -104,6 +119,10 @@ function mapRowsToSettings(rows: SiteSettingRow[]): SiteSettings {
 
     if (settingKey === "newsletterEnabled") {
       settings.newsletterEnabled = value === "true";
+    } else if (settingKey === "homeHeroOverlayOpacity") {
+      settings.homeHeroOverlayOpacity = String(normalizeHomeHeroOverlayOpacity(value));
+    } else if (settingKey === "homeHeroOverlayStyle") {
+      settings.homeHeroOverlayStyle = normalizeHomeHeroOverlayStyle(value);
     } else {
       settings[settingKey as Exclude<keyof SiteSettings, "newsletterEnabled">] = value;
     }

@@ -8,6 +8,10 @@ import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upser
 import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
+import {
+  normalizeHomeHeroOverlayOpacity,
+  normalizeHomeHeroOverlayStyle,
+} from "@/lib/home-hero-settings";
 import { saveSiteSettings } from "@/lib/site-settings";
 import type {
   AdminCollection,
@@ -140,16 +144,26 @@ async function guideOwnershipContext(formData: FormData) {
       throw new Error("Choose a valid destination for this guide.");
     }
 
-    return { targetType, countryId: "", cityId: "", citySlug: "", destinationId: destination.id };
+    const city = (await getCities()).find(
+      (item) => item.id === destination.cityId || item.slug === destination.citySlug,
+    );
+
+    return {
+      targetType,
+      countryId: slugify(city?.country || ""),
+      cityId: destination.cityId || city?.id || "",
+      citySlug: destination.citySlug || city?.slug || "",
+      destinationId: destination.id,
+    };
   }
 
-  const { cityId, citySlug } = await cityContext(formData);
+  const { cityId, citySlug, countrySlug } = await cityContext(formData);
 
   if (!citySlug) {
     throw new Error("Choose a valid city for this guide.");
   }
 
-  return { targetType, countryId: "", cityId, citySlug, destinationId: "" };
+  return { targetType, countryId: countrySlug, cityId, citySlug, destinationId: "" };
 }
 
 function redirectWithUploadError(error: unknown): never {
@@ -651,22 +665,32 @@ export async function saveSitePageAction(formData: FormData) {
 }
 
 export async function saveSiteSettingsAction(formData: FormData) {
-  const settings: SiteSettings = {
-    instagramUrl: value(formData, "instagramUrl"),
-    facebookUrl: value(formData, "facebookUrl"),
-    youtubeUrl: value(formData, "youtubeUrl"),
-    pinterestUrl: value(formData, "pinterestUrl"),
-    tiktokUrl: value(formData, "tiktokUrl"),
-    twitterUrl: value(formData, "twitterUrl"),
-    linkedinUrl: value(formData, "linkedinUrl"),
-    contactEmail: value(formData, "contactEmail") || "info@top7spots.com",
-    footerDescription: value(formData, "footerDescription"),
-    footerTrustText: value(formData, "footerTrustText"),
-    copyrightText: value(formData, "copyrightText"),
-    newsletterEnabled: checkboxValue(formData, "newsletterEnabled"),
-  };
-
   try {
+    const homeHeroImage = await getImagePathFromForm(formData, {
+      fieldName: "homeHeroImage",
+      folder: "homepage",
+      fallbackName: "home-hero",
+    });
+
+    const settings: SiteSettings = {
+      homeHeroImage,
+      homeHeroImageAlt: value(formData, "homeHeroImageAlt"),
+      homeHeroOverlayOpacity: String(normalizeHomeHeroOverlayOpacity(value(formData, "homeHeroOverlayOpacity"))),
+      homeHeroOverlayStyle: normalizeHomeHeroOverlayStyle(value(formData, "homeHeroOverlayStyle")),
+      instagramUrl: value(formData, "instagramUrl"),
+      facebookUrl: value(formData, "facebookUrl"),
+      youtubeUrl: value(formData, "youtubeUrl"),
+      pinterestUrl: value(formData, "pinterestUrl"),
+      tiktokUrl: value(formData, "tiktokUrl"),
+      twitterUrl: value(formData, "twitterUrl"),
+      linkedinUrl: value(formData, "linkedinUrl"),
+      contactEmail: value(formData, "contactEmail") || "info@top7spots.com",
+      footerDescription: value(formData, "footerDescription"),
+      footerTrustText: value(formData, "footerTrustText"),
+      copyrightText: value(formData, "copyrightText"),
+      newsletterEnabled: checkboxValue(formData, "newsletterEnabled"),
+    };
+
     await saveSiteSettings(settings);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Settings could not be saved.";

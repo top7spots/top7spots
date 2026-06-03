@@ -239,6 +239,10 @@ export type SitePage = {
 };
 
 export type SiteSettings = {
+  homeHeroImage: string;
+  homeHeroImageAlt: string;
+  homeHeroOverlayOpacity: string;
+  homeHeroOverlayStyle: string;
   instagramUrl: string;
   facebookUrl: string;
   youtubeUrl: string;

@@ -10,9 +10,7 @@ import {
   ChevronDown,
   Crown,
   Gem,
-  Globe2,
   MapPin,
-  Menu,
   Mountain,
   Quote,
   ShieldCheck,
@@ -20,20 +18,12 @@ import {
   TentTree,
   Waves,
 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
 import { CityDirectory } from "@/components/city-directory";
 import { HomepageHeroModeSwitcher } from "@/components/homepage-hero-mode-switcher";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
+import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import {
@@ -43,14 +33,22 @@ import {
   getPublishedHomepageFaqs,
   getPublishedHomepageReviews,
 } from "@/lib/data";
+import { getGuideHref } from "@/lib/guide-routes";
+import {
+  homeHeroFallbackAlt,
+  homeHeroFallbackImage,
+  homeHeroOverlayClassName,
+  normalizeHomeHeroOverlayOpacity,
+} from "@/lib/home-hero-settings";
 import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/site-settings";
 import type { City, Destination, Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const heroImage = "/uploads/global/home-hero.webp";
+const heroImage = homeHeroFallbackImage;
 const featuredCityImageSizes = "(max-width: 768px) 100vw, 360px";
 const weeklyDestinationImageSizes = "(max-width: 768px) 100vw, 50vw";
 const optimizedHomepageCityImages: Record<string, string> = {
@@ -151,18 +149,17 @@ const fallbackHomepageFaqs = [
 ];
 
 export default async function Home() {
-  const [cities, destinations, guides, publishedReviews, publishedFaqs] = await Promise.all([
+  const [cities, destinations, guides, publishedReviews, publishedFaqs, siteSettings] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
     getPublishedHomepageReviews(),
     getPublishedHomepageFaqs(),
+    getSiteSettings(),
   ]);
   const visibleCities = sortHomepageCities(cities).slice(0, 12);
   const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
   const cityGroups = groupCitiesByCountry(cities);
-  const destinationGroups = groupDestinationsByCity(destinations, cityBySlug);
-  const guideGroups = groupGuidesByCity(guides, cityBySlug);
   const cityDirectoryGroups = cityGroups.map((group) => ({
     country: group.country,
     countryPath: countryPath(group.country),
@@ -183,52 +180,32 @@ export default async function Home() {
     publishedFaqs.length > 0
       ? publishedFaqs.map((faq) => ({ question: faq.question, answer: faq.answer }))
       : fallbackHomepageFaqs;
+  const homeHeroImage = resolveImagePath(siteSettings.homeHeroImage || homeHeroFallbackImage);
+  const homeHeroAlt = siteSettings.homeHeroImageAlt || homeHeroFallbackAlt;
+  const overlayOpacity = normalizeHomeHeroOverlayOpacity(siteSettings.homeHeroOverlayOpacity) / 100;
+  const overlayClassName = homeHeroOverlayClassName(siteSettings.homeHeroOverlayStyle);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#111827]">
       <WebsiteJsonLd />
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
-          <BrandLogo imageClassName="h-10 w-auto sm:h-11 lg:h-12" />
-          <HomepageNavigation
-            cityGroups={cityGroups}
-            destinationGroups={destinationGroups}
-            guideGroups={guideGroups}
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Select language, English"
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              <Globe2 className="size-4" aria-hidden="true" />
-              EN
-            </button>
-            <MobileHomepageNavigation
-              cityGroups={cityGroups}
-              destinationGroups={destinationGroups}
-              guideGroups={guideGroups}
-            />
-          </div>
-        </div>
-      </header>
+      <SiteHeader variant="homepage" />
 
       <main>
         <section className="relative isolate min-h-[680px] overflow-hidden bg-[#0A2A66] text-white">
           <Image
-            src={heroImage}
-            alt="Scenic global travel landscape"
+            src={homeHeroImage}
+            alt={homeHeroAlt}
             fill
             priority
             loading="eager"
             fetchPriority="high"
             sizes="100vw"
-            quality={78}
+            quality={75}
             className="absolute inset-0 -z-20 object-cover"
           />
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(7_27_66_/_92%),rgb(7_27_66_/_70%),rgb(7_27_66_/_28%))]" />
+          <div className={`absolute inset-0 -z-10 ${overlayClassName}`} style={{ opacity: overlayOpacity }} />
           <div className="absolute inset-x-0 bottom-0 -z-10 h-48 bg-gradient-to-t from-[#F8FAFC] via-[#F8FAFC]/30 to-transparent" />
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-28 sm:px-6 md:pb-24 md:pt-32 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:px-8">
             <div className="max-w-4xl">
               <p className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-blue-50 ring-1 ring-white/20">
                 Premium global travel discovery
@@ -550,317 +527,6 @@ function groupCitiesByCountry(cities: City[]) {
     .sort((a, b) => a.country.localeCompare(b.country));
 }
 
-function groupDestinationsByCity(destinations: Destination[], cityBySlug: Map<string, City>) {
-  const groups = new Map<string, { label: string; href?: string; city?: City; destinations: Destination[] }>();
-
-  for (const destination of selectWeeklyDestinations(destinations)) {
-    if (!destination.name || !destination.slug) {
-      continue;
-    }
-
-    const city = cityBySlug.get(destination.citySlug);
-    const key = city?.slug || destination.city || destination.region || "More destinations";
-    const label = city?.name || destination.city || destination.region || "More destinations";
-    const current = groups.get(key);
-
-    groups.set(key, {
-      label,
-      href: city ? `/${city.slug}` : undefined,
-      city,
-      destinations: [...(current?.destinations || []), destination],
-    });
-  }
-
-  return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function groupGuidesByCity(guides: Guide[], cityBySlug: Map<string, City>) {
-  const groups = new Map<string, { city: City; guides: Guide[] }>();
-
-  for (const guide of guides) {
-    if (guide.targetType !== "city") {
-      continue;
-    }
-
-    const city = cityBySlug.get(guide.citySlug);
-
-    if (!city) {
-      continue;
-    }
-
-    const current = groups.get(city.slug);
-    groups.set(city.slug, {
-      city,
-      guides: [...(current?.guides || []), guide],
-    });
-  }
-
-  return Array.from(groups.values())
-    .map((group) => ({
-      ...group,
-      guides: selectHomepageGuides(group.guides, cityBySlug, [group.city]).slice(0, 4),
-    }))
-    .sort((a, b) => a.city.name.localeCompare(b.city.name));
-}
-
-function HomepageNavigation({
-  cityGroups,
-  destinationGroups,
-  guideGroups,
-}: {
-  cityGroups: ReturnType<typeof groupCitiesByCountry>;
-  destinationGroups: ReturnType<typeof groupDestinationsByCity>;
-  guideGroups: ReturnType<typeof groupGuidesByCity>;
-}) {
-  return (
-    <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-      <div className="group relative">
-        <Link href="#all-cities" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
-          Cities
-          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
-        </Link>
-        {cityGroups.length > 0 ? (
-          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
-              {cityGroups.slice(0, 6).map((group) => (
-                <div key={group.country}>
-                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                    {group.country}
-                  </Link>
-                  <div className="mt-2 grid gap-1.5">
-                    {group.cities.slice(0, 5).map((city) => (
-                      <Link key={city.id} href={`/${city.slug}`} className="text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]">
-                        {city.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <div className="group relative">
-        <Link href="/destinations" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
-          Destinations
-          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
-        </Link>
-        {destinationGroups.length > 0 ? (
-          <div className="invisible absolute left-1/2 top-full z-50 w-[560px] -translate-x-1/2 translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
-              {destinationGroups.slice(0, 6).map((group) => (
-                <div key={group.label}>
-                  {group.href ? (
-                    <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                      {group.label}
-                    </Link>
-                  ) : (
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                      {group.label}
-                    </p>
-                  )}
-                  <div className="mt-2 grid gap-1.5">
-                    {group.destinations.slice(0, 4).map((destination) => (
-                      <Link
-                        key={destination.id}
-                        href={getCanonicalDestinationPath(destination, group.city)}
-                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                      >
-                        {destination.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link href="/destinations" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
-              View all destinations
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        ) : null}
-      </div>
-      <div className="group relative">
-        <Link href="#travel-guides" className="inline-flex items-center gap-1.5 py-5 transition hover:text-[#1D4ED8]">
-          Travel Guides
-          <ChevronDown className="size-3.5 transition group-hover:rotate-180" aria-hidden="true" />
-        </Link>
-        {guideGroups.length > 0 ? (
-          <div className="invisible absolute right-0 top-full z-50 w-[520px] translate-y-2 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-2xl shadow-slate-950/15 transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <div className="grid grid-cols-2 gap-4">
-              {guideGroups.slice(0, 6).map((group) => (
-                <div key={group.city.id}>
-                  <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                    {group.city.name}
-                  </Link>
-                  <div className="mt-2 grid gap-1.5">
-                    {group.guides.slice(0, 3).map((guide) => (
-                      <Link
-                        key={guide.id}
-                        href={`/${guide.citySlug}/guides/${guide.slug}`}
-                        className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
-                      >
-                        {guide.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link href="/guides" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66]">
-              View all guides
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        ) : null}
-      </div>
-    </nav>
-  );
-}
-
-function MobileHomepageNavigation({
-  cityGroups,
-  destinationGroups,
-  guideGroups,
-}: {
-  cityGroups: ReturnType<typeof groupCitiesByCountry>;
-  destinationGroups: ReturnType<typeof groupDestinationsByCity>;
-  guideGroups: ReturnType<typeof groupGuidesByCity>;
-}) {
-  return (
-    <Sheet>
-      <SheetTrigger
-        render={
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full md:hidden"
-            aria-label="Open menu"
-          />
-        }
-      >
-        <Menu className="size-4" aria-hidden="true" />
-      </SheetTrigger>
-      <SheetContent side="right" className="z-[70] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto bg-[#0A2A66] text-white">
-        <SheetHeader>
-          <SheetTitle>
-            <BrandLogo variant="dark" imageClassName="h-12 w-auto" />
-          </SheetTitle>
-        </SheetHeader>
-        <nav className="mt-8 grid gap-2 overflow-y-auto px-3 pb-6">
-          <details className="group rounded-lg">
-            <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
-              Cities
-              <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
-            </summary>
-            <div className="grid gap-4 px-3 pb-3 pt-1">
-              <Link href="#all-cities" className="text-sm font-semibold text-white transition hover:text-orange-200">
-                All city hubs
-              </Link>
-              {cityGroups.slice(0, 8).map((group) => (
-                <div key={group.country}>
-                  <Link href={countryPath(group.country)} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
-                    {group.country}
-                  </Link>
-                  <div className="mt-2 grid gap-1.5">
-                    {group.cities.slice(0, 5).map((city) => (
-                      <Link key={city.id} href={`/${city.slug}`} className="text-sm font-medium text-white/80 transition hover:text-white">
-                        {city.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-          {destinationGroups.length > 0 ? (
-            <details className="group rounded-lg">
-              <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
-                Destinations
-                <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="grid gap-4 px-3 pb-3 pt-1">
-                <Link href="/destinations" className="text-sm font-semibold text-white transition hover:text-orange-200">
-                  View all destinations
-                </Link>
-                {destinationGroups.slice(0, 8).map((group) => (
-                  <div key={group.label}>
-                    {group.href ? (
-                      <Link href={group.href} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
-                        {group.label}
-                      </Link>
-                    ) : (
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
-                        {group.label}
-                      </p>
-                    )}
-                    <div className="mt-2 grid gap-1.5">
-                      {group.destinations.slice(0, 4).map((destination) => (
-                        <Link
-                          key={destination.id}
-                          href={getCanonicalDestinationPath(destination, group.city)}
-                          className="line-clamp-1 text-sm font-medium text-white/80 transition hover:text-white"
-                        >
-                          {destination.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </details>
-          ) : (
-            <Link
-              href="/destinations"
-              className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-            >
-              Destinations
-            </Link>
-          )}
-          {guideGroups.length > 0 ? (
-            <details className="group rounded-lg">
-              <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white">
-                Travel Guides
-                <ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="grid gap-4 px-3 pb-3 pt-1">
-                <Link href="/guides" className="text-sm font-semibold text-white transition hover:text-orange-200">
-                  All travel guides
-                </Link>
-                {guideGroups.slice(0, 8).map((group) => (
-                  <div key={group.city.id}>
-                    <Link href={`/${group.city.slug}/guides`} className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200">
-                      {group.city.name}
-                    </Link>
-                    <div className="mt-2 grid gap-1.5">
-                      {group.guides.slice(0, 3).map((guide) => (
-                        <Link
-                          key={guide.id}
-                          href={`/${guide.citySlug}/guides/${guide.slug}`}
-                          className="line-clamp-1 text-sm font-medium text-white/80 transition hover:text-white"
-                        >
-                          {guide.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </details>
-          ) : (
-            <Link
-              href="/guides"
-              className="rounded-lg px-3 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
-            >
-              Travel Guides
-            </Link>
-          )}
-        </nav>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 function CityCard({ city }: { city: City }) {
   const image = optimizedHomepageImage(city.cardImage || city.featuredImage || city.heroImage);
 
@@ -986,7 +652,7 @@ function GuideTextCard({ guide, city }: { guide: Guide; city?: City }) {
           </span>
         ) : null}
         <Link
-          href={guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+          href={getGuideHref(guide)}
           aria-label={`Read ${guide.title}`}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] transition hover:text-[#0A2A66] group-hover:translate-x-0.5"
         >

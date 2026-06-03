@@ -47,6 +47,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/format";
+import { getGuideHref } from "@/lib/guide-routes";
+import {
+  homeHeroOverlayStyleOptions,
+  normalizeHomeHeroOverlayOpacity,
+  normalizeHomeHeroOverlayStyle,
+} from "@/lib/home-hero-settings";
 import type {
   AdminCollection,
   Attraction,
@@ -898,6 +904,8 @@ function MediaSection() {
 
 function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
   const settings = data.siteSettings;
+  const overlayOpacity = normalizeHomeHeroOverlayOpacity(settings.homeHeroOverlayOpacity);
+  const overlayStyle = normalizeHomeHeroOverlayStyle(settings.homeHeroOverlayStyle);
 
   return (
     <form action={saveSiteSettingsAction} className="grid gap-6">
@@ -912,6 +920,43 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
           <Field label="Contact email" name="contactEmail" type="email" defaultValue={settings.contactEmail} />
         </CardContent>
       </Card>
+
+      <FormSection title="Homepage Hero">
+        <div className="md:col-span-3">
+          <ImageUploadField
+            fieldName="homeHeroImage"
+            label="Homepage hero background image"
+            currentImage={settings.homeHeroImage}
+          />
+        </div>
+        <Field
+          label="Hero background alt text"
+          name="homeHeroImageAlt"
+          defaultValue={settings.homeHeroImageAlt}
+          placeholder="Mountain landscape at sunset"
+          helperText="Describe the scenic background for accessibility and image SEO."
+        />
+        <Field
+          label="Overlay opacity"
+          name="homeHeroOverlayOpacity"
+          type="number"
+          min={0}
+          max={85}
+          defaultValue={overlayOpacity}
+          helperText="0 is transparent. 85 is the darkest allowed. Higher overlay makes white text easier to read."
+        />
+        <SelectField label="Overlay style" name="homeHeroOverlayStyle" defaultValue={overlayStyle}>
+          {homeHeroOverlayStyleOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectField>
+        <p className="text-xs leading-5 text-slate-500 md:col-span-3">
+          If no custom image is saved, the homepage keeps using the built-in scenic fallback. New
+          uploads use the existing hero-image compression and long-lived cache settings.
+        </p>
+      </FormSection>
 
       <FormSection title="Footer Settings" columns={1}>
         <Area
@@ -1861,6 +1906,8 @@ function Field({
   defaultValue,
   placeholder,
   helperText,
+  min,
+  max,
   type = "text",
 }: {
   label: string;
@@ -1868,12 +1915,22 @@ function Field({
   defaultValue?: string | number;
   placeholder?: string;
   helperText?: string;
+  min?: number;
+  max?: number;
   type?: string;
 }) {
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} />
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        min={min}
+        max={max}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+      />
       {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
     </div>
   );
@@ -2203,9 +2260,7 @@ function guideTargetLabel(guide: Guide, cities: City[], destinations: Destinatio
 }
 
 function guideViewHref(guide: Guide) {
-  return guide.targetType === "city" && guide.citySlug
-    ? `/${guide.citySlug}/guides/${guide.slug}`
-    : `/guides/${guide.slug}`;
+  return getGuideHref(guide);
 }
 
 function isPublished(item: { status: string }) {

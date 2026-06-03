@@ -8,6 +8,7 @@ import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCityBySlug, getGuidesByCity } from "@/lib/data";
+import { getGuideHref } from "@/lib/guide-routes";
 import { seoMetadata } from "@/lib/seo";
 import type { Guide } from "@/lib/types";
 
@@ -95,7 +96,7 @@ export default async function CityGuidesPage({ params }: CityGuidesPageProps) {
                     key={guide.id}
                     guide={guide}
                     cityName={city.name}
-                    href={`/${city.slug}/guides/${guide.slug}`}
+                    href={getGuideHref(guide)}
                   />
                 ))}
               </div>

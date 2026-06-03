@@ -13,6 +13,7 @@ import {
 import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
+import { getGuideHref } from "@/lib/guide-routes";
 import type { City, Destination, Guide } from "@/lib/types";
 
 export async function SiteHeader() {
@@ -161,7 +162,7 @@ export async function SiteHeader() {
                           {group.guides.slice(0, 3).map((guide) => (
                             <Link
                               key={guide.id}
-                              href={`/${guide.citySlug}/guides/${guide.slug}`}
+                              href={getGuideHref(guide)}
                               className="line-clamp-1 text-sm font-medium text-white/80 transition hover:text-white"
                             >
                               {guide.title}
@@ -282,7 +283,7 @@ function DesktopNavigation({
                     {group.guides.slice(0, 3).map((guide) => (
                       <Link
                         key={guide.id}
-                        href={`/${guide.citySlug}/guides/${guide.slug}`}
+                        href={getGuideHref(guide)}
                         className="line-clamp-1 text-sm font-semibold text-[#0A2A66] transition hover:text-[#1D4ED8]"
                       >
                         {guide.title}

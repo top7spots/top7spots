@@ -6,6 +6,7 @@ import {
   getPublishedGuides,
 } from "@/lib/data";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
+import { getGuideHref } from "@/lib/guide-routes";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -98,10 +99,7 @@ export async function GET(request: Request) {
         id: `guide-${guide.id}`,
         title: guide.title,
         type: "Guide" as const,
-        href:
-          guide.targetType === "city" && guide.citySlug
-            ? `/${guide.citySlug}/guides/${guide.slug}`
-            : `/guides/${guide.slug}`,
+        href: getGuideHref(guide),
         context: [city?.name, city?.country, guide.category].filter(Boolean).join(" · "),
         description: guide.excerpt || guide.seoDescription || guide.content[0],
         searchable: [

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { GuideDetailArticle } from "@/components/guide-detail-article";
 import {
   getDestinations,
-  getGuide,
   getPublishedAttractions,
   getPublishedCities,
   getPublishedGuides,
+  getPublishedGuidesBySlug,
   getPublishedRestaurants,
 } from "@/lib/data";
+import { getGuideCanonicalPath, getGuideHref, isCityGuide } from "@/lib/guide-routes";
 import { seoMetadata } from "@/lib/seo";
+import type { Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,7 +22,8 @@ type GuideDetailPageProps = {
 
 export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const guide = await getGuide(slug);
+  const resolvedGuide = resolveGenericGuide(await getPublishedGuidesBySlug(slug));
+  const guide = resolvedGuide?.guide;
 
   if (!guide) {
     return {};
@@ -29,7 +32,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
   return seoMetadata({
     title: guide.seoTitle || guide.title,
     description: guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots.",
-    path: guideCanonicalPath(guide),
+    path: getGuideCanonicalPath(guide),
     image: guide.coverImage || guide.image,
     keywords: guide.seoKeywords,
     type: "article",
@@ -38,20 +41,27 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { slug } = await params;
-  const [guide, destinations, attractions, cities, guides, restaurants] = await Promise.all([
-    getGuide(slug),
+  const [guideMatches, destinations, attractions, cities, guides, restaurants] = await Promise.all([
+    getPublishedGuidesBySlug(slug),
     getDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedGuides(),
     getPublishedRestaurants(),
   ]);
+  const resolvedGuide = resolveGenericGuide(guideMatches);
 
-  if (!guide) {
+  if (!resolvedGuide) {
     notFound();
   }
 
-  const canonicalPath = guideCanonicalPath(guide);
+  const { guide, redirectPath } = resolvedGuide;
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
+  const canonicalPath = getGuideCanonicalPath(guide);
   const parentCity =
     guide.targetType === "city" && guide.citySlug
       ? cities.find((city) => city.slug === guide.citySlug)
@@ -78,8 +88,25 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   );
 }
 
-function guideCanonicalPath(guide: { targetType: string; citySlug?: string; slug: string }) {
-  return guide.targetType === "city" && guide.citySlug
-    ? `/${guide.citySlug}/guides/${guide.slug}`
-    : `/guides/${guide.slug}`;
+function resolveGenericGuide(guides: Guide[]) {
+  const genericGuides = guides.filter((guide) => !isCityGuide(guide));
+
+  if (genericGuides.length === 1) {
+    return { guide: genericGuides[0], redirectPath: "" };
+  }
+
+  if (genericGuides.length > 1) {
+    return undefined;
+  }
+
+  if (guides.length === 1) {
+    const [guide] = guides;
+    const canonicalPath = getGuideHref(guide);
+    return {
+      guide,
+      redirectPath: canonicalPath.startsWith("/guides/") ? "" : canonicalPath,
+    };
+  }
+
+  return undefined;
 }

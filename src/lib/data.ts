@@ -163,7 +163,7 @@ function status(value?: string | null): ContentStatus {
 function guideTargetType(row: GuideRow): GuideTargetType {
   const value = stringField(row, "target_type", "targetType").toLowerCase();
 
-  if (value === "country" || value === "destination") {
+  if (value === "country" || value === "city" || value === "destination") {
     return value;
   }
 
@@ -797,6 +797,12 @@ export async function getPublishedGuides() {
   return guides.filter((guide) => guide.status === "published");
 }
 
+export async function getPublishedGuidesBySlug(slug: string) {
+  const normalizedSlug = slugify(slug);
+  const guides = await getPublishedGuides();
+  return guides.filter((guide) => guide.slug === normalizedSlug);
+}
+
 export async function getGuidesByCity(citySlug: string) {
   const normalizedCitySlug = slugify(citySlug);
   const guides = await getPublishedGuides();
@@ -840,8 +846,18 @@ export async function getGuidesForDestination(destinationSlug: string) {
 }
 
 export async function getGuide(slug: string) {
-  const guides = await getGuides();
-  return guides.find((guide) => guide.slug === slugify(slug));
+  const guides = await getPublishedGuidesBySlug(slug);
+  const genericGuides = guides.filter((guide) => guide.targetType !== "city" || !guide.citySlug);
+
+  if (genericGuides.length === 1) {
+    return genericGuides[0];
+  }
+
+  if (genericGuides.length > 1) {
+    return undefined;
+  }
+
+  return guides.length === 1 ? guides[0] : undefined;
 }
 
 export async function getGuideByCityAndSlug(citySlug: string, guideSlug: string) {

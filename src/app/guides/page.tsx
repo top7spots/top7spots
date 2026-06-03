@@ -8,6 +8,7 @@ import { BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getPublishedCities, getPublishedGuides } from "@/lib/data";
+import { getGuideHref } from "@/lib/guide-routes";
 import { seoMetadata } from "@/lib/seo";
 import type { City, Guide } from "@/lib/types";
 
@@ -89,7 +90,6 @@ export default async function GuidesPage() {
                       <GuideCard
                         key={guide.id}
                         guide={guide}
-                        href={`/guides/${guide.slug}`}
                         cityName={cityLabel(cityBySlug, guide)}
                       />
                     ))}
@@ -106,7 +106,6 @@ export default async function GuidesPage() {
                   <GuideCard
                     key={guide.id}
                     guide={guide}
-                    href={`/guides/${guide.slug}`}
                     cityName={cityLabel(cityBySlug, guide)}
                   />
                 ))}
@@ -131,7 +130,7 @@ export default async function GuidesPage() {
                       {categoryGuides.map((guide) => (
                         <Link
                           key={guide.id}
-                          href={`/guides/${guide.slug}`}
+                          href={getGuideHref(guide)}
                           className="rounded-lg bg-white px-4 py-3 text-sm font-semibold text-[#0A2A66] shadow-sm transition hover:text-[#1D4ED8]"
                         >
                           {guide.title}

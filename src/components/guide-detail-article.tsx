@@ -32,6 +32,7 @@ import {
   type ResolvedGuideListingBlock,
   type ResolvedGuideListingBlockItem,
 } from "@/lib/guide-listing-blocks";
+import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type {
@@ -180,10 +181,9 @@ export function GuideDetailArticle({
     currentCountrySlug: guide.countryId || city?.country,
   });
   const legacyFaqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
-  const blockFaqItems = mergeFaqItems(
-    mainPageBlocks.flatMap((block) => (block.type === "faq" ? block.faqs || [] : [])),
-  );
-  const faqJsonLdItems = mergeFaqItems(blockFaqItems, legacyFaqItems);
+  const faqPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type === "faq") : [];
+  const blockFaqItems = mergeFaqItems(faqPageBlocks.flatMap((block) => block.faqs || []));
+  const visibleFaqItems = faqPageBlocks.length > 0 ? blockFaqItems : legacyFaqItems;
   const contentListingBlocks = mainPageBlocks
     .map((block) =>
       listingBlockForContentBlock(block, {
@@ -203,7 +203,6 @@ export function GuideDetailArticle({
   const primaryPageBlocks = hasPageBlocks
     ? mainPageBlocks.filter((block) => !isGuideSupportBlock(block) && block.type !== "faq")
     : [];
-  const faqPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type === "faq") : [];
   const useTwoColumnContent = !isListGuideLayout && supportPageBlocks.length > 0 && primaryPageBlocks.length > 0;
   const selectedItemListItems = guideItemListEntries(allListingBlocks);
   const jsonLd = [
@@ -214,7 +213,7 @@ export function GuideDetailArticle({
       city,
       includeCity: includeCityInBreadcrumbJson,
     }),
-    buildGuideFaqJsonLd({ faqs: faqJsonLdItems }),
+    buildGuideFaqJsonLd({ faqs: visibleFaqItems }),
     buildGuideItemListJsonLd({
       canonicalPath,
       name: `${guide.title} selected places`,
@@ -301,7 +300,6 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={legacyFaqItems}
                   />
                   {!useTwoColumnContent && supportPageBlocks.length > 0 ? (
                     <GuidePageBlocks
@@ -313,7 +311,6 @@ export function GuideDetailArticle({
                       attractions={attractions}
                       restaurants={restaurants}
                       guides={guides}
-                      fallbackFaqs={legacyFaqItems}
                     />
                   ) : null}
                 </div>
@@ -327,7 +324,6 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={legacyFaqItems}
                   />
                 ) : null}
               </div>
@@ -342,8 +338,11 @@ export function GuideDetailArticle({
                     attractions={attractions}
                     restaurants={restaurants}
                     guides={guides}
-                    fallbackFaqs={legacyFaqItems}
                   />
+                </div>
+              ) : legacyFaqItems.length > 0 ? (
+                <div className="mt-8 grid gap-8">
+                  <ServerGuideFaqAccordion faqs={legacyFaqItems} />
                 </div>
               ) : null}
             </>
@@ -609,7 +608,6 @@ function GuidePageBlocks({
   attractions,
   restaurants,
   guides,
-  fallbackFaqs,
 }: {
   guide: Guide;
   blocks: GuideCmsBlock[];
@@ -619,7 +617,6 @@ function GuidePageBlocks({
   attractions: Attraction[];
   restaurants: Restaurant[];
   guides: Guide[];
-  fallbackFaqs: GuideFaqItem[];
 }) {
   return (
     <>
@@ -634,7 +631,6 @@ function GuidePageBlocks({
           attractions={attractions}
           restaurants={restaurants}
           guides={guides}
-          fallbackFaqs={fallbackFaqs}
         />
       ))}
     </>
@@ -650,7 +646,6 @@ function GuideSupportColumn({
   attractions,
   restaurants,
   guides,
-  fallbackFaqs,
 }: {
   guide: Guide;
   blocks: GuideCmsBlock[];
@@ -660,7 +655,6 @@ function GuideSupportColumn({
   attractions: Attraction[];
   restaurants: Restaurant[];
   guides: Guide[];
-  fallbackFaqs: GuideFaqItem[];
 }) {
   return (
     <aside className="grid gap-4 lg:sticky lg:top-24">
@@ -675,7 +669,6 @@ function GuideSupportColumn({
           attractions={attractions}
           restaurants={restaurants}
           guides={guides}
-          fallbackFaqs={fallbackFaqs}
         />
       ))}
     </aside>
@@ -691,7 +684,6 @@ function GuidePageBlock({
   attractions,
   restaurants,
   guides,
-  fallbackFaqs,
 }: {
   guide: Guide;
   block: GuideCmsBlock;
@@ -701,11 +693,9 @@ function GuidePageBlock({
   attractions: Attraction[];
   restaurants: Restaurant[];
   guides: Guide[];
-  fallbackFaqs: GuideFaqItem[];
 }) {
   if (block.type === "faq") {
-    const faqs = block.faqs?.length ? block.faqs : fallbackFaqs;
-    return <ServerGuideFaqAccordion faqs={faqs} />;
+    return <ServerGuideFaqAccordion faqs={block.faqs || []} />;
   }
 
   const listingBlock = listingBlockForContentBlock(block, {
@@ -1181,7 +1171,7 @@ function SimilarGuidesGrid({ guides }: { guides: Guide[] }) {
 }
 
 function SimilarGuideCard({ guide }: { guide: Guide }) {
-  const href = guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`;
+  const href = getGuideHref(guide);
   const image = guide.coverImage || guide.image ? resolveImagePath(guide.coverImage || guide.image) : "";
 
   return (
@@ -1845,10 +1835,7 @@ function sortGuidesNewestFirst(a: Guide, b: Guide) {
 function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
   return {
     key: `guide-${guide.id}`,
-    href:
-      guide.targetType === "city" && guide.citySlug
-        ? `/${guide.citySlug}/guides/${guide.slug}`
-        : `/guides/${guide.slug}`,
+    href: getGuideHref(guide),
     title: guide.title,
     description: guide.excerpt || guide.seoDescription,
     image: guide.coverImage || guide.image,
@@ -2011,7 +1998,7 @@ function selectedBlockItems(
       .filter((guide) => guide.id !== context.guide.id)
       .map((guide) => ({
         key: `guide-${guide.id}`,
-        href: guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`,
+        href: getGuideHref(guide),
         title: guide.title,
         description: guide.excerpt || guide.seoDescription,
         image: guide.coverImage || guide.image,

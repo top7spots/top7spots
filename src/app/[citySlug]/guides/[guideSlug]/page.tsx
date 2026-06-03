@@ -11,6 +11,7 @@ import {
   getPublishedGuides,
   getPublishedRestaurants,
 } from "@/lib/data";
+import { getGuideCanonicalPath } from "@/lib/guide-routes";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
       guide.seoDescription ||
       guide.excerpt ||
       `A practical ${city.name} travel guide from Top7Spots.`,
-    path: `/${city.slug}/guides/${guide.slug}`,
+    path: getGuideCanonicalPath(guide),
     image: guide.coverImage || guide.image,
     keywords: guide.seoKeywords,
     type: "article",
@@ -65,7 +66,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     <GuideDetailArticle
       guide={guide}
       city={city}
-      canonicalPath={`/${city.slug}/guides/${guide.slug}`}
+      canonicalPath={getGuideCanonicalPath(guide)}
       includeCityInBreadcrumbJson
       breadcrumbItems={[
         { label: city.name, href: `/${city.slug}` },

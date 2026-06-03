@@ -9,6 +9,7 @@ import {
 import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
 import { getCanonicalDestinationPath, getLocalCityDestinations } from "@/lib/city-intelligence";
+import { getGuideHref } from "@/lib/guide-routes";
 import {
   cityProgrammaticPages,
   citySeoPath,
@@ -34,6 +35,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedSitePages(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
+  const guideSitemapEntries = uniqueSitemapEntries(
+    guides.map((guide) => ({
+      url: absoluteUrl(getGuideHref(guide)),
+      lastModified: lastModified(guide.updatedAt, guide.createdAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  );
   const cityContent = new Map(
     cities.map((city) => {
       const citySlug = slugify(city.slug);
@@ -119,16 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
-    ...guides.map((guide) => ({
-      url: absoluteUrl(
-        guide.targetType === "city" && guide.citySlug
-          ? `/${slugify(guide.citySlug)}/guides/${slugify(guide.slug)}`
-          : `/guides/${slugify(guide.slug)}`,
-      ),
-      lastModified: lastModified(guide.updatedAt, guide.createdAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    })),
+    ...guideSitemapEntries,
     ...attractions
       .filter((attraction) => attraction.citySlug)
       .map((attraction) => ({
@@ -137,4 +137,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       })),
   ];
+}
+
+function uniqueSitemapEntries<T extends { url: string }>(entries: T[]) {
+  return Array.from(new Map(entries.map((entry) => [entry.url, entry])).values());
 }

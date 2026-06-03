@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, BookOpen, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import type { Guide } from "@/lib/types";
 
@@ -23,11 +24,7 @@ export function GuideCard({
   imageSizes = defaultGuideCardImageSizes,
 }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
-  const href =
-    hrefOverride ||
-    (guide.targetType === "city" && guide.citySlug
-      ? `/${guide.citySlug}/guides/${guide.slug}`
-      : `/guides/${guide.slug}`);
+  const href = hrefOverride || getGuideHref(guide);
   const imageAlt = guide.coverImageAlt || `${guide.title} travel guide${cityName ? ` for ${cityName}` : ""}`;
 
   return (
@@ -84,11 +81,7 @@ type CompactGuideCardProps = {
 
 export function CompactGuideCard({ guide, href: hrefOverride }: CompactGuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
-  const href =
-    hrefOverride ||
-    (guide.targetType === "city" && guide.citySlug
-      ? `/${guide.citySlug}/guides/${guide.slug}`
-      : `/guides/${guide.slug}`);
+  const href = hrefOverride || getGuideHref(guide);
   const imageAlt = guide.coverImageAlt || `${guide.title} travel guide`;
 
   return (

@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { countryPath } from "@/lib/country-hubs";
 import { getCityBySlug, getDestinationsByCity, getGuidesByCity, getPublishedCities } from "@/lib/data";
+import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 import type { City, Destination, Guide } from "@/lib/types";
@@ -198,7 +199,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 {cityGuides.map((guide) => (
                   <Link
                     key={guide.id}
-                    href={`/${city.slug}/guides/${guide.slug}`}
+                    href={getGuideHref(guide)}
                     className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-lg"
                   >
                     <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">

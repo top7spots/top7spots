@@ -50,6 +50,20 @@ function carRentalLanguageValue(formData: FormData) {
   return value(formData, "language") === "ar" ? "ar" : "en";
 }
 
+function carRentalPageTypeValue(formData: FormData) {
+  const pageType = value(formData, "pageType");
+  return pageType === "country" || pageType === "city" || pageType === "airport" ? pageType : "";
+}
+
+function parseCarRentalJsonArray<T>(formData: FormData, key: string, label: string): T[] {
+  try {
+    return parseJsonArray<T>(formData.get(key));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Invalid JSON.";
+    throw new Error(`${label} must be valid JSON array. ${detail}`);
+  }
+}
+
 function checkboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
@@ -698,6 +712,11 @@ export async function saveCarRentalPageAction(formData: FormData) {
       language: carRentalLanguageValue(formData),
       slug,
       translationGroup,
+      countryName: value(formData, "countryName"),
+      countrySlug: slugify(value(formData, "countrySlug") || value(formData, "countryName")),
+      cityName: value(formData, "cityName"),
+      citySlug: slugify(value(formData, "citySlug") || value(formData, "cityName")),
+      pageType: carRentalPageTypeValue(formData),
       status: statusValue(formData),
       pageTitle,
       seoTitle: value(formData, "seoTitle"),
@@ -713,21 +732,21 @@ export async function saveCarRentalPageAction(formData: FormData) {
       discovercarsAffiliateLink: value(formData, "discovercarsAffiliateLink") || defaultDiscoverCarsAffiliateLink,
       discovercarsAffiliateId: value(formData, "discovercarsAffiliateId") || "top7spots",
       discovercarsChannel: value(formData, "discovercarsChannel") || "locations",
-      benefits: parseJsonArray(formData.get("benefits")),
+      benefits: parseCarRentalJsonArray(formData, "benefits", "Benefits"),
       descriptionTitle: value(formData, "descriptionTitle"),
       descriptionPreviewText: value(formData, "descriptionPreviewText"),
       descriptionFullText: value(formData, "descriptionFullText"),
       descriptionImage: value(formData, "descriptionImage"),
-      popularLocationCards: parseJsonArray(formData.get("popularLocationCards")),
-      guideCards: parseJsonArray(formData.get("guideCards")),
-      destinationCards: parseJsonArray(formData.get("destinationCards")),
-      directoryGroups: parseJsonArray(formData.get("directoryGroups")),
-      faqs: parseJsonArray(formData.get("faqs")),
+      popularLocationCards: parseCarRentalJsonArray(formData, "popularLocationCards", "Popular location cards"),
+      guideCards: parseCarRentalJsonArray(formData, "guideCards", "Guide cards"),
+      destinationCards: parseCarRentalJsonArray(formData, "destinationCards", "Destination cards"),
+      directoryGroups: parseCarRentalJsonArray(formData, "directoryGroups", "Directory groups"),
+      faqs: parseCarRentalJsonArray(formData, "faqs", "FAQs"),
       createdAt: timestamp(formData),
       updatedAt: new Date().toISOString(),
     });
-  } catch {
-    redirectWithSaveError("car_rental_pages", new Error("One of the JSON fields is invalid."), id);
+  } catch (error) {
+    redirectWithSaveError("car_rental_pages", error, id);
   }
 
   try {

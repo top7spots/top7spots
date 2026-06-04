@@ -170,6 +170,11 @@ function status(value?: string | null): ContentStatus {
   return value?.toLowerCase() === "draft" ? "draft" : "published";
 }
 
+function pageTypeField(row: Record<string, unknown>) {
+  const value = stringField(row, "page_type", "pageType").toLowerCase();
+  return value === "country" || value === "city" || value === "airport" ? value : "";
+}
+
 function guideTargetType(row: GuideRow): GuideTargetType {
   const value = stringField(row, "target_type", "targetType").toLowerCase();
 
@@ -465,6 +470,11 @@ function mapCarRentalPage(row: CarRentalPageRow): CarRentalPage {
     language: stringField(row, "language") === "ar" ? "ar" : "en",
     slug: slugify(stringField(row, "slug") || pageTitle),
     translationGroup: slugify(stringField(row, "translation_group", "translationGroup") || stringField(row, "slug")),
+    countryName: stringField(row, "country_name", "countryName"),
+    countrySlug: slugify(stringField(row, "country_slug", "countrySlug")),
+    cityName: stringField(row, "city_name", "cityName"),
+    citySlug: slugify(stringField(row, "city_slug", "citySlug")),
+    pageType: pageTypeField(row),
     status: status(stringField(row, "status")),
     pageTitle,
     seoTitle: stringField(row, "seo_title", "seoTitle"),
@@ -695,6 +705,11 @@ function toCarRentalPageRow(item: CarRentalPage): CarRentalPageRow {
     language: page.language,
     slug: slugify(page.slug),
     translation_group: slugify(page.translationGroup),
+    country_name: page.countryName,
+    country_slug: slugify(page.countrySlug),
+    city_name: page.cityName,
+    city_slug: slugify(page.citySlug),
+    page_type: page.pageType || null,
     status: page.status,
     page_title: page.pageTitle,
     seo_title: page.seoTitle,

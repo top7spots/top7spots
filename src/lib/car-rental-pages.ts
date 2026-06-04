@@ -20,6 +20,11 @@ export type CarRentalImportInput = {
   language?: unknown;
   slug?: unknown;
   translationGroup?: unknown;
+  countryName?: unknown;
+  countrySlug?: unknown;
+  cityName?: unknown;
+  citySlug?: unknown;
+  pageType?: unknown;
   status?: unknown;
   pageTitle?: unknown;
   seoTitle?: unknown;
@@ -109,6 +114,11 @@ export function normalizeCarRentalImport(input: CarRentalImportInput, existingId
     language,
     slug,
     translationGroup,
+    countryName: textValue(input.countryName),
+    countrySlug: slugValue(input.countrySlug) || slugValue(input.countryName),
+    cityName: textValue(input.cityName),
+    citySlug: slugValue(input.citySlug) || slugValue(input.cityName),
+    pageType: normalizePageType(input.pageType),
     status,
     pageTitle,
     seoTitle: textValue(input.seoTitle),
@@ -149,7 +159,12 @@ export function parseJsonArray<T>(value: FormDataEntryValue | null, fallback: T[
   }
 
   const parsed = JSON.parse(text);
-  return Array.isArray(parsed) ? parsed : fallback;
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("JSON value must be an array.");
+  }
+
+  return parsed;
 }
 
 export function prettyJson(value: unknown) {
@@ -162,6 +177,11 @@ export function normalizeCarRentalPageDraft(page: CarRentalPage): CarRentalPage 
     language: normalizeLanguage(page.language) || "en",
     slug: slugValue(page.slug),
     translationGroup: slugValue(page.translationGroup),
+    countryName: page.countryName.trim(),
+    countrySlug: slugValue(page.countrySlug) || slugValue(page.countryName),
+    cityName: page.cityName.trim(),
+    citySlug: slugValue(page.citySlug) || slugValue(page.cityName),
+    pageType: normalizePageType(page.pageType),
     status: normalizeStatus(page.status) || "draft",
     heroChips: stringArray(page.heroChips),
     benefits: normalizeBenefits(page.benefits),
@@ -183,6 +203,10 @@ function normalizeLanguage(value: unknown): CarRentalLanguage | null {
 
 function normalizeStatus(value: unknown): ContentStatus | null {
   return value === "draft" || value === "published" ? value : null;
+}
+
+function normalizePageType(value: unknown) {
+  return value === "country" || value === "city" || value === "airport" ? value : "";
 }
 
 function textValue(value: unknown) {

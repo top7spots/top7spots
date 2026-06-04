@@ -239,6 +239,7 @@ export type SitePage = {
 };
 
 export type CarRentalLanguage = "en" | "ar";
+export type CarRentalPageType = "country" | "city" | "airport" | "";
 
 export type CarRentalBenefit = {
   title: string;
@@ -281,6 +282,11 @@ export type CarRentalPage = {
   language: CarRentalLanguage;
   slug: string;
   translationGroup: string;
+  countryName: string;
+  countrySlug: string;
+  cityName: string;
+  citySlug: string;
+  pageType: CarRentalPageType;
   status: ContentStatus;
   pageTitle: string;
   seoTitle: string;

@@ -40,7 +40,7 @@ export function CarRentalBulkImport() {
           setHasValidated(false);
         }}
         rows={12}
-        placeholder='{"language":"en","slug":"rent-a-car-in-oman","translationGroup":"rent-a-car-in-oman","status":"draft","pageTitle":"Rent a Car in Oman","hero":{"title":"Rent a Car in Oman"}}'
+        placeholder='{"language":"en","slug":"rent-a-car-in-oman","translationGroup":"rent-a-car-in-oman","countryName":"Oman","countrySlug":"oman","pageType":"country","status":"draft","pageTitle":"Rent a Car in Oman","hero":{"title":"Rent a Car in Oman"}}'
         className="font-mono text-xs"
       />
       <div className="flex flex-wrap items-center gap-3">
@@ -72,6 +72,9 @@ export function CarRentalBulkImport() {
               <Summary label="Slug" value={preview.page.slug} />
               <Summary label="Translation group" value={preview.page.translationGroup} />
               <Summary label="Public URL" value={carRentalPublicPath(preview.page)} />
+              <Summary label="Country" value={preview.page.countryName || preview.page.countrySlug || "Not set"} />
+              <Summary label="City" value={preview.page.cityName || preview.page.citySlug || "Not set"} />
+              <Summary label="Page type" value={preview.page.pageType || "Not set"} />
               <Summary label="Page title" value={preview.page.pageTitle} />
               <Summary label="Status" value={status} />
               <Summary label="Hero chips" value={preview.page.heroChips.length} />

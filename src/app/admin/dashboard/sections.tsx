@@ -25,6 +25,12 @@ import {
   Utensils,
 } from "lucide-react";
 import {
+  CarRentalJsonTextarea,
+  DirectoryGroupsField,
+  GuideCardsField,
+  PopularLocationCardsField,
+} from "@/components/admin/car-rental-json-fields";
+import {
   saveAttractionAction,
   saveDestinationAction,
   saveGuideAction,
@@ -891,6 +897,9 @@ function CarRentalPagesSection({ data, searchParams }: AdminCrudProps) {
       <CarRentalPageForm
         title={page ? `Edit ${page.pageTitle}` : "Add car rental page"}
         page={page}
+        pages={data.carRentalPages}
+        guides={data.guides}
+        cities={data.cities}
         backHref={adminHref("car_rental_pages")}
       />
     );
@@ -1675,14 +1684,23 @@ function SitePageForm({
 function CarRentalPageForm({
   title,
   page,
+  pages,
+  guides,
+  cities,
   backHref,
 }: {
   title: string;
   page?: CarRentalPage;
+  pages: CarRentalPage[];
+  guides: Guide[];
+  cities: City[];
   backHref: string;
 }) {
   const language = page?.language ?? "en";
   const publicPath = page ? carRentalPublicPath(page) : "Slug and language set the public URL";
+  const popularLocationSuggestions = buildCarRentalCardSuggestions(page, pages);
+  const guideSuggestions = buildGuideCardSuggestions(page, guides, cities);
+  const directorySuggestions = buildDirectorySuggestions(page, pages);
 
   return (
     <EditShell title={title} backHref={backHref}>
@@ -1705,6 +1723,19 @@ function CarRentalPageForm({
           <StatusSelect defaultValue={page?.status ?? "draft"} />
           <Field label="Page title" name="pageTitle" defaultValue={page?.pageTitle} placeholder="Rent a Car in Oman" />
           <ReadOnlySetting label="Public URL" value={publicPath} />
+        </FormSection>
+
+        <FormSection title="Page context">
+          <Field label="Country name" name="countryName" defaultValue={page?.countryName} placeholder="Oman" />
+          <Field label="Country slug" name="countrySlug" defaultValue={page?.countrySlug} placeholder="oman" />
+          <Field label="City name" name="cityName" defaultValue={page?.cityName} placeholder="Muscat" />
+          <Field label="City slug" name="citySlug" defaultValue={page?.citySlug} placeholder="muscat" />
+          <SelectField label="Page type" name="pageType" defaultValue={page?.pageType || "country"}>
+            <option value="">Not specified</option>
+            <option value="country">Country</option>
+            <option value="city">City</option>
+            <option value="airport">Airport</option>
+          </SelectField>
         </FormSection>
 
         <FormSection title="SEO">
@@ -1755,51 +1786,228 @@ function CarRentalPageForm({
         </FormSection>
 
         <FormSection title="Repeatable JSON sections" columns={1}>
-          <Area
+          <CarRentalJsonTextarea
             label="Benefits"
             name="benefits"
             defaultValue={prettyJson(page?.benefits)}
             rows={8}
             helperText='Array of objects: title, description, icon, sortOrder.'
+            example={carRentalBenefitsExample}
           />
-          <Area
-            label="Popular location cards"
-            name="popularLocationCards"
+          <PopularLocationCardsField
             defaultValue={prettyJson(page?.popularLocationCards)}
-            rows={8}
-            helperText='Array of objects: title, url, description, image, label, sortOrder, visible.'
+            suggestions={popularLocationSuggestions}
+            example={carRentalCardsExample}
           />
-          <Area
-            label="Guide cards"
-            name="guideCards"
+          <GuideCardsField
             defaultValue={prettyJson(page?.guideCards)}
-            rows={8}
+            suggestions={guideSuggestions}
+            example={carRentalCardsExample}
           />
-          <Area
+          <CarRentalJsonTextarea
             label="Destination cards"
             name="destinationCards"
             defaultValue={prettyJson(page?.destinationCards)}
             rows={8}
+            helperText="Array of objects: title, url, description, image, label, sortOrder, visible."
+            example={carRentalCardsExample}
           />
-          <Area
-            label="Directory groups"
-            name="directoryGroups"
+          <DirectoryGroupsField
             defaultValue={prettyJson(page?.directoryGroups)}
-            rows={10}
-            helperText='Use groups such as Airports and Popular Locations. Links do not need to exist yet.'
+            airportSuggestions={directorySuggestions.airports}
+            locationSuggestions={directorySuggestions.locations}
+            example={carRentalDirectoryExample}
           />
-          <Area
+          <CarRentalJsonTextarea
             label="FAQs"
             name="faqs"
             defaultValue={prettyJson(page?.faqs)}
             rows={8}
             helperText='Array of objects: question, answer, sortOrder, visible.'
+            example={carRentalFaqExample}
           />
         </FormSection>
         <FormActions backHref={backHref} label="Save car rental page" />
       </form>
     </EditShell>
   );
+}
+
+const carRentalBenefitsExample = prettyJson([
+  {
+    title: "Flexible pickup",
+    description: "Compare pickup options in the city, airport, or nearby locations.",
+    icon: "map",
+    sortOrder: 0,
+  },
+]);
+
+const carRentalCardsExample = prettyJson([
+  {
+    title: "Rent a Car in Muscat",
+    url: "/rent-a-car-in-muscat",
+    description: "Compare car rental options for exploring Muscat and nearby routes.",
+    image: "",
+    label: "Car rental",
+    sortOrder: 0,
+    visible: true,
+  },
+]);
+
+const carRentalDirectoryExample = prettyJson([
+  {
+    title: "Airports",
+    sortOrder: 0,
+    links: [{ text: "Rent a Car at Muscat Airport", url: "/rent-a-car-at-muscat-airport", sortOrder: 0 }],
+  },
+  {
+    title: "Popular Locations",
+    sortOrder: 1,
+    links: [{ text: "Rent a Car in Muscat", url: "/rent-a-car-in-muscat", sortOrder: 0 }],
+  },
+]);
+
+const carRentalFaqExample = prettyJson([
+  {
+    question: "Can I rent a car without an international driving permit?",
+    answer: "Requirements vary by rental company and license country, so check the booking terms before reserving.",
+    sortOrder: 0,
+    visible: true,
+  },
+]);
+
+function buildCarRentalCardSuggestions(currentPage: CarRentalPage | undefined, pages: CarRentalPage[]) {
+  return matchingCarRentalPages(currentPage, pages).map((page, index) => ({
+    title: page.pageTitle || page.heroTitle || page.seoTitle,
+    url: carRentalPublicPath(page),
+    description: page.metaDescription || page.heroSubtitle,
+    image: page.ogImage || page.descriptionImage,
+    label: page.pageType === "airport" ? "Airport car rental" : page.cityName || page.countryName || "Car rental",
+    sortOrder: index,
+    visible: true,
+    status: page.status,
+  }));
+}
+
+function buildDirectorySuggestions(currentPage: CarRentalPage | undefined, pages: CarRentalPage[]) {
+  const links = matchingCarRentalPages(currentPage, pages).map((page, index) => ({
+    text: page.pageTitle || page.heroTitle || page.seoTitle,
+    url: carRentalPublicPath(page),
+    sortOrder: index,
+    status: page.status,
+    isAirport: isAirportCarRentalPage(page),
+  }));
+
+  return {
+    airports: links
+      .filter((link) => link.isAirport)
+      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, status: link.status })),
+    locations: links
+      .filter((link) => !link.isAirport)
+      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, status: link.status })),
+  };
+}
+
+function buildGuideCardSuggestions(currentPage: CarRentalPage | undefined, guides: Guide[], cities: City[]) {
+  if (!currentPage) {
+    return [];
+  }
+
+  const countrySlug = slugify(currentPage.countrySlug || currentPage.countryName);
+  const citySlug = slugify(currentPage.citySlug || currentPage.cityName);
+  const cityCountryBySlug = new Map(cities.map((city) => [city.slug, slugify(city.country)]));
+
+  return guides
+    .filter((guide) => guide.status === "published" || guide.status === "draft")
+    .map((guide) => ({ guide, score: guideRelevanceScore(guide, countrySlug, citySlug, cityCountryBySlug) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.guide.title.localeCompare(b.guide.title))
+    .slice(0, 8)
+    .map(({ guide }, index) => ({
+      title: guide.title,
+      url: getGuideHref(guide),
+      description: guide.excerpt || guide.seoDescription,
+      image: guide.coverImage || guide.image,
+      label: guide.category || "Travel guide",
+      sortOrder: index,
+      visible: true,
+    }));
+}
+
+function matchingCarRentalPages(currentPage: CarRentalPage | undefined, pages: CarRentalPage[]) {
+  if (!currentPage) {
+    return [];
+  }
+
+  const currentCountrySlug = slugify(currentPage.countrySlug || currentPage.countryName);
+  const currentCountryName = normalizeComparableText(currentPage.countryName);
+
+  return pages
+    .filter((page) => page.id !== currentPage.id)
+    .filter((page) => page.language === currentPage.language)
+    .filter((page) => {
+      const pageCountrySlug = slugify(page.countrySlug || page.countryName);
+      const pageCountryName = normalizeComparableText(page.countryName);
+      return Boolean(
+        (currentCountrySlug && pageCountrySlug === currentCountrySlug) ||
+          (currentCountryName && pageCountryName === currentCountryName),
+      );
+    })
+    .sort((a, b) => {
+      const airportCompare = Number(isAirportCarRentalPage(b)) - Number(isAirportCarRentalPage(a));
+      return airportCompare || a.pageTitle.localeCompare(b.pageTitle);
+    });
+}
+
+function isAirportCarRentalPage(page: CarRentalPage) {
+  const text = `${page.pageTitle} ${page.heroTitle} ${page.slug} ${page.pageType}`.toLowerCase();
+  return page.pageType === "airport" || text.includes("airport");
+}
+
+function guideRelevanceScore(
+  guide: Guide,
+  countrySlug: string,
+  citySlug: string,
+  cityCountryBySlug: Map<string, string>,
+) {
+  let score = 0;
+
+  if (citySlug && guide.citySlug === citySlug) {
+    score += 5;
+  }
+
+  if (countrySlug && guide.countryId === countrySlug) {
+    score += 4;
+  }
+
+  if (countrySlug && guide.citySlug && cityCountryBySlug.get(guide.citySlug) === countrySlug) {
+    score += 3;
+  }
+
+  const keywordScore = guideKeywordScore(guide);
+
+  if (keywordScore > 0) {
+    score += keywordScore + 2;
+  }
+
+  return score;
+}
+
+function guideKeywordScore(guide: Guide) {
+  const text = searchBlob(
+    guide.title,
+    guide.excerpt,
+    guide.category,
+    guide.seoTitle,
+    guide.seoDescription,
+    ...(guide.seoKeywords || []),
+  );
+  const keywords = ["car rental", "driving", "drive", "road trip", "transport", "airport", "4x4", "documents", "travel tips", "travel tip"];
+  return keywords.reduce((score, keyword) => score + (text.includes(keyword) ? 1 : 0), 0);
+}
+
+function normalizeComparableText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 function ManagementShell({

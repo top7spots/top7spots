@@ -1,24 +1,34 @@
 import Image from "next/image";
-import { Car, CheckCircle2, Compass, MapPinned, Route, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Car,
+  CheckCircle2,
+  CircleDollarSign,
+  Compass,
+  Headphones,
+  MapPin,
+  Plane,
+  Route,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { BreadcrumbJsonLd, FAQPageJsonLd, JsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import {
-  CarRentalFAQ,
-  DirectoryTabs,
-  DiscoverCarsWidget,
-  ReadMoreText,
-} from "@/components/car-rental/car-rental-client";
+import { CarRentalFAQ, DiscoverCarsWidget, ReadMoreText } from "@/components/car-rental/car-rental-client";
 import { carRentalCanonicalUrl, carRentalPublicPath } from "@/lib/car-rental-pages";
-import { absoluteImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
 import { resolveImagePath } from "@/lib/images";
+import { absoluteImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import type { CarRentalBenefit, CarRentalLinkCard, CarRentalPage } from "@/lib/types";
+import type { CarRentalLinkCard, CarRentalPage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type CarRentalLandingPageProps = {
   page: CarRentalPage;
 };
+
+type CompactCardKind = "location" | "guide" | "destination";
 
 export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) {
   const isRtl = page.language === "ar";
@@ -27,9 +37,10 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
   const settings = await getSiteSettings();
   const coverImage = settings.carRentalCoverImage;
   const socialImage = page.ogImage || coverImage;
+  const locationCards = mergeLocationAndDirectoryCards(page);
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F8FAFC] text-[#111827]">
+    <div dir={isRtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F4F7FB] text-[#111827]">
       <BreadcrumbJsonLd items={[{ name: page.pageTitle, path: publicPath }]} />
       <FAQPageJsonLd faqs={page.faqs} />
       <JsonLd
@@ -52,12 +63,29 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
       <SiteHeader />
       <main>
         <CarRentalHero page={page} isRtl={isRtl} coverImage={coverImage} />
-        <CarRentalBenefits benefits={page.benefits} />
+        <CarRentalTrustBar />
+        <CompactCardSection
+          eyebrow="Popular rental locations"
+          title="Pick up your rental car where it makes sense"
+          cards={locationCards}
+          kind="location"
+          gridClassName="grid-cols-2 lg:grid-cols-4"
+        />
+        <CompactCardSection
+          eyebrow="Road trip ideas"
+          title="Places to visit by rental car"
+          cards={page.destinationCards}
+          kind="destination"
+          gridClassName="grid-cols-2 lg:grid-cols-3"
+        />
+        <CompactCardSection
+          eyebrow="Driving and rental guides"
+          title="Plan the practical details before you book"
+          cards={page.guideCards}
+          kind="guide"
+          gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        />
         <CarRentalDescriptionReadMore page={page} isRtl={isRtl} />
-        <CarRentalPopularLocations cards={page.popularLocationCards} isRtl={isRtl} />
-        <CarRentalGuideCards cards={page.guideCards} isRtl={isRtl} />
-        <CarRentalDestinationCards cards={page.destinationCards} isRtl={isRtl} />
-        <CarRentalDirectoryTabs page={page} isRtl={isRtl} />
         <CarRentalFAQSection page={page} isRtl={isRtl} />
       </main>
       <SiteFooter />
@@ -67,7 +95,6 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
 
 export function CarRentalHero({
   page,
-  isRtl,
   coverImage,
 }: {
   page: CarRentalPage;
@@ -75,64 +102,71 @@ export function CarRentalHero({
   coverImage: string;
 }) {
   return (
-    <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-[88rem] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:px-8 lg:py-12 xl:grid-cols-[minmax(0,1fr)_500px]">
-        <div className="flex flex-col justify-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-            {isRtl ? "تأجير سيارات" : "Car rental"}
+    <section className="relative overflow-hidden border-b border-blue-950/10 bg-[#071B42]">
+      {coverImage ? (
+        <Image
+          src={resolveImagePath(coverImage)}
+          alt={page.pageTitle}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-[0.18]"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-[#071B42]/88" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(29,78,216,0.28),rgba(255,107,0,0.12)_52%,rgba(7,27,66,0.88))]" />
+
+      <div className="relative mx-auto grid max-w-[88rem] gap-5 px-4 py-5 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_470px] lg:items-center lg:px-8 lg:py-9 xl:grid-cols-[minmax(0,1fr)_520px]">
+        <div className="py-2 text-white lg:py-5">
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-blue-50 ring-1 ring-white/20">
+            <Car className="size-3.5" aria-hidden="true" />
+            Car rental search
           </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-tight tracking-tight text-[#111827] md:text-5xl">
+          <h1 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
             {page.heroTitle || page.pageTitle}
           </h1>
           {page.heroSubtitle ? (
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-50/90 sm:text-base">
               {page.heroSubtitle}
             </p>
           ) : null}
           {page.heroChips.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {page.heroChips.map((chip) => (
-                <span key={chip} className="rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-[#0A2A66]">
+            <div className="mt-5 flex flex-wrap gap-2">
+              {page.heroChips.slice(0, 5).map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur"
+                >
                   {chip}
                 </span>
               ))}
             </div>
           ) : null}
-          {coverImage ? (
-            <div className="relative mt-8 min-h-72 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_50px_rgb(15_23_42_/_9%)]">
-              <Image
-                src={resolveImagePath(coverImage)}
-                alt={page.pageTitle}
-                fill
-                priority
-                sizes="(min-width: 1024px) 720px, 100vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
-            </div>
-          ) : null}
         </div>
-        <CarRentalWidgetCard page={page} isRtl={isRtl} />
+        <CarRentalWidgetCard page={page} />
       </div>
     </section>
   );
 }
 
-export function CarRentalWidgetCard({ page, isRtl }: { page: CarRentalPage; isRtl: boolean }) {
+export function CarRentalWidgetCard({ page }: { page: CarRentalPage; isRtl?: boolean }) {
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgb(15_23_42_/_10%)] sm:p-5">
-      <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF6B00]">
-          {isRtl ? "قارن الأسعار" : "Compare prices"}
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
-          {page.widgetHeading || (isRtl ? "ابحث عن سيارتك" : "Find your rental car")}
-        </h2>
-        {page.widgetIntroText ? (
-          <p className="mt-2 text-sm leading-6 text-slate-600">{page.widgetIntroText}</p>
-        ) : null}
+    <aside className="rounded-[1.25rem] border border-white/20 bg-white p-3 shadow-[0_24px_70px_rgb(2_6_23_/_30%)] sm:p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF6B00]">Compare and book</p>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#111827]">
+            {page.widgetHeading || "Find your rental car"}
+          </h2>
+          {page.widgetIntroText ? (
+            <p className="mt-1 text-xs leading-5 text-slate-500">{page.widgetIntroText}</p>
+          ) : null}
+        </div>
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1D4ED8]">
+          <Sparkles className="size-5" aria-hidden="true" />
+        </span>
       </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#fff7e6] p-2">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#fff7e6] p-1.5">
         <DiscoverCarsWidget code={page.discovercarsWidgetCode} />
       </div>
       {page.discovercarsAffiliateLink ? (
@@ -140,34 +174,106 @@ export function CarRentalWidgetCard({ page, isRtl }: { page: CarRentalPage; isRt
           href={page.discovercarsAffiliateLink}
           rel="nofollow sponsored noopener noreferrer"
           target="_blank"
-          className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]"
         >
-          {isRtl ? "فتح DiscoverCars" : "Open DiscoverCars"}
+          Open full search
+          <ArrowRight className="size-4" aria-hidden="true" />
         </a>
       ) : null}
     </aside>
   );
 }
 
-export function CarRentalBenefits({ benefits }: { benefits: CarRentalBenefit[] }) {
-  if (benefits.length === 0) {
-    return null;
-  }
+export function CarRentalTrustBar() {
+  const items = [
+    { label: "Compare Prices", icon: CircleDollarSign },
+    { label: "No Hidden Fees", icon: ShieldCheck },
+    { label: "Free Cancellation", icon: CheckCircle2 },
+    { label: "Airport Pickup", icon: Plane },
+    { label: "Multiple Suppliers", icon: Users },
+    { label: "24/7 Support", icon: Headphones },
+  ];
 
   return (
-    <section className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid gap-4 md:grid-cols-3">
-        {benefits.map((benefit, index) => (
-          <div key={`${benefit.title}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="inline-flex size-11 items-center justify-center rounded-xl bg-blue-50 text-[#1D4ED8]">
-              <BenefitIcon icon={benefit.icon} />
-            </div>
-            <h2 className="mt-4 text-lg font-semibold tracking-tight text-[#111827]">{benefit.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{benefit.description}</p>
+    <section className="border-b border-slate-200 bg-white">
+      <div className="mx-auto grid max-w-[88rem] grid-cols-2 gap-2 px-4 py-3 sm:px-6 md:grid-cols-3 lg:grid-cols-6 lg:px-8">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+            <item.icon className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+            <span>{item.label}</span>
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+export function CompactCardSection({
+  eyebrow,
+  title,
+  cards,
+  kind,
+  gridClassName,
+}: {
+  eyebrow: string;
+  title: string;
+  cards: CarRentalLinkCard[];
+  kind: CompactCardKind;
+  gridClassName: string;
+}) {
+  const visibleCards = cards.filter((card) => card.title && card.url && card.visible !== false);
+
+  if (visibleCards.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6 lg:px-8">
+      <SectionIntro eyebrow={eyebrow} title={title} />
+      <div className={cn("grid gap-3", gridClassName)}>
+        {visibleCards.map((card, index) => (
+          <CompactCard key={`${card.title}-${index}`} card={card} kind={kind} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CompactCard({ card, kind }: { card: CarRentalLinkCard; kind: CompactCardKind }) {
+  const showThumbnail = kind === "guide" && Boolean(card.image);
+
+  return (
+    <a
+      href={card.url}
+      className={cn(
+        "group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-md",
+        kind !== "location" && "items-start",
+      )}
+    >
+      {showThumbnail ? (
+        <span className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+          <Image src={resolveImagePath(card.image)} alt={card.title} fill sizes="56px" className="object-cover" />
+        </span>
+      ) : (
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D4ED8]">
+          <CompactIcon kind={kind} />
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        {card.label ? (
+          <span className="line-clamp-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1D4ED8]">
+            {card.label}
+          </span>
+        ) : null}
+        <span className="mt-0.5 line-clamp-2 text-sm font-semibold leading-5 text-[#111827] sm:text-base">
+          {card.title}
+        </span>
+        {card.description ? (
+          <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{card.description}</span>
+        ) : null}
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-[#1D4ED8] rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+    </a>
   );
 }
 
@@ -177,43 +283,16 @@ export function CarRentalDescriptionReadMore({ page, isRtl }: { page: CarRentalP
   }
 
   return (
-    <section className="mx-auto grid max-w-[88rem] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-          {isRtl ? "دليل القيادة" : "Driving guide"}
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
+    <section className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-7">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">Why rent a car</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827] sm:text-3xl">
           {page.descriptionTitle || page.pageTitle}
         </h2>
-        <div className="mt-5">
+        <div className="mt-4 max-w-4xl">
           <ReadMoreText preview={page.descriptionPreviewText} fullText={page.descriptionFullText} isRtl={isRtl} />
         </div>
       </div>
-    </section>
-  );
-}
-
-export function CarRentalPopularLocations({ cards, isRtl }: { cards: CarRentalLinkCard[]; isRtl: boolean }) {
-  return <CardSection eyebrow={isRtl ? "مواقع شائعة" : "Popular locations"} title={isRtl ? "مواقع تأجير السيارات" : "Popular Car Rental Locations"} cards={cards} icon="map" />;
-}
-
-export function CarRentalGuideCards({ cards, isRtl }: { cards: CarRentalLinkCard[]; isRtl: boolean }) {
-  return <CardSection eyebrow={isRtl ? "أدلة مفيدة" : "Helpful guides"} title={isRtl ? "أدلة تأجير سيارات مفيدة" : "Helpful Car Rental Guides"} cards={cards} icon="route" />;
-}
-
-export function CarRentalDestinationCards({ cards, isRtl }: { cards: CarRentalLinkCard[]; isRtl: boolean }) {
-  return <CardSection eyebrow={isRtl ? "أماكن بالسيارة" : "Road trip ideas"} title={isRtl ? "أماكن للزيارة بسيارة مستأجرة" : "Places to Visit by Rental Car"} cards={cards} icon="compass" />;
-}
-
-export function CarRentalDirectoryTabs({ page, isRtl }: { page: CarRentalPage; isRtl: boolean }) {
-  if (page.directoryGroups.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6 lg:px-8">
-      <SectionIntro eyebrow={isRtl ? "دليل التأجير" : "Rental directory"} title={isRtl ? "روابط تأجير سيارات مفيدة" : "Car Rental Directory"} />
-      <DirectoryTabs groups={page.directoryGroups} isRtl={isRtl} />
     </section>
   );
 }
@@ -224,93 +303,57 @@ export function CarRentalFAQSection({ page, isRtl }: { page: CarRentalPage; isRt
   }
 
   return (
-    <section className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6 lg:px-8">
-      <SectionIntro eyebrow={isRtl ? "أسئلة شائعة" : "FAQs"} title={isRtl ? "أسئلة عن تأجير السيارات" : `FAQs about ${page.pageTitle}`} />
+    <section className="mx-auto max-w-[88rem] px-4 py-6 pb-10 sm:px-6 lg:px-8">
+      <SectionIntro eyebrow="FAQs" title={`Questions about ${page.pageTitle}`} />
       <CarRentalFAQ faqs={page.faqs} isRtl={isRtl} />
-    </section>
-  );
-}
-
-function CardSection({
-  eyebrow,
-  title,
-  cards,
-  icon,
-}: {
-  eyebrow: string;
-  title: string;
-  cards: CarRentalLinkCard[];
-  icon: "map" | "route" | "compass";
-}) {
-  if (cards.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6 lg:px-8">
-      <SectionIntro eyebrow={eyebrow} title={title} />
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {cards.map((card, index) => (
-          <a
-            key={`${card.title}-${index}`}
-            href={card.url}
-            className="group flex min-h-48 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-[0_24px_70px_rgb(15_23_42_/_10%)]"
-          >
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                <CardIcon icon={icon} />
-                <span>{card.label || "Car rental"}</span>
-              </div>
-              <h2 className="mt-3 text-xl font-semibold tracking-tight text-[#111827]">{card.title}</h2>
-              {card.description ? (
-                <p className="mt-2 text-sm leading-6 text-slate-600">{card.description}</p>
-              ) : null}
-            </div>
-            <span className="mt-5 inline-flex items-center text-sm font-semibold text-[#0A2A66] transition group-hover:text-[#1D4ED8]">
-              View page
-              <span className="ms-2 transition group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5">-&gt;</span>
-            </span>
-          </a>
-        ))}
-      </div>
     </section>
   );
 }
 
 function SectionIntro({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
-    <div className="mb-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">{eyebrow}</p>
-      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">{title}</h2>
+    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">{eyebrow}</p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-[#111827] sm:text-3xl">{title}</h2>
+      </div>
     </div>
   );
 }
 
-function BenefitIcon({ icon }: { icon: string }) {
-  const normalized = icon.toLowerCase();
+function mergeLocationAndDirectoryCards(page: CarRentalPage): CarRentalLinkCard[] {
+  const directoryCards = page.directoryGroups.flatMap((group) =>
+    group.links.map((link, index) => ({
+      title: link.text,
+      url: link.url,
+      description: group.title,
+      image: "",
+      label: group.title,
+      sortOrder: link.sortOrder + index / 100,
+      visible: true,
+    })),
+  );
+  const cardsByUrl = new Map<string, CarRentalLinkCard>();
 
-  if (normalized.includes("shield") || normalized.includes("safe")) {
-    return <ShieldCheck className="size-5" aria-hidden="true" />;
+  for (const card of [...page.popularLocationCards, ...directoryCards]) {
+    if (!card.url || cardsByUrl.has(card.url)) {
+      continue;
+    }
+
+    cardsByUrl.set(card.url, card);
   }
 
-  if (normalized.includes("route") || normalized.includes("road")) {
+  return Array.from(cardsByUrl.values()).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function CompactIcon({ kind }: { kind: CompactCardKind }) {
+  if (kind === "guide") {
     return <Route className="size-5" aria-hidden="true" />;
   }
 
-  if (normalized.includes("map") || normalized.includes("location")) {
-    return <MapPinned className="size-5" aria-hidden="true" />;
+  if (kind === "destination") {
+    return <Compass className="size-5" aria-hidden="true" />;
   }
 
-  return <CheckCircle2 className="size-5" aria-hidden="true" />;
-}
-
-function CardIcon({ icon }: { icon: "map" | "route" | "compass" }) {
-  return (
-    <span className={cn("inline-flex size-8 items-center justify-center rounded-full bg-blue-50 text-[#1D4ED8]")}>
-      {icon === "map" ? <MapPinned className="size-4" aria-hidden="true" /> : null}
-      {icon === "route" ? <Route className="size-4" aria-hidden="true" /> : null}
-      {icon === "compass" ? <Compass className="size-4" aria-hidden="true" /> : null}
-      {icon === "map" || icon === "route" || icon === "compass" ? null : <Car className="size-4" aria-hidden="true" />}
-    </span>
-  );
+  return <MapPin className="size-5" aria-hidden="true" />;
 }

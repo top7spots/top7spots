@@ -1,21 +1,29 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { CarRentalDirectoryGroup, CarRentalLinkCard, ContentStatus } from "@/lib/types";
 
-type CardSuggestion = CarRentalLinkCard & {
+export type CardSuggestion = CarRentalLinkCard & {
+  id?: string;
+  meta?: string;
+  slug?: string;
+  language?: string;
   status?: ContentStatus;
+  sourceType?: "car-rental-page" | "guide" | "city" | "destination";
 };
 
-type DirectorySuggestion = {
+export type DirectorySuggestion = {
   text: string;
   url: string;
   sortOrder: number;
+  meta?: string;
   status?: ContentStatus;
+  sourceType?: "car-rental-page" | "guide" | "city" | "destination";
 };
 
 type JsonFieldProps = {
@@ -27,6 +35,19 @@ type JsonFieldProps = {
   example?: string;
 };
 
+type CardSelectorProps = {
+  label: string;
+  name: string;
+  defaultValue: string;
+  suggestions: CardSuggestion[];
+  helperText: string;
+  example: string;
+  searchPlaceholder: string;
+  autoFillLabel?: string;
+  emptyAutoFillMessage?: string;
+  includeDraftsControl?: boolean;
+};
+
 export function CarRentalJsonTextarea({
   label,
   name,
@@ -36,17 +57,24 @@ export function CarRentalJsonTextarea({
   example,
 }: JsonFieldProps) {
   const [value, setValue] = useState(defaultValue);
+  const validation = validateJson(value, "array");
 
   return (
-    <JsonTextareaShell
-      label={label}
-      name={name}
-      value={value}
-      rows={rows}
-      helperText={helperText}
-      example={example}
-      onChange={setValue}
-    />
+    <div className="grid gap-2">
+      <Label htmlFor={name}>{label}</Label>
+      <Textarea
+        id={name}
+        name={name}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        rows={rows}
+        aria-invalid={!validation.valid}
+        className="font-mono text-xs"
+      />
+      {!validation.valid ? <p className="text-xs font-medium text-red-600">{validation.message}</p> : null}
+      {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
+      {example ? <ExampleJson example={example} /> : null}
+    </div>
   );
 }
 
@@ -59,50 +87,18 @@ export function PopularLocationCardsField({
   suggestions: CardSuggestion[];
   example: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
-  const [includeDrafts, setIncludeDrafts] = useState(true);
-  const [message, setMessage] = useState("");
-
-  function autoFill() {
-    const cards = suggestions
-      .filter((item) => includeDrafts || item.status === "published")
-      .map((item) => ({
-        title: item.title,
-        url: item.url,
-        description: item.description,
-        image: item.image,
-        label: item.label,
-        sortOrder: item.sortOrder,
-        visible: item.visible,
-      }));
-
-    if (cards.length === 0) {
-      setMessage("No matching car rental pages were found for this page context.");
-      return;
-    }
-
-    setValue(pretty(cards));
-    setMessage(`${cards.length} popular location ${cards.length === 1 ? "card" : "cards"} added. Review and edit before saving.`);
-  }
-
   return (
-    <JsonTextareaShell
+    <CardSelectorField
       label="Popular location cards"
       name="popularLocationCards"
-      value={value}
-      rows={8}
-      helperText="Use the auto-fill button to add existing car rental pages from the same country, or edit JSON manually."
+      defaultValue={defaultValue}
+      suggestions={suggestions}
+      helperText="Select existing car rental pages from the same country. Cards remain editable after auto-fill."
       example={example}
-      onChange={setValue}
-      toolbar={
-        <AutoFillToolbar
-          buttonLabel="Auto-fill from car rental pages"
-          includeDrafts={includeDrafts}
-          onIncludeDraftsChange={setIncludeDrafts}
-          onAutoFill={autoFill}
-          message={message}
-        />
-      }
+      searchPlaceholder="Search car rental pages by title, slug, language, or status"
+      autoFillLabel="Auto-fill from car rental pages"
+      emptyAutoFillMessage="No matching car rental pages were found for this page context."
+      includeDraftsControl
     />
   );
 }
@@ -113,38 +109,42 @@ export function GuideCardsField({
   example,
 }: {
   defaultValue: string;
-  suggestions: CarRentalLinkCard[];
+  suggestions: CardSuggestion[];
   example: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
-  const [message, setMessage] = useState("");
-
-  function autoFill() {
-    if (suggestions.length === 0) {
-      setMessage("No related travel guides were found yet. You can keep using the manual JSON field.");
-      return;
-    }
-
-    setValue(pretty(suggestions));
-    setMessage(`${suggestions.length} related ${suggestions.length === 1 ? "guide" : "guides"} added. Review and edit before saving.`);
-  }
-
   return (
-    <JsonTextareaShell
+    <CardSelectorField
       label="Guide cards"
       name="guideCards"
-      value={value}
-      rows={8}
-      helperText="Auto-fill from existing Travel Guides related to this page country/city, or edit JSON manually."
+      defaultValue={defaultValue}
+      suggestions={suggestions}
+      helperText="Select related Travel Guides. The saved JSON uses guide title, URL, excerpt, category label, and sort order."
       example={example}
-      onChange={setValue}
-      toolbar={
-        <AutoFillToolbar
-          buttonLabel="Auto-fill related guides"
-          onAutoFill={autoFill}
-          message={message}
-        />
-      }
+      searchPlaceholder="Search guides by title, city, country, category, or status"
+      autoFillLabel="Auto-fill related guides"
+      emptyAutoFillMessage="No related travel guides were found yet. You can keep using the Advanced JSON Editor."
+    />
+  );
+}
+
+export function DestinationCardsField({
+  defaultValue,
+  suggestions,
+  example,
+}: {
+  defaultValue: string;
+  suggestions: CardSuggestion[];
+  example: string;
+}) {
+  return (
+    <CardSelectorField
+      label="Destination cards"
+      name="destinationCards"
+      defaultValue={defaultValue}
+      suggestions={suggestions}
+      helperText="Select cities and destinations together. The type badge is saved as the card label, with images left optional."
+      example={example}
+      searchPlaceholder="Search cities and destinations by name, country, city, or type"
     />
   );
 }
@@ -153,21 +153,50 @@ export function DirectoryGroupsField({
   defaultValue,
   airportSuggestions,
   locationSuggestions,
+  linkSuggestions,
   example,
 }: {
   defaultValue: string;
   airportSuggestions: DirectorySuggestion[];
   locationSuggestions: DirectorySuggestion[];
+  linkSuggestions: DirectorySuggestion[];
   example: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const initialGroups = parseGroups(defaultValue);
+  const [groups, setGroups] = useState<CarRentalDirectoryGroup[]>(initialGroups.items);
+  const [advancedValue, setAdvancedValue] = useState(initialGroups.valid ? pretty(initialGroups.items) : defaultValue);
+  const [advancedError, setAdvancedError] = useState(initialGroups.valid ? "" : initialGroups.message);
+  const [query, setQuery] = useState("");
   const [includeDrafts, setIncludeDrafts] = useState(true);
   const [message, setMessage] = useState("");
+  const jsonValue = pretty(normalizeGroups(groups));
+  const visibleSuggestions = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const existingUrls = new Set(groups.flatMap((group) => group.links.map((link) => link.url)));
+    return linkSuggestions
+      .filter((item) => !existingUrls.has(item.url))
+      .filter((item) => {
+        if (!needle) {
+          return true;
+        }
+
+        return searchText(item.text, item.url, item.meta, item.status, item.sourceType).includes(needle);
+      })
+      .slice(0, 12);
+  }, [groups, linkSuggestions, query]);
+
+  function syncGroups(nextGroups: CarRentalDirectoryGroup[], nextMessage = "") {
+    const normalized = normalizeGroups(nextGroups);
+    setGroups(normalized);
+    setAdvancedValue(pretty(normalized));
+    setAdvancedError("");
+    setMessage(nextMessage);
+  }
 
   function autoFill() {
     const airports = airportSuggestions.filter((item) => includeDrafts || item.status === "published");
     const locations = locationSuggestions.filter((item) => includeDrafts || item.status === "published");
-    const groups: CarRentalDirectoryGroup[] = [
+    const nextGroups: CarRentalDirectoryGroup[] = [
       {
         title: "Airports",
         sortOrder: 0,
@@ -180,108 +209,723 @@ export function DirectoryGroupsField({
       },
     ].filter((group) => group.links.length > 0);
 
-    if (groups.length === 0) {
+    if (nextGroups.length === 0) {
       setMessage("No matching car rental pages were found for directory links.");
       return;
     }
 
-    setValue(pretty(groups));
-    setMessage("Directory groups added. Review group names, order, and links before saving.");
+    syncGroups(nextGroups, "Directory groups added. Review, reorder, or add more links before saving.");
+  }
+
+  function addGroup(title: string) {
+    const cleanedTitle = title.trim();
+    if (!cleanedTitle) {
+      return;
+    }
+
+    syncGroups([
+      ...groups,
+      {
+        title: cleanedTitle,
+        sortOrder: groups.length,
+        links: [],
+      },
+    ]);
+  }
+
+  function addLink(groupIndex: number, suggestion: DirectorySuggestion) {
+    syncGroups(
+      groups.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              links: [
+                ...group.links,
+                {
+                  text: suggestion.text,
+                  url: suggestion.url,
+                  sortOrder: group.links.length,
+                },
+              ],
+            }
+          : group,
+      ),
+    );
+  }
+
+  function updateGroup(groupIndex: number, nextGroup: CarRentalDirectoryGroup) {
+    syncGroups(groups.map((group, index) => (index === groupIndex ? nextGroup : group)));
+  }
+
+  function removeGroup(groupIndex: number) {
+    syncGroups(groups.filter((_, index) => index !== groupIndex));
+  }
+
+  function moveGroup(groupIndex: number, direction: -1 | 1) {
+    syncGroups(moveItem(groups, groupIndex, direction));
+  }
+
+  function handleAdvancedChange(value: string) {
+    setAdvancedValue(value);
+    const parsed = parseGroups(value);
+    if (!parsed.valid) {
+      setAdvancedError(parsed.message);
+      return;
+    }
+
+    setAdvancedError("");
+    setGroups(parsed.items);
   }
 
   return (
-    <JsonTextareaShell
-      label="Directory groups"
-      name="directoryGroups"
-      value={value}
-      rows={10}
-      helperText="Auto-fill Airports and Popular Locations from existing car rental pages in the same country, or edit JSON manually."
-      example={example}
-      onChange={setValue}
-      toolbar={
-        <AutoFillToolbar
-          buttonLabel="Auto-fill directory"
-          includeDrafts={includeDrafts}
-          onIncludeDraftsChange={setIncludeDrafts}
-          onAutoFill={autoFill}
-          message={message}
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <input type="hidden" name="directoryGroups" value={jsonValue} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Label>Directory groups / simple text listings</Label>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Create text-link groups for airports, popular locations, cities, destinations, guides, or custom related links.
+          </p>
+        </div>
+        <Button type="button" onClick={autoFill} className="rounded-full bg-[#0A2A66] text-white hover:bg-[#1D4ED8]">
+          Auto-fill directory
+        </Button>
+      </div>
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <input
+          type="checkbox"
+          checked={includeDrafts}
+          onChange={(event) => setIncludeDrafts(event.target.checked)}
+          className="size-4 rounded border-slate-300 text-[#1D4ED8]"
         />
-      }
-    />
-  );
-}
+        Include draft pages
+      </label>
+      {message ? <p className="text-sm font-medium text-slate-600">{message}</p> : null}
 
-function JsonTextareaShell({
-  label,
-  name,
-  value,
-  rows,
-  helperText,
-  example,
-  toolbar,
-  onChange,
-}: Omit<JsonFieldProps, "defaultValue"> & {
-  value: string;
-  toolbar?: ReactNode;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={name}>{label}</Label>
-      {toolbar}
-      <Textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        rows={rows}
-        className="font-mono text-xs"
+      <DirectoryGroupCreator onAdd={addGroup} />
+
+      <div className="grid gap-3">
+        {groups.map((group, groupIndex) => (
+          <DirectoryGroupEditor
+            key={`${group.title}-${groupIndex}`}
+            group={group}
+            groupIndex={groupIndex}
+            groupCount={groups.length}
+            suggestions={visibleSuggestions}
+            query={query}
+            onQueryChange={setQuery}
+            onAddLink={addLink}
+            onUpdateGroup={updateGroup}
+            onRemoveGroup={removeGroup}
+            onMoveGroup={moveGroup}
+          />
+        ))}
+        {groups.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            No directory groups selected yet. Auto-fill the default groups or create one manually.
+          </p>
+        ) : null}
+      </div>
+
+      <AdvancedJsonEditor
+        value={advancedValue}
+        rows={10}
+        example={example}
+        error={advancedError}
+        onChange={handleAdvancedChange}
       />
-      {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
-      {example ? (
-        <details className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-          <summary className="cursor-pointer font-semibold text-slate-700">Example JSON</summary>
-          <pre className="mt-3 overflow-x-auto whitespace-pre-wrap">{example}</pre>
-        </details>
-      ) : null}
     </div>
   );
 }
 
-function AutoFillToolbar({
-  buttonLabel,
-  includeDrafts,
-  onIncludeDraftsChange,
-  onAutoFill,
-  message,
-}: {
-  buttonLabel: string;
-  includeDrafts?: boolean;
-  onIncludeDraftsChange?: (value: boolean) => void;
-  onAutoFill: () => void;
-  message: string;
-}) {
+function CardSelectorField({
+  label,
+  name,
+  defaultValue,
+  suggestions,
+  helperText,
+  example,
+  searchPlaceholder,
+  autoFillLabel,
+  emptyAutoFillMessage,
+  includeDraftsControl = false,
+}: CardSelectorProps) {
+  const initialCards = parseCards(defaultValue);
+  const [cards, setCards] = useState<CarRentalLinkCard[]>(initialCards.items);
+  const [advancedValue, setAdvancedValue] = useState(initialCards.valid ? pretty(initialCards.items) : defaultValue);
+  const [advancedError, setAdvancedError] = useState(initialCards.valid ? "" : initialCards.message);
+  const [query, setQuery] = useState("");
+  const [includeDrafts, setIncludeDrafts] = useState(true);
+  const [message, setMessage] = useState("");
+  const jsonValue = pretty(normalizeCards(cards));
+  const filteredSuggestions = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const existingUrls = new Set(cards.map((card) => card.url));
+    return suggestions
+      .filter((item) => includeDrafts || item.status === "published" || !includeDraftsControl)
+      .filter((item) => !existingUrls.has(item.url))
+      .filter((item) => {
+        if (!needle) {
+          return true;
+        }
+
+        return searchText(item.title, item.url, item.description, item.label, item.meta, item.slug, item.language, item.status).includes(needle);
+      })
+      .slice(0, 12);
+  }, [cards, includeDrafts, includeDraftsControl, query, suggestions]);
+
+  function syncCards(nextCards: CarRentalLinkCard[], nextMessage = "") {
+    const normalized = normalizeCards(nextCards);
+    setCards(normalized);
+    setAdvancedValue(pretty(normalized));
+    setAdvancedError("");
+    setMessage(nextMessage);
+  }
+
+  function autoFill() {
+    const nextCards = suggestions
+      .filter((item) => includeDrafts || item.status === "published" || !includeDraftsControl)
+      .map(cardFromSuggestion);
+
+    if (nextCards.length === 0) {
+      setMessage(emptyAutoFillMessage || "No matching records were found.");
+      return;
+    }
+
+    syncCards(nextCards, `${nextCards.length} ${nextCards.length === 1 ? "item" : "items"} added. Review and edit before saving.`);
+  }
+
+  function addCard(suggestion: CardSuggestion) {
+    syncCards([...cards, { ...cardFromSuggestion(suggestion), sortOrder: cards.length }]);
+  }
+
+  function updateCard(index: number, patch: Partial<CarRentalLinkCard>) {
+    syncCards(cards.map((card, cardIndex) => (cardIndex === index ? { ...card, ...patch } : card)));
+  }
+
+  function removeCard(index: number) {
+    syncCards(cards.filter((_, cardIndex) => cardIndex !== index));
+  }
+
+  function moveCard(index: number, direction: -1 | 1) {
+    syncCards(moveItem(cards, index, direction));
+  }
+
+  function handleAdvancedChange(value: string) {
+    setAdvancedValue(value);
+    const parsed = parseCards(value);
+    if (!parsed.valid) {
+      setAdvancedError(parsed.message);
+      return;
+    }
+
+    setAdvancedError("");
+    setCards(parsed.items);
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3">
-      <Button type="button" onClick={onAutoFill} className="rounded-full bg-[#0A2A66] text-white hover:bg-[#1D4ED8]">
-        {buttonLabel}
-      </Button>
-      {onIncludeDraftsChange ? (
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <input type="hidden" name={name} value={jsonValue} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Label>{label}</Label>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{helperText}</p>
+        </div>
+        {autoFillLabel ? (
+          <Button type="button" onClick={autoFill} className="rounded-full bg-[#0A2A66] text-white hover:bg-[#1D4ED8]">
+            {autoFillLabel}
+          </Button>
+        ) : null}
+      </div>
+      {includeDraftsControl ? (
         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
           <input
             type="checkbox"
             checked={includeDrafts}
-            onChange={(event) => onIncludeDraftsChange(event.target.checked)}
+            onChange={(event) => setIncludeDrafts(event.target.checked)}
             className="size-4 rounded border-slate-300 text-[#1D4ED8]"
           />
           Include draft pages
         </label>
       ) : null}
       {message ? <p className="text-sm font-medium text-slate-600">{message}</p> : null}
+
+      <div className="grid gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={searchPlaceholder}
+            className="pl-9"
+          />
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          {filteredSuggestions.map((suggestion) => (
+            <SelectorSuggestion key={`${suggestion.url}-${suggestion.title}`} suggestion={suggestion} onAdd={() => addCard(suggestion)} />
+          ))}
+          {filteredSuggestions.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500 md:col-span-2">
+              No selectable matches found. Try a different search or use Advanced JSON Editor.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {cards.map((card, index) => (
+          <EditableCardRow
+            key={`${card.url}-${index}`}
+            card={card}
+            index={index}
+            count={cards.length}
+            onChange={updateCard}
+            onRemove={removeCard}
+            onMove={moveCard}
+          />
+        ))}
+        {cards.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            Nothing selected yet. Add records from the selector above or paste JSON in the advanced editor.
+          </p>
+        ) : null}
+      </div>
+
+      <AdvancedJsonEditor
+        value={advancedValue}
+        rows={8}
+        example={example}
+        error={advancedError}
+        onChange={handleAdvancedChange}
+      />
     </div>
   );
 }
 
+function SelectorSuggestion({ suggestion, onAdd }: { suggestion: CardSuggestion; onAdd: () => void }) {
+  return (
+    <div className="flex min-w-0 items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="min-w-0">
+        <p className="line-clamp-1 text-sm font-semibold text-slate-900">{suggestion.title}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+          {[suggestion.slug, suggestion.language, suggestion.meta, suggestion.status].filter(Boolean).join(" - ") || suggestion.url}
+        </p>
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={onAdd} className="shrink-0 rounded-full">
+        <Plus className="size-4" aria-hidden="true" />
+        Add
+      </Button>
+    </div>
+  );
+}
+
+function EditableCardRow({
+  card,
+  index,
+  count,
+  onChange,
+  onRemove,
+  onMove,
+}: {
+  card: CarRentalLinkCard;
+  index: number;
+  count: number;
+  onChange: (index: number, patch: Partial<CarRentalLinkCard>) => void;
+  onRemove: (index: number) => void;
+  onMove: (index: number, direction: -1 | 1) => void;
+}) {
+  return (
+    <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Selected item {index + 1}</p>
+        <RowControls
+          index={index}
+          count={count}
+          onMove={onMove}
+          onRemove={onRemove}
+        />
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Input value={card.title} onChange={(event) => onChange(index, { title: event.target.value })} placeholder="Title" />
+        <Input value={card.url} onChange={(event) => onChange(index, { url: event.target.value })} placeholder="URL" />
+        <Input value={card.label} onChange={(event) => onChange(index, { label: event.target.value })} placeholder="Badge / label" />
+        <Input
+          type="number"
+          value={card.sortOrder}
+          onChange={(event) => onChange(index, { sortOrder: Number(event.target.value) || 0 })}
+          placeholder="Sort order"
+        />
+      </div>
+      <Textarea
+        value={card.description}
+        onChange={(event) => onChange(index, { description: event.target.value })}
+        placeholder="Description"
+        rows={2}
+      />
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <input
+          type="checkbox"
+          checked={card.visible !== false}
+          onChange={(event) => onChange(index, { visible: event.target.checked })}
+          className="size-4 rounded border-slate-300 text-[#1D4ED8]"
+        />
+        Visible
+      </label>
+    </div>
+  );
+}
+
+function DirectoryGroupCreator({ onAdd }: { onAdd: (title: string) => void }) {
+  const [customTitle, setCustomTitle] = useState("");
+
+  function add(title: string) {
+    onAdd(title);
+    setCustomTitle("");
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <Button type="button" variant="outline" className="rounded-full" onClick={() => add("Airports")}>
+        Add Airports
+      </Button>
+      <Button type="button" variant="outline" className="rounded-full" onClick={() => add("Popular Locations")}>
+        Add Popular Locations
+      </Button>
+      <Input
+        value={customTitle}
+        onChange={(event) => setCustomTitle(event.target.value)}
+        placeholder="Custom group title"
+        className="min-w-[220px] flex-1"
+      />
+      <Button type="button" variant="outline" className="rounded-full" onClick={() => add(customTitle)}>
+        Add Custom
+      </Button>
+    </div>
+  );
+}
+
+function DirectoryGroupEditor({
+  group,
+  groupIndex,
+  groupCount,
+  suggestions,
+  query,
+  onQueryChange,
+  onAddLink,
+  onUpdateGroup,
+  onRemoveGroup,
+  onMoveGroup,
+}: {
+  group: CarRentalDirectoryGroup;
+  groupIndex: number;
+  groupCount: number;
+  suggestions: DirectorySuggestion[];
+  query: string;
+  onQueryChange: (value: string) => void;
+  onAddLink: (groupIndex: number, suggestion: DirectorySuggestion) => void;
+  onUpdateGroup: (groupIndex: number, group: CarRentalDirectoryGroup) => void;
+  onRemoveGroup: (groupIndex: number) => void;
+  onMoveGroup: (groupIndex: number, direction: -1 | 1) => void;
+}) {
+  function updateLink(linkIndex: number, patch: Partial<CarRentalDirectoryGroup["links"][number]>) {
+    onUpdateGroup(groupIndex, {
+      ...group,
+      links: group.links.map((link, index) => (index === linkIndex ? { ...link, ...patch } : link)),
+    });
+  }
+
+  function removeLink(linkIndex: number) {
+    onUpdateGroup(groupIndex, {
+      ...group,
+      links: group.links.filter((_, index) => index !== linkIndex),
+    });
+  }
+
+  function moveLink(linkIndex: number, direction: -1 | 1) {
+    onUpdateGroup(groupIndex, {
+      ...group,
+      links: moveItem(group.links, linkIndex, direction),
+    });
+  }
+
+  return (
+    <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <Input
+          value={group.title}
+          onChange={(event) => onUpdateGroup(groupIndex, { ...group, title: event.target.value })}
+          className="max-w-md bg-white"
+          placeholder="Group title"
+        />
+        <RowControls index={groupIndex} count={groupCount} onMove={onMoveGroup} onRemove={onRemoveGroup} />
+      </div>
+      <div className="grid gap-2">
+        {group.links.map((link, linkIndex) => (
+          <div key={`${link.url}-${linkIndex}`} className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]">
+            <Input value={link.text} onChange={(event) => updateLink(linkIndex, { text: event.target.value })} placeholder="Link text" />
+            <Input value={link.url} onChange={(event) => updateLink(linkIndex, { url: event.target.value })} placeholder="URL" />
+            <RowControls index={linkIndex} count={group.links.length} onMove={moveLink} onRemove={removeLink} compact />
+          </div>
+        ))}
+        {group.links.length === 0 ? <p className="text-sm text-slate-500">No links in this group yet.</p> : null}
+      </div>
+      <div className="grid gap-2 rounded-lg border border-blue-100 bg-blue-50/70 p-3">
+        <Input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search car rental pages, cities, destinations, or guides" />
+        <div className="grid gap-2 md:grid-cols-2">
+          {suggestions.map((suggestion) => (
+            <div key={`${group.title}-${suggestion.url}`} className="flex items-start justify-between gap-3 rounded-lg bg-white p-3">
+              <div className="min-w-0">
+                <p className="line-clamp-1 text-sm font-semibold text-slate-900">{suggestion.text}</p>
+                <p className="mt-1 line-clamp-1 text-xs text-slate-500">
+                  {[suggestion.sourceType, suggestion.meta, suggestion.status].filter(Boolean).join(" - ") || suggestion.url}
+                </p>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="shrink-0 rounded-full" onClick={() => onAddLink(groupIndex, suggestion)}>
+                <Plus className="size-4" aria-hidden="true" />
+                Add
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RowControls({
+  index,
+  count,
+  compact = false,
+  onMove,
+  onRemove,
+}: {
+  index: number;
+  count: number;
+  compact?: boolean;
+  onMove: (index: number, direction: -1 | 1) => void;
+  onRemove: (index: number) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <Button type="button" variant="outline" size="icon" disabled={index === 0} onClick={() => onMove(index, -1)} className="size-8 rounded-full">
+        <ArrowUp className="size-4" aria-hidden="true" />
+        <span className="sr-only">Move up</span>
+      </Button>
+      <Button type="button" variant="outline" size="icon" disabled={index === count - 1} onClick={() => onMove(index, 1)} className="size-8 rounded-full">
+        <ArrowDown className="size-4" aria-hidden="true" />
+        <span className="sr-only">Move down</span>
+      </Button>
+      <Button type="button" variant="outline" size={compact ? "icon" : "sm"} onClick={() => onRemove(index)} className="rounded-full text-red-600 hover:text-red-700">
+        <Trash2 className="size-4" aria-hidden="true" />
+        {!compact ? "Remove" : <span className="sr-only">Remove</span>}
+      </Button>
+    </div>
+  );
+}
+
+function AdvancedJsonEditor({
+  value,
+  rows,
+  example,
+  error,
+  onChange,
+}: {
+  value: string;
+  rows: number;
+  example: string;
+  error: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <details className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+      <summary className="cursor-pointer font-semibold text-slate-700">Advanced JSON Editor</summary>
+      <Textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={rows}
+        aria-invalid={Boolean(error)}
+        className="mt-3 font-mono text-xs"
+      />
+      {error ? (
+        <p className="mt-2 font-medium text-red-600">
+          {error} The last valid selector state will be saved until this JSON is fixed.
+        </p>
+      ) : null}
+      <ExampleJson example={example} />
+    </details>
+  );
+}
+
+function ExampleJson({ example }: { example: string }) {
+  return (
+    <details className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <summary className="cursor-pointer font-semibold text-slate-700">Helper example</summary>
+      <pre className="mt-3 overflow-x-auto whitespace-pre-wrap">{example}</pre>
+    </details>
+  );
+}
+
+function parseCards(value: string): { valid: boolean; items: CarRentalLinkCard[]; message: string } {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (!Array.isArray(parsed)) {
+      return { valid: false, items: [], message: "JSON must be an array of card objects." };
+    }
+
+    return {
+      valid: true,
+      items: normalizeCards(parsed.map((item) => ({ ...emptyCard(), ...(isRecord(item) ? item : {}) }))),
+      message: "",
+    };
+  } catch (error) {
+    return { valid: false, items: [], message: jsonErrorMessage(error) };
+  }
+}
+
+function parseGroups(value: string): { valid: boolean; items: CarRentalDirectoryGroup[]; message: string } {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (!Array.isArray(parsed)) {
+      return { valid: false, items: [], message: "JSON must be an array of directory groups." };
+    }
+
+    return {
+      valid: true,
+      items: normalizeGroups(
+        parsed.map((group) => {
+          const record = isRecord(group) ? group : {};
+          const links = Array.isArray(record.links) ? record.links : [];
+          return {
+            title: stringValue(record.title),
+            sortOrder: numberValue(record.sortOrder),
+            links: links.map((link) => {
+              const linkRecord = isRecord(link) ? link : {};
+              return {
+                text: stringValue(linkRecord.text),
+                url: stringValue(linkRecord.url),
+                sortOrder: numberValue(linkRecord.sortOrder),
+              };
+            }),
+          };
+        }),
+      ),
+      message: "",
+    };
+  } catch (error) {
+    return { valid: false, items: [], message: jsonErrorMessage(error) };
+  }
+}
+
+function validateJson(value: string, shape: "array") {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (shape === "array" && !Array.isArray(parsed)) {
+      return { valid: false, message: "JSON must be an array." };
+    }
+
+    return { valid: true, message: "" };
+  } catch (error) {
+    return { valid: false, message: jsonErrorMessage(error) };
+  }
+}
+
+function normalizeCards(cards: CarRentalLinkCard[]) {
+  return cards
+    .map((card, index) => ({
+      title: stringValue(card.title),
+      url: stringValue(card.url),
+      description: stringValue(card.description),
+      image: stringValue(card.image),
+      label: stringValue(card.label),
+      sortOrder: numberValue(card.sortOrder, index),
+      visible: card.visible !== false,
+    }))
+    .filter((card) => card.title || card.url)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((card, index) => ({ ...card, sortOrder: index }));
+}
+
+function normalizeGroups(groups: CarRentalDirectoryGroup[]) {
+  return groups
+    .map((group, index) => ({
+      title: stringValue(group.title),
+      sortOrder: numberValue(group.sortOrder, index),
+      links: group.links
+        .map((link, linkIndex) => ({
+          text: stringValue(link.text),
+          url: stringValue(link.url),
+          sortOrder: numberValue(link.sortOrder, linkIndex),
+        }))
+        .filter((link) => link.text || link.url)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((link, linkIndex) => ({ ...link, sortOrder: linkIndex })),
+    }))
+    .filter((group) => group.title || group.links.length > 0)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((group, index) => ({ ...group, sortOrder: index }));
+}
+
+function cardFromSuggestion(suggestion: CardSuggestion): CarRentalLinkCard {
+  return {
+    title: suggestion.title,
+    url: suggestion.url,
+    description: suggestion.description,
+    image: "",
+    label: suggestion.label,
+    sortOrder: suggestion.sortOrder,
+    visible: suggestion.visible !== false,
+  };
+}
+
+function emptyCard(): CarRentalLinkCard {
+  return {
+    title: "",
+    url: "",
+    description: "",
+    image: "",
+    label: "",
+    sortOrder: 0,
+    visible: true,
+  };
+}
+
+function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= items.length) {
+    return items;
+  }
+
+  const nextItems = [...items];
+  const item = nextItems[index];
+  nextItems[index] = nextItems[nextIndex];
+  nextItems[nextIndex] = item;
+  return nextItems;
+}
+
+function searchText(...values: unknown[]) {
+  return values
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
 function pretty(value: unknown) {
   return JSON.stringify(value, null, 2);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : value == null ? "" : String(value);
+}
+
+function numberValue(value: unknown, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function jsonErrorMessage(error: unknown) {
+  return error instanceof Error ? `Invalid JSON: ${error.message}` : "Invalid JSON.";
 }

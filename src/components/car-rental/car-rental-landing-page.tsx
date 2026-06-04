@@ -37,7 +37,7 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
   const settings = await getSiteSettings();
   const coverImage = settings.carRentalCoverImage;
   const socialImage = page.ogImage || coverImage;
-  const locationCards = mergeLocationAndDirectoryCards(page);
+  const locationCards = page.popularLocationCards;
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F4F7FB] text-[#111827]">
@@ -71,6 +71,7 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
           kind="location"
           gridClassName="grid-cols-2 lg:grid-cols-4"
         />
+        <SimpleTextLinkListings page={page} />
         <CompactCardSection
           eyebrow="Road trip ideas"
           title="Places to visit by rental car"
@@ -169,17 +170,6 @@ export function CarRentalWidgetCard({ page }: { page: CarRentalPage; isRtl?: boo
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#fff7e6] p-1.5">
         <DiscoverCarsWidget code={page.discovercarsWidgetCode} />
       </div>
-      {page.discovercarsAffiliateLink ? (
-        <a
-          href={page.discovercarsAffiliateLink}
-          rel="nofollow sponsored noopener noreferrer"
-          target="_blank"
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]"
-        >
-          Open full search
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </a>
-      ) : null}
     </aside>
   );
 }
@@ -310,6 +300,45 @@ export function CarRentalFAQSection({ page, isRtl }: { page: CarRentalPage; isRt
   );
 }
 
+function SimpleTextLinkListings({ page }: { page: CarRentalPage }) {
+  const groups = page.directoryGroups
+    .map((group) => ({
+      ...group,
+      links: group.links.filter((link) => link.text && link.url).sort((a, b) => a.sortOrder - b.sortOrder),
+    }))
+    .filter((group) => group.title && group.links.length > 0)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-[88rem] px-4 py-4 sm:px-6 lg:px-8">
+      <SectionIntro eyebrow="Related car rental links" title="Browse more rental pages and travel resources" />
+      <div className="grid gap-3 md:grid-cols-2">
+        {groups.map((group) => (
+          <div key={group.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-base font-semibold text-[#111827]">{group.title}</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {group.links.map((link) => (
+                <a
+                  key={`${group.title}-${link.url}`}
+                  href={link.url}
+                  className="group inline-flex min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1D4ED8]"
+                >
+                  <span className="line-clamp-1">{link.text}</span>
+                  <ArrowRight className="size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-[#1D4ED8] rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function SectionIntro({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -319,31 +348,6 @@ function SectionIntro({ eyebrow, title }: { eyebrow: string; title: string }) {
       </div>
     </div>
   );
-}
-
-function mergeLocationAndDirectoryCards(page: CarRentalPage): CarRentalLinkCard[] {
-  const directoryCards = page.directoryGroups.flatMap((group) =>
-    group.links.map((link, index) => ({
-      title: link.text,
-      url: link.url,
-      description: group.title,
-      image: "",
-      label: group.title,
-      sortOrder: link.sortOrder + index / 100,
-      visible: true,
-    })),
-  );
-  const cardsByUrl = new Map<string, CarRentalLinkCard>();
-
-  for (const card of [...page.popularLocationCards, ...directoryCards]) {
-    if (!card.url || cardsByUrl.has(card.url)) {
-      continue;
-    }
-
-    cardsByUrl.set(card.url, card);
-  }
-
-  return Array.from(cardsByUrl.values()).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 function CompactIcon({ kind }: { kind: CompactCardKind }) {

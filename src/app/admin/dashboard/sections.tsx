@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import {
   CarRentalJsonTextarea,
+  DestinationCardsField,
   DirectoryGroupsField,
   GuideCardsField,
   PopularLocationCardsField,
@@ -57,6 +58,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/format";
 import { carRentalPublicPath, defaultDiscoverCarsAffiliateLink, defaultDiscoverCarsWidgetCode, prettyJson } from "@/lib/car-rental-pages";
+import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getGuideHref } from "@/lib/guide-routes";
 import {
   homeHeroOverlayStyleOptions,
@@ -900,6 +902,7 @@ function CarRentalPagesSection({ data, searchParams }: AdminCrudProps) {
         pages={data.carRentalPages}
         guides={data.guides}
         cities={data.cities}
+        destinations={data.destinations}
         backHref={adminHref("car_rental_pages")}
       />
     );
@@ -1701,6 +1704,7 @@ function CarRentalPageForm({
   pages,
   guides,
   cities,
+  destinations,
   backHref,
 }: {
   title: string;
@@ -1708,13 +1712,16 @@ function CarRentalPageForm({
   pages: CarRentalPage[];
   guides: Guide[];
   cities: City[];
+  destinations: Destination[];
   backHref: string;
 }) {
   const language = page?.language ?? "en";
   const publicPath = page ? carRentalPublicPath(page) : "Slug and language set the public URL";
   const popularLocationSuggestions = buildCarRentalCardSuggestions(page, pages);
   const guideSuggestions = buildGuideCardSuggestions(page, guides, cities);
+  const destinationSuggestions = buildDestinationCardSuggestions(page, cities, destinations);
   const directorySuggestions = buildDirectorySuggestions(page, pages);
+  const directoryLinkSuggestions = buildDirectoryLinkSuggestions(page, pages, guides, cities, destinations);
 
   return (
     <EditShell title={title} backHref={backHref}>
@@ -1818,18 +1825,16 @@ function CarRentalPageForm({
             suggestions={guideSuggestions}
             example={carRentalCardsExample}
           />
-          <CarRentalJsonTextarea
-            label="Destination cards"
-            name="destinationCards"
+          <DestinationCardsField
             defaultValue={prettyJson(page?.destinationCards)}
-            rows={8}
-            helperText="Array of objects: title, url, description, image, label, sortOrder, visible."
+            suggestions={destinationSuggestions}
             example={carRentalCardsExample}
           />
           <DirectoryGroupsField
             defaultValue={prettyJson(page?.directoryGroups)}
             airportSuggestions={directorySuggestions.airports}
             locationSuggestions={directorySuggestions.locations}
+            linkSuggestions={directoryLinkSuggestions}
             example={carRentalDirectoryExample}
           />
           <CarRentalJsonTextarea
@@ -1892,6 +1897,7 @@ const carRentalFaqExample = prettyJson([
 
 function buildCarRentalCardSuggestions(currentPage: CarRentalPage | undefined, pages: CarRentalPage[]) {
   return matchingCarRentalPages(currentPage, pages).map((page, index) => ({
+    id: page.id,
     title: page.pageTitle || page.heroTitle || page.seoTitle,
     url: carRentalPublicPath(page),
     description: page.metaDescription || page.heroSubtitle,
@@ -1899,6 +1905,10 @@ function buildCarRentalCardSuggestions(currentPage: CarRentalPage | undefined, p
     label: page.pageType === "airport" ? "Airport car rental" : page.cityName || page.countryName || "Car rental",
     sortOrder: index,
     visible: true,
+    slug: page.slug,
+    language: page.language,
+    meta: [page.pageType || "car rental", page.cityName, page.countryName].filter(Boolean).join(" - "),
+    sourceType: "car-rental-page" as const,
     status: page.status,
   }));
 }
@@ -1908,17 +1918,19 @@ function buildDirectorySuggestions(currentPage: CarRentalPage | undefined, pages
     text: page.pageTitle || page.heroTitle || page.seoTitle,
     url: carRentalPublicPath(page),
     sortOrder: index,
+    meta: [page.slug, page.language, page.pageType || "car rental"].filter(Boolean).join(" - "),
     status: page.status,
+    sourceType: "car-rental-page" as const,
     isAirport: isAirportCarRentalPage(page),
   }));
 
   return {
     airports: links
       .filter((link) => link.isAirport)
-      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, status: link.status })),
+      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, meta: link.meta, status: link.status, sourceType: link.sourceType })),
     locations: links
       .filter((link) => !link.isAirport)
-      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, status: link.status })),
+      .map((link) => ({ text: link.text, url: link.url, sortOrder: link.sortOrder, meta: link.meta, status: link.status, sourceType: link.sourceType })),
   };
 }
 
@@ -1938,6 +1950,7 @@ function buildGuideCardSuggestions(currentPage: CarRentalPage | undefined, guide
     .sort((a, b) => b.score - a.score || a.guide.title.localeCompare(b.guide.title))
     .slice(0, 8)
     .map(({ guide }, index) => ({
+      id: guide.id,
       title: guide.title,
       url: getGuideHref(guide),
       description: guide.excerpt || guide.seoDescription,
@@ -1945,7 +1958,99 @@ function buildGuideCardSuggestions(currentPage: CarRentalPage | undefined, guide
       label: guide.category || "Travel guide",
       sortOrder: index,
       visible: true,
+      slug: guide.slug,
+      meta: [cityLabel(cities, guide.citySlug), guide.countryId, guide.targetType].filter(Boolean).join(" - "),
+      sourceType: "guide" as const,
+      status: guide.status,
     }));
+}
+
+function buildDestinationCardSuggestions(currentPage: CarRentalPage | undefined, cities: City[], destinations: Destination[]) {
+  if (!currentPage) {
+    return [];
+  }
+
+  const countrySlug = slugify(currentPage.countrySlug || currentPage.countryName);
+  const countryName = normalizeComparableText(currentPage.countryName);
+  const citySlug = slugify(currentPage.citySlug || currentPage.cityName);
+  const matchingCities = cities.filter((city) => {
+    const cityCountrySlug = slugify(city.country);
+    return Boolean(
+      (citySlug && city.slug === citySlug) ||
+        (countrySlug && cityCountrySlug === countrySlug) ||
+        (countryName && normalizeComparableText(city.country) === countryName),
+    );
+  });
+  const matchingCitySlugs = new Set(matchingCities.map((city) => city.slug));
+  const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
+  const cityCards = matchingCities.map((city, index) => ({
+    id: city.id,
+    title: city.name,
+    url: `/${city.slug}`,
+    description: city.shortDescription || city.seoDescription,
+    image: "",
+    label: "City",
+    sortOrder: index,
+    visible: true,
+    slug: city.slug,
+    meta: [city.country, city.status].filter(Boolean).join(" - "),
+    sourceType: "city" as const,
+    status: city.status,
+  }));
+  const destinationCards = destinations
+    .filter((destination) => matchingCitySlugs.has(destination.citySlug))
+    .map((destination, index) => ({
+      id: destination.id,
+      title: destination.name,
+      url: getCanonicalDestinationPath(destination, cityBySlug.get(destination.citySlug)),
+      description: destination.summary || destination.seoDescription || destination.location,
+      image: "",
+      label: destination.category || "Destination",
+      sortOrder: cityCards.length + index,
+      visible: true,
+      slug: destination.slug,
+      meta: [destination.city, destination.category, destination.status].filter(Boolean).join(" - "),
+      sourceType: "destination" as const,
+      status: destination.status,
+    }));
+
+  return [...cityCards, ...destinationCards].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function buildDirectoryLinkSuggestions(
+  currentPage: CarRentalPage | undefined,
+  pages: CarRentalPage[],
+  guides: Guide[],
+  cities: City[],
+  destinations: Destination[],
+) {
+  const carRentalLinks = matchingCarRentalPages(currentPage, pages).map((page, index) => ({
+    text: page.pageTitle || page.heroTitle || page.seoTitle,
+    url: carRentalPublicPath(page),
+    sortOrder: index,
+    meta: [page.slug, page.language, page.status].filter(Boolean).join(" - "),
+    status: page.status,
+    sourceType: "car-rental-page" as const,
+  }));
+  const destinationCards = buildDestinationCardSuggestions(currentPage, cities, destinations);
+  const cityAndDestinationLinks = destinationCards.map((card, index) => ({
+    text: card.title,
+    url: card.url,
+    sortOrder: carRentalLinks.length + index,
+    meta: card.meta,
+    status: card.status,
+    sourceType: card.sourceType,
+  }));
+  const guideLinks = buildGuideCardSuggestions(currentPage, guides, cities).map((guide, index) => ({
+    text: guide.title,
+    url: guide.url,
+    sortOrder: carRentalLinks.length + cityAndDestinationLinks.length + index,
+    meta: guide.meta,
+    status: guide.status,
+    sourceType: "guide" as const,
+  }));
+
+  return [...carRentalLinks, ...cityAndDestinationLinks, ...guideLinks];
 }
 
 function matchingCarRentalPages(currentPage: CarRentalPage | undefined, pages: CarRentalPage[]) {

@@ -60,7 +60,7 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
           },
         }}
       />
-      <SiteHeader />
+      <SiteHeader variant="homepage" />
       <main>
         <CarRentalHero page={page} isRtl={isRtl} coverImage={coverImage} />
         <CarRentalTrustBar />
@@ -117,17 +117,17 @@ export function CarRentalHero({
       <div className="absolute inset-0 bg-[#071B42]/88" />
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(29,78,216,0.28),rgba(255,107,0,0.12)_52%,rgba(7,27,66,0.88))]" />
 
-      <div className="relative z-10 mx-auto grid max-w-[88rem] gap-5 px-4 py-5 pb-7 sm:px-6 sm:py-7 sm:pb-9 lg:grid-cols-[minmax(0,1fr)_470px] lg:items-center lg:px-8 lg:py-9 xl:grid-cols-[minmax(0,1fr)_520px]">
+      <div className="relative z-10 mx-auto grid max-w-[88rem] gap-5 px-4 pb-7 pt-24 sm:px-6 sm:pb-9 sm:pt-28 lg:grid-cols-[minmax(0,1fr)_minmax(520px,1fr)] lg:items-center lg:gap-8 lg:px-8 lg:pb-12 lg:pt-32 xl:grid-cols-[minmax(0,0.9fr)_minmax(620px,1.1fr)]">
         <div className="py-2 text-white lg:py-5">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-blue-50 ring-1 ring-white/20">
             <Car className="size-3.5" aria-hidden="true" />
             Car rental search
           </p>
-          <h1 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
             {page.heroTitle || page.pageTitle}
           </h1>
           {page.heroSubtitle ? (
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-50/90 sm:text-base">
+            <p className="mt-4 max-w-xl text-sm leading-7 text-blue-50/90 sm:text-base lg:max-w-2xl">
               {page.heroSubtitle}
             </p>
           ) : null}

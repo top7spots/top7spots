@@ -807,12 +807,18 @@ export async function saveSiteSettingsAction(formData: FormData) {
       folder: "homepage",
       fallbackName: "home-hero",
     });
+    const carRentalCoverImage = await getImagePathFromForm(formData, {
+      fieldName: "carRentalCoverImage",
+      folder: "car-rental",
+      fallbackName: "car-rental-cover",
+    });
 
     const settings: SiteSettings = {
       homeHeroImage,
       homeHeroImageAlt: value(formData, "homeHeroImageAlt"),
       homeHeroOverlayOpacity: String(normalizeHomeHeroOverlayOpacity(value(formData, "homeHeroOverlayOpacity"))),
       homeHeroOverlayStyle: normalizeHomeHeroOverlayStyle(value(formData, "homeHeroOverlayStyle")),
+      carRentalCoverImage,
       instagramUrl: value(formData, "instagramUrl"),
       facebookUrl: value(formData, "facebookUrl"),
       youtubeUrl: value(formData, "youtubeUrl"),
@@ -835,5 +841,6 @@ export async function saveSiteSettingsAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
+  revalidatePath("/sitemap.xml");
   redirect("/admin/dashboard?section=settings&updated=settings");
 }

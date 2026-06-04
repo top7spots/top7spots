@@ -1056,6 +1056,20 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
         </p>
       </FormSection>
 
+      <FormSection title="Car Rental Defaults">
+        <div className="md:col-span-3">
+          <ImageUploadField
+            fieldName="carRentalCoverImage"
+            label="Car Rental Cover Image"
+            currentImage={settings.carRentalCoverImage}
+          />
+        </div>
+        <p className="text-xs leading-5 text-slate-500 md:col-span-3">
+          Used as the shared hero image and social fallback for all Car Rental Pages when a page
+          does not define its own Open Graph image.
+        </p>
+      </FormSection>
+
       <FormSection title="Footer Settings" columns={1}>
         <Area
           label="Footer description"
@@ -1706,6 +1720,7 @@ function CarRentalPageForm({
     <EditShell title={title} backHref={backHref}>
       <form action={saveCarRentalPageAction} className="grid gap-6">
         <input type="hidden" name="id" value={page?.id ?? ""} />
+        <input type="hidden" name="descriptionImage" value={page?.descriptionImage ?? ""} />
         <HiddenTimestamps createdAt={page?.createdAt} />
         <FormSection title="Core page fields">
           <SelectField label="Language" name="language" defaultValue={language}>
@@ -1782,7 +1797,6 @@ function CarRentalPageForm({
           <Field label="Section title" name="descriptionTitle" defaultValue={page?.descriptionTitle} />
           <Area label="Preview text" name="descriptionPreviewText" defaultValue={page?.descriptionPreviewText} rows={5} />
           <Area label="Full/read-more text" name="descriptionFullText" defaultValue={page?.descriptionFullText} rows={8} />
-          <Field label="Description image" name="descriptionImage" defaultValue={page?.descriptionImage} />
         </FormSection>
 
         <FormSection title="Repeatable JSON sections" columns={1}>
@@ -1881,7 +1895,7 @@ function buildCarRentalCardSuggestions(currentPage: CarRentalPage | undefined, p
     title: page.pageTitle || page.heroTitle || page.seoTitle,
     url: carRentalPublicPath(page),
     description: page.metaDescription || page.heroSubtitle,
-    image: page.ogImage || page.descriptionImage,
+    image: "",
     label: page.pageType === "airport" ? "Airport car rental" : page.cityName || page.countryName || "Car rental",
     sortOrder: index,
     visible: true,
@@ -1927,7 +1941,7 @@ function buildGuideCardSuggestions(currentPage: CarRentalPage | undefined, guide
       title: guide.title,
       url: getGuideHref(guide),
       description: guide.excerpt || guide.seoDescription,
-      image: guide.coverImage || guide.image,
+      image: "",
       label: guide.category || "Travel guide",
       sortOrder: index,
       visible: true,

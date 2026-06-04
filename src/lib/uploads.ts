@@ -19,7 +19,8 @@ export type UploadFolder =
   | "guides"
   | "attractions"
   | "restaurants"
-  | "homepage";
+  | "homepage"
+  | "car-rental";
 
 type ImageUploadOptions = {
   fieldName: string;

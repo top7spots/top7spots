@@ -417,6 +417,7 @@ values
     'newsletter_enabled',
     'false'
   ),
+  ('car_rental_cover_image', '/uploads/global/home-hero.webp'),
   ('instagram_url', ''),
   ('facebook_url', ''),
   ('youtube_url', ''),

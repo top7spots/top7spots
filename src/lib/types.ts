@@ -321,6 +321,7 @@ export type SiteSettings = {
   homeHeroImageAlt: string;
   homeHeroOverlayOpacity: string;
   homeHeroOverlayStyle: string;
+  carRentalCoverImage: string;
   instagramUrl: string;
   facebookUrl: string;
   youtubeUrl: string;

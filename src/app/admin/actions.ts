@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
 import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
+import {
+  defaultDiscoverCarsAffiliateLink,
+  defaultDiscoverCarsWidgetCode,
+  normalizeCarRentalImport,
+  normalizeCarRentalPageDraft,
+  parseJsonArray,
+} from "@/lib/car-rental-pages";
 import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
@@ -16,6 +23,7 @@ import { saveSiteSettings } from "@/lib/site-settings";
 import type {
   AdminCollection,
   Attraction,
+  CarRentalPage,
   ContentStatus,
   Destination,
   Guide,
@@ -36,6 +44,10 @@ function value(formData: FormData, key: string) {
 
 function statusValue(formData: FormData): ContentStatus {
   return value(formData, "status") === "draft" ? "draft" : "published";
+}
+
+function carRentalLanguageValue(formData: FormData) {
+  return value(formData, "language") === "ar" ? "ar" : "en";
 }
 
 function checkboxValue(formData: FormData, key: string) {
@@ -662,6 +674,111 @@ export async function saveSitePageAction(formData: FormData) {
   revalidatePath(`/${item.slug}`);
   revalidatePath("/admin/dashboard");
   redirectToAdminSection("site_pages");
+}
+
+export async function saveCarRentalPageAction(formData: FormData) {
+  const id = value(formData, "id");
+  const pageTitle = value(formData, "pageTitle");
+  const slug = slugify(value(formData, "slug") || pageTitle);
+  const translationGroup = slugify(value(formData, "translationGroup") || slug);
+
+  if (!pageTitle || !slug || !translationGroup || !value(formData, "heroTitle")) {
+    redirectWithSaveError(
+      "car_rental_pages",
+      new Error("Page title, slug, translation group, and hero title are required."),
+      id,
+    );
+  }
+
+  let item: CarRentalPage;
+
+  try {
+    item = normalizeCarRentalPageDraft({
+      id: id || crypto.randomUUID(),
+      language: carRentalLanguageValue(formData),
+      slug,
+      translationGroup,
+      status: statusValue(formData),
+      pageTitle,
+      seoTitle: value(formData, "seoTitle"),
+      metaDescription: value(formData, "metaDescription"),
+      canonicalUrl: value(formData, "canonicalUrl"),
+      ogImage: value(formData, "ogImage"),
+      heroTitle: value(formData, "heroTitle"),
+      heroSubtitle: value(formData, "heroSubtitle"),
+      heroChips: listFromTextarea(formData.get("heroChips")),
+      widgetHeading: value(formData, "widgetHeading"),
+      widgetIntroText: value(formData, "widgetIntroText"),
+      discovercarsWidgetCode: value(formData, "discovercarsWidgetCode") || defaultDiscoverCarsWidgetCode,
+      discovercarsAffiliateLink: value(formData, "discovercarsAffiliateLink") || defaultDiscoverCarsAffiliateLink,
+      discovercarsAffiliateId: value(formData, "discovercarsAffiliateId") || "top7spots",
+      discovercarsChannel: value(formData, "discovercarsChannel") || "locations",
+      benefits: parseJsonArray(formData.get("benefits")),
+      descriptionTitle: value(formData, "descriptionTitle"),
+      descriptionPreviewText: value(formData, "descriptionPreviewText"),
+      descriptionFullText: value(formData, "descriptionFullText"),
+      descriptionImage: value(formData, "descriptionImage"),
+      popularLocationCards: parseJsonArray(formData.get("popularLocationCards")),
+      guideCards: parseJsonArray(formData.get("guideCards")),
+      destinationCards: parseJsonArray(formData.get("destinationCards")),
+      directoryGroups: parseJsonArray(formData.get("directoryGroups")),
+      faqs: parseJsonArray(formData.get("faqs")),
+      createdAt: timestamp(formData),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch {
+    redirectWithSaveError("car_rental_pages", new Error("One of the JSON fields is invalid."), id);
+  }
+
+  try {
+    await upsertItem("car_rental_pages", item);
+  } catch (error) {
+    redirectWithSaveError("car_rental_pages", error, item.id);
+  }
+
+  revalidatePath(`/${item.slug}`);
+  revalidatePath(`/ar/${item.slug}`);
+  revalidatePath("/admin/dashboard");
+  redirectToAdminSection("car_rental_pages");
+}
+
+export async function importCarRentalPageAction(formData: FormData) {
+  const json = String(formData.get("carRentalJson") ?? "").trim();
+
+  if (!json) {
+    redirectWithSaveError("car_rental_pages", new Error("Paste one car rental page JSON object."));
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    redirectWithSaveError("car_rental_pages", new Error("Invalid JSON. Check commas, quotes, and braces."));
+  }
+
+  const result = normalizeCarRentalImport(parsed as Record<string, unknown>);
+
+  if (!result.ok) {
+    redirectWithSaveError("car_rental_pages", new Error(result.errors.join(" ")));
+  }
+
+  const status = value(formData, "importStatus");
+  const item: CarRentalPage = {
+    ...result.page,
+    status: status === "published" ? "published" : "draft",
+  };
+
+  try {
+    await upsertItem("car_rental_pages", item);
+  } catch (error) {
+    redirectWithSaveError("car_rental_pages", error, item.id);
+  }
+
+  revalidatePath(`/${item.slug}`);
+  revalidatePath(`/ar/${item.slug}`);
+  revalidatePath("/admin/dashboard");
+  redirect(`/admin/dashboard?section=car_rental_pages&mode=edit&id=${encodeURIComponent(item.id)}&updated=car_rental_pages`);
 }
 
 export async function saveSiteSettingsAction(formData: FormData) {

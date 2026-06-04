@@ -238,6 +238,78 @@ export type SitePage = {
   updatedAt: string;
 };
 
+export type CarRentalLanguage = "en" | "ar";
+
+export type CarRentalBenefit = {
+  title: string;
+  description: string;
+  icon: string;
+  sortOrder: number;
+};
+
+export type CarRentalLinkCard = {
+  title: string;
+  url: string;
+  description: string;
+  image: string;
+  label: string;
+  sortOrder: number;
+  visible: boolean;
+};
+
+export type CarRentalDirectoryLink = {
+  text: string;
+  url: string;
+  sortOrder: number;
+};
+
+export type CarRentalDirectoryGroup = {
+  title: string;
+  sortOrder: number;
+  links: CarRentalDirectoryLink[];
+};
+
+export type CarRentalFaq = {
+  question: string;
+  answer: string;
+  sortOrder: number;
+  visible: boolean;
+};
+
+export type CarRentalPage = {
+  id: string;
+  language: CarRentalLanguage;
+  slug: string;
+  translationGroup: string;
+  status: ContentStatus;
+  pageTitle: string;
+  seoTitle: string;
+  metaDescription: string;
+  canonicalUrl: string;
+  ogImage: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroChips: string[];
+  widgetHeading: string;
+  widgetIntroText: string;
+  discovercarsWidgetCode: string;
+  discovercarsAffiliateLink: string;
+  discovercarsAffiliateId: string;
+  discovercarsChannel: string;
+  benefits: CarRentalBenefit[];
+  descriptionTitle: string;
+  descriptionPreviewText: string;
+  descriptionFullText: string;
+  descriptionImage: string;
+  popularLocationCards: CarRentalLinkCard[];
+  guideCards: CarRentalLinkCard[];
+  destinationCards: CarRentalLinkCard[];
+  directoryGroups: CarRentalDirectoryGroup[];
+  faqs: CarRentalFaq[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type SiteSettings = {
   homeHeroImage: string;
   homeHeroImageAlt: string;
@@ -265,4 +337,5 @@ export type AdminCollection =
   | "restaurants"
   | "homepage_reviews"
   | "homepage_faqs"
-  | "site_pages";
+  | "site_pages"
+  | "car_rental_pages";

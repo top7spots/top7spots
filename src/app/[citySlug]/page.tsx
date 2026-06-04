@@ -4,12 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { DestinationCard } from "@/components/destination-card";
+import { CarRentalLandingPage } from "@/components/car-rental/car-rental-landing-page";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { countryPath } from "@/lib/country-hubs";
-import { getCityBySlug, getDestinationsByCity, getGuidesByCity, getPublishedCities } from "@/lib/data";
+import { getCityBySlug, getDestinationsByCity, getGuidesByCity, getPublishedCarRentalPage, getPublishedCities } from "@/lib/data";
+import { carRentalPageMetadata } from "@/lib/car-rental-seo";
 import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
@@ -27,7 +29,8 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
   const city = await getCityBySlug(citySlug);
 
   if (!city) {
-    return {};
+    const carRentalPage = await getPublishedCarRentalPage("en", citySlug);
+    return carRentalPage ? carRentalPageMetadata(carRentalPage) : {};
   }
 
   const title = city.seoTitle || `${city.name}, ${city.country} | Top7Spots`;
@@ -49,16 +52,23 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
 
 export default async function CityPage({ params }: CityPageProps) {
   const { citySlug } = await params;
-  const [city, destinations, guides, publishedCities] = await Promise.all([
-    getCityBySlug(citySlug),
+  const city = await getCityBySlug(citySlug);
+
+  if (!city || city.status !== "published") {
+    const carRentalPage = await getPublishedCarRentalPage("en", citySlug);
+
+    if (carRentalPage) {
+      return <CarRentalLandingPage page={carRentalPage} />;
+    }
+
+    notFound();
+  }
+
+  const [destinations, guides, publishedCities] = await Promise.all([
     getDestinationsByCity(citySlug),
     getGuidesByCity(citySlug),
     getPublishedCities(),
   ]);
-
-  if (!city || city.status !== "published") {
-    notFound();
-  }
 
   const cityDestinations = sortCityDestinations(destinations);
   const cityGuides = sortCityGuides(guides);

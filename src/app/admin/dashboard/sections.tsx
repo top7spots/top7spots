@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   BookOpen,
   Building2,
+  Car,
   Compass,
   Eye,
   FileText,
@@ -29,10 +30,12 @@ import {
   saveGuideAction,
   saveHomepageFaqAction,
   saveHomepageReviewAction,
+  saveCarRentalPageAction,
   saveRestaurantAction,
   saveSiteSettingsAction,
   saveSitePageAction,
 } from "@/app/admin/actions";
+import { CarRentalBulkImport } from "@/components/admin/car-rental-bulk-import";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { DestinationAiContentImport } from "@/components/admin/destination-ai-content-import";
 import { GuideContentBlocksField } from "@/components/admin/guide-content-blocks-field";
@@ -47,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/format";
+import { carRentalPublicPath, defaultDiscoverCarsAffiliateLink, defaultDiscoverCarsWidgetCode, prettyJson } from "@/lib/car-rental-pages";
 import { getGuideHref } from "@/lib/guide-routes";
 import {
   homeHeroOverlayStyleOptions,
@@ -56,6 +60,7 @@ import {
 import type {
   AdminCollection,
   Attraction,
+  CarRentalPage,
   City,
   Destination,
   Guide,
@@ -77,6 +82,7 @@ type AdminSection =
   | "homepage_reviews"
   | "homepage_faqs"
   | "site_pages"
+  | "car_rental_pages"
   | "categories"
   | "media"
   | "settings";
@@ -94,6 +100,7 @@ type AdminCrudProps = {
     homepageReviews: HomepageReview[];
     homepageFaqs: HomepageFaq[];
     sitePages: SitePage[];
+    carRentalPages: CarRentalPage[];
     siteSettings: SiteSettings;
   };
   searchParams: SearchParams;
@@ -109,6 +116,7 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
   { section: "homepage_reviews", label: "Homepage Reviews", icon: <Quote className="size-4" /> },
   { section: "homepage_faqs", label: "Homepage FAQs", icon: <FileText className="size-4" /> },
   { section: "site_pages", label: "Site Pages", icon: <FileText className="size-4" /> },
+  { section: "car_rental_pages", label: "Car Rental Pages", icon: <Car className="size-4" /> },
   { section: "categories", label: "Categories / Filters", icon: <SlidersHorizontal className="size-4" /> },
   { section: "media", label: "Media Library", icon: <Library className="size-4" /> },
   { section: "settings", label: "Settings", icon: <Settings className="size-4" /> },
@@ -202,6 +210,9 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
         {activeSection === "site_pages" ? (
           <SitePagesSection data={data} searchParams={searchParams} />
         ) : null}
+        {activeSection === "car_rental_pages" ? (
+          <CarRentalPagesSection data={data} searchParams={searchParams} />
+        ) : null}
         {activeSection === "categories" ? <CategoriesSection /> : null}
         {activeSection === "media" ? <MediaSection /> : null}
         {activeSection === "settings" ? <SettingsSection data={data} /> : null}
@@ -217,7 +228,8 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     data.guides.filter(isDraft).length +
     data.attractions.filter(isDraft).length +
     data.restaurants.filter((item) => !item.published).length +
-    data.sitePages.filter(isDraft).length;
+    data.sitePages.filter(isDraft).length +
+    data.carRentalPages.filter(isDraft).length;
   const stats = [
     { label: "Total cities", value: data.cities.length, icon: <Building2 className="size-5" /> },
     { label: "Published cities", value: data.cities.filter(isPublished).length, icon: <Globe2 className="size-5" /> },
@@ -228,6 +240,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     { label: "Homepage reviews", value: data.homepageReviews.length, icon: <Quote className="size-5" /> },
     { label: "Homepage FAQs", value: data.homepageFaqs.length, icon: <FileText className="size-5" /> },
     { label: "Site pages", value: data.sitePages.length, icon: <FileText className="size-5" /> },
+    { label: "Car rental pages", value: data.carRentalPages.length, icon: <Car className="size-5" /> },
     { label: "Draft content", value: draftCount, icon: <FileText className="size-5" /> },
   ];
 
@@ -260,6 +273,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
           <QuickAction href={adminHref("homepage_reviews", { mode: "add" })} label="Add homepage review" />
           <QuickAction href={adminHref("homepage_faqs", { mode: "add" })} label="Add homepage FAQ" />
           <QuickAction href={adminHref("site_pages", { mode: "add" })} label="Add site page" />
+          <QuickAction href={adminHref("car_rental_pages", { mode: "add" })} label="Add car rental page" />
         </CardContent>
       </Card>
     </div>
@@ -849,6 +863,81 @@ function SitePagesSection({ data, searchParams }: AdminCrudProps) {
         />
       ) : (
         <EmptyState title="No site pages found" text="Add the trust and legal pages shown in the footer." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function CarRentalPagesSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getParam(searchParams.mode);
+  const id = getParam(searchParams.id);
+  const page = data.carRentalPages.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && page);
+  const q = getParam(searchParams.q).toLowerCase();
+  const status = getParam(searchParams.status);
+  const filtered = data.carRentalPages.filter((item) => {
+    const matchesQuery = searchBlob(
+      item.pageTitle,
+      item.slug,
+      item.translationGroup,
+      item.heroTitle,
+      item.metaDescription,
+    ).includes(q);
+    return matchesQuery && matchesStatus(item.status, status);
+  });
+
+  if (isForm) {
+    return (
+      <CarRentalPageForm
+        title={page ? `Edit ${page.pageTitle}` : "Add car rental page"}
+        page={page}
+        backHref={adminHref("car_rental_pages")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Car Rental Pages"
+      description="Create, import, publish, and manage multilingual DiscoverCars landing pages."
+      addHref={adminHref("car_rental_pages", { mode: "add" })}
+      addLabel="Add Car Rental Page"
+      filters={
+        <CommonFilters
+          section="car_rental_pages"
+          searchLabel="Search car rental page"
+          status={status}
+          q={getParam(searchParams.q)}
+        />
+      }
+    >
+      <CarRentalBulkImport />
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Page title", "Language", "Slug", "Public URL", "Status", "Translation group", "Updated", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <TextEntityCell key="entity" title={item.pageTitle} text={item.metaDescription || item.heroSubtitle} />,
+              item.language,
+              item.slug,
+              carRentalPublicPath(item),
+              <StatusBadge key="status" status={item.status} />,
+              item.translationGroup,
+              formatDate(item.updatedAt),
+              <RowActions
+                key="actions"
+                collection="car_rental_pages"
+                viewHref={carRentalPublicPath(item)}
+                editHref={adminHref("car_rental_pages", { mode: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=car_rental_pages&deleted=car_rental_pages"
+                hidden={{ id: item.id, slug: item.slug }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No car rental pages found" text="Create one manually or paste AI-generated JSON into the bulk import panel." />
       )}
     </ManagementShell>
   );
@@ -1578,6 +1667,136 @@ function SitePageForm({
           <StatusSelect defaultValue={page?.status ?? "published"} />
         </FormSection>
         <FormActions backHref={backHref} label="Save page" />
+      </form>
+    </EditShell>
+  );
+}
+
+function CarRentalPageForm({
+  title,
+  page,
+  backHref,
+}: {
+  title: string;
+  page?: CarRentalPage;
+  backHref: string;
+}) {
+  const language = page?.language ?? "en";
+  const publicPath = page ? carRentalPublicPath(page) : "Slug and language set the public URL";
+
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveCarRentalPageAction} className="grid gap-6">
+        <input type="hidden" name="id" value={page?.id ?? ""} />
+        <HiddenTimestamps createdAt={page?.createdAt} />
+        <FormSection title="Core page fields">
+          <SelectField label="Language" name="language" defaultValue={language}>
+            <option value="en">English</option>
+            <option value="ar">Arabic</option>
+          </SelectField>
+          <Field label="Slug" name="slug" defaultValue={page?.slug} placeholder="rent-a-car-in-oman" />
+          <Field
+            label="Translation group"
+            name="translationGroup"
+            defaultValue={page?.translationGroup}
+            placeholder="rent-a-car-in-oman"
+            helperText="Use the same value for English and Arabic versions of the same page."
+          />
+          <StatusSelect defaultValue={page?.status ?? "draft"} />
+          <Field label="Page title" name="pageTitle" defaultValue={page?.pageTitle} placeholder="Rent a Car in Oman" />
+          <ReadOnlySetting label="Public URL" value={publicPath} />
+        </FormSection>
+
+        <FormSection title="SEO">
+          <Field label="SEO title" name="seoTitle" defaultValue={page?.seoTitle} />
+          <Field label="Meta description" name="metaDescription" defaultValue={page?.metaDescription} />
+          <Field label="Canonical URL" name="canonicalUrl" defaultValue={page?.canonicalUrl} />
+          <Field label="Open Graph image" name="ogImage" defaultValue={page?.ogImage} />
+        </FormSection>
+
+        <FormSection title="Hero" columns={1}>
+          <Field label="Hero title" name="heroTitle" defaultValue={page?.heroTitle} placeholder="Rent a Car in Oman" />
+          <Area label="Hero subtitle" name="heroSubtitle" defaultValue={page?.heroSubtitle} rows={4} />
+          <Area
+            label="Hero chips"
+            name="heroChips"
+            defaultValue={lines(page?.heroChips)}
+            helperText="One chip per line."
+            rows={4}
+          />
+        </FormSection>
+
+        <FormSection title="DiscoverCars widget" columns={1}>
+          <Field label="Widget heading" name="widgetHeading" defaultValue={page?.widgetHeading} />
+          <Area label="Widget intro text" name="widgetIntroText" defaultValue={page?.widgetIntroText} rows={3} />
+          <Area
+            label="DiscoverCars widget code"
+            name="discovercarsWidgetCode"
+            defaultValue={page?.discovercarsWidgetCode || defaultDiscoverCarsWidgetCode}
+            rows={6}
+            helperText="The widget script is loaded only on published car rental pages."
+          />
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field
+              label="Affiliate link"
+              name="discovercarsAffiliateLink"
+              defaultValue={page?.discovercarsAffiliateLink || defaultDiscoverCarsAffiliateLink}
+            />
+            <Field label="Affiliate ID" name="discovercarsAffiliateId" defaultValue={page?.discovercarsAffiliateId || "top7spots"} />
+            <Field label="Channel" name="discovercarsChannel" defaultValue={page?.discovercarsChannel || "locations"} />
+          </div>
+        </FormSection>
+
+        <FormSection title="Description / read more" columns={1}>
+          <Field label="Section title" name="descriptionTitle" defaultValue={page?.descriptionTitle} />
+          <Area label="Preview text" name="descriptionPreviewText" defaultValue={page?.descriptionPreviewText} rows={5} />
+          <Area label="Full/read-more text" name="descriptionFullText" defaultValue={page?.descriptionFullText} rows={8} />
+          <Field label="Description image" name="descriptionImage" defaultValue={page?.descriptionImage} />
+        </FormSection>
+
+        <FormSection title="Repeatable JSON sections" columns={1}>
+          <Area
+            label="Benefits"
+            name="benefits"
+            defaultValue={prettyJson(page?.benefits)}
+            rows={8}
+            helperText='Array of objects: title, description, icon, sortOrder.'
+          />
+          <Area
+            label="Popular location cards"
+            name="popularLocationCards"
+            defaultValue={prettyJson(page?.popularLocationCards)}
+            rows={8}
+            helperText='Array of objects: title, url, description, image, label, sortOrder, visible.'
+          />
+          <Area
+            label="Guide cards"
+            name="guideCards"
+            defaultValue={prettyJson(page?.guideCards)}
+            rows={8}
+          />
+          <Area
+            label="Destination cards"
+            name="destinationCards"
+            defaultValue={prettyJson(page?.destinationCards)}
+            rows={8}
+          />
+          <Area
+            label="Directory groups"
+            name="directoryGroups"
+            defaultValue={prettyJson(page?.directoryGroups)}
+            rows={10}
+            helperText='Use groups such as Airports and Popular Locations. Links do not need to exist yet.'
+          />
+          <Area
+            label="FAQs"
+            name="faqs"
+            defaultValue={prettyJson(page?.faqs)}
+            rows={8}
+            helperText='Array of objects: question, answer, sortOrder, visible.'
+          />
+        </FormSection>
+        <FormActions backHref={backHref} label="Save car rental page" />
       </form>
     </EditShell>
   );

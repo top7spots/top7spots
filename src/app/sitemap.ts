@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import {
   getPublishedAttractions,
+  getPublishedCarRentalPages,
   getPublishedCities,
   getPublishedDestinations,
   getPublishedGuides,
@@ -10,6 +11,7 @@ import { buildCountryHubs, countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
 import { getCanonicalDestinationPath, getLocalCityDestinations } from "@/lib/city-intelligence";
 import { getGuideHref } from "@/lib/guide-routes";
+import { carRentalPublicPath } from "@/lib/car-rental-pages";
 import {
   cityProgrammaticPages,
   citySeoPath,
@@ -27,12 +29,13 @@ function lastModified(...dates: Array<string | undefined>) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [cities, destinations, guides, attractions, sitePages] = await Promise.all([
+  const [cities, destinations, guides, attractions, sitePages, carRentalPages] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
     getPublishedAttractions(),
     getPublishedSitePages(),
+    getPublishedCarRentalPages(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
   const guideSitemapEntries = uniqueSitemapEntries(
@@ -83,6 +86,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: lastModified(page.updatedAt, page.createdAt),
       changeFrequency: "monthly" as const,
       priority: page.slug === "about" || page.slug === "contact" ? 0.65 : 0.45,
+    })),
+    ...carRentalPages.map((page) => ({
+      url: absoluteUrl(carRentalPublicPath(page)),
+      lastModified: lastModified(page.updatedAt, page.createdAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.78,
     })),
     ...cities.map((city) => ({
       url: absoluteUrl(`/${slugify(city.slug)}`),

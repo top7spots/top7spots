@@ -13,6 +13,7 @@ const adminCollections: AdminCollection[] = [
   "homepage_reviews",
   "homepage_faqs",
   "site_pages",
+  "car_rental_pages",
 ];
 
 export async function POST(request: Request) {
@@ -103,5 +104,10 @@ function revalidateDeletedContent(collection: AdminCollection, formData: FormDat
 
   if (collection === "site_pages" && slug) {
     revalidatePath(`/${slug}`);
+  }
+
+  if (collection === "car_rental_pages" && slug) {
+    revalidatePath(`/${slug}`);
+    revalidatePath(`/ar/${slug}`);
   }
 }

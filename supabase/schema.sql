@@ -178,6 +178,41 @@ create table if not exists public.site_pages (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.car_rental_pages (
+  id text primary key,
+  language text not null check (language in ('en', 'ar')),
+  slug text not null,
+  translation_group text not null,
+  status text not null default 'draft' check (status in ('draft', 'published')),
+  page_title text not null,
+  seo_title text,
+  meta_description text,
+  canonical_url text,
+  og_image text,
+  hero_title text not null,
+  hero_subtitle text,
+  hero_chips text[] not null default '{}',
+  widget_heading text,
+  widget_intro_text text,
+  discovercars_widget_code text,
+  discovercars_affiliate_link text,
+  discovercars_affiliate_id text,
+  discovercars_channel text,
+  benefits jsonb not null default '[]'::jsonb,
+  description_title text,
+  description_preview_text text,
+  description_full_text text,
+  description_image text,
+  popular_location_cards jsonb not null default '[]'::jsonb,
+  guide_cards jsonb not null default '[]'::jsonb,
+  destination_cards jsonb not null default '[]'::jsonb,
+  directory_groups jsonb not null default '[]'::jsonb,
+  faqs jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (language, slug)
+);
+
 create table if not exists public.contact_messages (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -208,6 +243,8 @@ create index if not exists restaurants_published_idx on public.restaurants (publ
 create index if not exists homepage_reviews_published_sort_order_idx on public.homepage_reviews (is_published, sort_order);
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);
 create index if not exists site_pages_status_slug_idx on public.site_pages (status, slug);
+create index if not exists car_rental_pages_language_status_slug_idx on public.car_rental_pages (language, status, slug);
+create index if not exists car_rental_pages_translation_group_idx on public.car_rental_pages (translation_group, status);
 create index if not exists contact_messages_status_created_at_idx on public.contact_messages (status, created_at);
 create index if not exists site_settings_updated_at_idx on public.site_settings (updated_at);
 
@@ -219,6 +256,7 @@ alter table public.restaurants enable row level security;
 alter table public.homepage_reviews enable row level security;
 alter table public.homepage_faqs enable row level security;
 alter table public.site_pages enable row level security;
+alter table public.car_rental_pages enable row level security;
 alter table public.contact_messages enable row level security;
 alter table public.site_settings enable row level security;
 
@@ -230,6 +268,7 @@ drop policy if exists "Published restaurants are readable" on public.restaurants
 drop policy if exists "Published homepage reviews are readable" on public.homepage_reviews;
 drop policy if exists "Published homepage FAQs are readable" on public.homepage_faqs;
 drop policy if exists "Published site pages are readable" on public.site_pages;
+drop policy if exists "Published car rental pages are readable" on public.car_rental_pages;
 drop policy if exists "Site settings are readable" on public.site_settings;
 
 create policy "Public cities are readable"
@@ -269,6 +308,11 @@ create policy "Published homepage FAQs are readable"
 
 create policy "Published site pages are readable"
   on public.site_pages for select
+  to anon
+  using (status = 'published');
+
+create policy "Published car rental pages are readable"
+  on public.car_rental_pages for select
   to anon
   using (status = 'published');
 

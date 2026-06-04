@@ -3,6 +3,7 @@ import "server-only";
 import type {
   AdminCollection,
   Attraction,
+  CarRentalPage,
   City,
   ContentStatus,
   Destination,
@@ -13,6 +14,11 @@ import type {
   Restaurant,
   SitePage,
 } from "@/lib/types";
+import {
+  defaultDiscoverCarsAffiliateLink,
+  defaultDiscoverCarsWidgetCode,
+  normalizeCarRentalPageDraft,
+} from "@/lib/car-rental-pages";
 import { slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
@@ -28,6 +34,7 @@ type CollectionMap = {
   homepage_reviews: HomepageReview;
   homepage_faqs: HomepageFaq;
   site_pages: SitePage;
+  car_rental_pages: CarRentalPage;
 };
 
 type CityRow = Record<string, unknown>;
@@ -38,6 +45,7 @@ type RestaurantRow = Record<string, unknown>;
 type HomepageReviewRow = Record<string, unknown>;
 type HomepageFaqRow = Record<string, unknown>;
 type SitePageRow = Record<string, unknown>;
+type CarRentalPageRow = Record<string, unknown>;
 
 type RowMap = {
   cities: CityRow;
@@ -48,6 +56,7 @@ type RowMap = {
   homepage_reviews: HomepageReviewRow;
   homepage_faqs: HomepageFaqRow;
   site_pages: SitePageRow;
+  car_rental_pages: CarRentalPageRow;
 };
 
 const tableNames: Record<AdminCollection, string> = {
@@ -59,6 +68,7 @@ const tableNames: Record<AdminCollection, string> = {
   homepage_reviews: "homepage_reviews",
   homepage_faqs: "homepage_faqs",
   site_pages: "site_pages",
+  car_rental_pages: "car_rental_pages",
 };
 
 const structuredGuideRowKeys = [
@@ -201,6 +211,25 @@ function stringListValue(value: unknown, { splitString = false } = {}) {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  return [];
+}
+
+function jsonArrayField(row: Record<string, unknown>, ...keys: string[]) {
+  const value = getField(row, ...keys);
+
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
   return [];
@@ -429,6 +458,47 @@ function mapSitePage(row: SitePageRow): SitePage {
   };
 }
 
+function mapCarRentalPage(row: CarRentalPageRow): CarRentalPage {
+  const pageTitle = stringField(row, "page_title", "pageTitle");
+  const page = normalizeCarRentalPageDraft({
+    id: stringField(row, "id"),
+    language: stringField(row, "language") === "ar" ? "ar" : "en",
+    slug: slugify(stringField(row, "slug") || pageTitle),
+    translationGroup: slugify(stringField(row, "translation_group", "translationGroup") || stringField(row, "slug")),
+    status: status(stringField(row, "status")),
+    pageTitle,
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    metaDescription: stringField(row, "meta_description", "metaDescription"),
+    canonicalUrl: stringField(row, "canonical_url", "canonicalUrl"),
+    ogImage: stringField(row, "og_image", "ogImage"),
+    heroTitle: stringField(row, "hero_title", "heroTitle") || pageTitle,
+    heroSubtitle: stringField(row, "hero_subtitle", "heroSubtitle"),
+    heroChips: stringListValue(getField(row, "hero_chips", "heroChips")),
+    widgetHeading: stringField(row, "widget_heading", "widgetHeading"),
+    widgetIntroText: stringField(row, "widget_intro_text", "widgetIntroText"),
+    discovercarsWidgetCode:
+      stringField(row, "discovercars_widget_code", "discovercarsWidgetCode") || defaultDiscoverCarsWidgetCode,
+    discovercarsAffiliateLink:
+      stringField(row, "discovercars_affiliate_link", "discovercarsAffiliateLink") || defaultDiscoverCarsAffiliateLink,
+    discovercarsAffiliateId: stringField(row, "discovercars_affiliate_id", "discovercarsAffiliateId") || "top7spots",
+    discovercarsChannel: stringField(row, "discovercars_channel", "discovercarsChannel") || "locations",
+    benefits: jsonArrayField(row, "benefits"),
+    descriptionTitle: stringField(row, "description_title", "descriptionTitle"),
+    descriptionPreviewText: stringField(row, "description_preview_text", "descriptionPreviewText"),
+    descriptionFullText: stringField(row, "description_full_text", "descriptionFullText"),
+    descriptionImage: stringField(row, "description_image", "descriptionImage"),
+    popularLocationCards: jsonArrayField(row, "popular_location_cards", "popularLocationCards"),
+    guideCards: jsonArrayField(row, "guide_cards", "guideCards"),
+    destinationCards: jsonArrayField(row, "destination_cards", "destinationCards"),
+    directoryGroups: jsonArrayField(row, "directory_groups", "directoryGroups"),
+    faqs: jsonArrayField(row, "faqs"),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  });
+
+  return page;
+}
+
 function toCityRow(item: City): CityRow {
   return {
     id: item.id,
@@ -617,6 +687,44 @@ function toSitePageRow(item: SitePage): SitePageRow {
   };
 }
 
+function toCarRentalPageRow(item: CarRentalPage): CarRentalPageRow {
+  const page = normalizeCarRentalPageDraft(item);
+
+  return {
+    id: page.id,
+    language: page.language,
+    slug: slugify(page.slug),
+    translation_group: slugify(page.translationGroup),
+    status: page.status,
+    page_title: page.pageTitle,
+    seo_title: page.seoTitle,
+    meta_description: page.metaDescription,
+    canonical_url: page.canonicalUrl,
+    og_image: page.ogImage,
+    hero_title: page.heroTitle,
+    hero_subtitle: page.heroSubtitle,
+    hero_chips: page.heroChips,
+    widget_heading: page.widgetHeading,
+    widget_intro_text: page.widgetIntroText,
+    discovercars_widget_code: page.discovercarsWidgetCode,
+    discovercars_affiliate_link: page.discovercarsAffiliateLink,
+    discovercars_affiliate_id: page.discovercarsAffiliateId,
+    discovercars_channel: page.discovercarsChannel,
+    benefits: page.benefits,
+    description_title: page.descriptionTitle,
+    description_preview_text: page.descriptionPreviewText,
+    description_full_text: page.descriptionFullText,
+    description_image: page.descriptionImage,
+    popular_location_cards: page.popularLocationCards,
+    guide_cards: page.guideCards,
+    destination_cards: page.destinationCards,
+    directory_groups: page.directoryGroups,
+    faqs: page.faqs,
+    created_at: page.createdAt,
+    updated_at: page.updatedAt,
+  };
+}
+
 async function readRows<T extends AdminCollection>(collection: T): Promise<RowMap[T][]> {
   if (!hasSupabaseConfig()) {
     console.error(
@@ -661,7 +769,8 @@ function isOptionalHomepageCollection(collection: AdminCollection) {
     collection === "homepage_reviews" ||
     collection === "homepage_faqs" ||
     collection === "restaurants" ||
-    collection === "site_pages"
+    collection === "site_pages" ||
+    collection === "car_rental_pages"
   );
 }
 
@@ -703,6 +812,12 @@ async function readCollection<T extends AdminCollection>(
     return (rows as HomepageFaqRow[]).map(mapHomepageFaq).sort(bySortOrder) as CollectionMap[T][];
   }
 
+  if (collection === "car_rental_pages") {
+    return (rows as CarRentalPageRow[])
+      .map(mapCarRentalPage)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.pageTitle.localeCompare(b.pageTitle)) as CollectionMap[T][];
+  }
+
   return (rows as SitePageRow[]).map(mapSitePage).sort(byDisplayOrder) as CollectionMap[T][];
 }
 
@@ -733,6 +848,10 @@ function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap
 
   if (collection === "homepage_faqs") {
     return toHomepageFaqRow(item as HomepageFaq) as RowMap[T];
+  }
+
+  if (collection === "car_rental_pages") {
+    return toCarRentalPageRow(item as CarRentalPage) as RowMap[T];
   }
 
   return toSitePageRow(item as SitePage) as RowMap[T];
@@ -964,6 +1083,32 @@ export async function getPublishedSitePageBySlug(slug: string) {
   return page?.status === "published" ? page : undefined;
 }
 
+export async function getCarRentalPages() {
+  return readCollection("car_rental_pages");
+}
+
+export async function getPublishedCarRentalPages() {
+  const pages = await getCarRentalPages();
+  return pages.filter((page) => page.status === "published");
+}
+
+export async function getCarRentalPage(language: CarRentalPage["language"], slug: string) {
+  const normalizedSlug = slugify(slug);
+  const pages = await getCarRentalPages();
+  return pages.find((page) => page.language === language && page.slug === normalizedSlug);
+}
+
+export async function getPublishedCarRentalPage(language: CarRentalPage["language"], slug: string) {
+  const page = await getCarRentalPage(language, slug);
+  return page?.status === "published" ? page : undefined;
+}
+
+export async function getPublishedCarRentalTranslations(translationGroup: string) {
+  const normalizedGroup = slugify(translationGroup);
+  const pages = await getPublishedCarRentalPages();
+  return pages.filter((page) => page.translationGroup === normalizedGroup);
+}
+
 export async function getAdminData() {
   const [
     cities,
@@ -975,6 +1120,7 @@ export async function getAdminData() {
     homepageReviews,
     homepageFaqs,
     sitePages,
+    carRentalPages,
     siteSettings,
   ] = await Promise.all([
     getCities(),
@@ -986,6 +1132,7 @@ export async function getAdminData() {
     getHomepageReviews(),
     getHomepageFaqs(),
     getSitePages(),
+    getCarRentalPages(),
     getSiteSettings(),
   ]);
 
@@ -999,6 +1146,7 @@ export async function getAdminData() {
     homepageReviews,
     homepageFaqs,
     sitePages,
+    carRentalPages,
     siteSettings,
   };
 }

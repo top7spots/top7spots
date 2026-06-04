@@ -27,7 +27,7 @@ export function DiscoverCarsWidget({ code }: { code: string }) {
     }
 
     const wrapper = document.createElement("div");
-    wrapper.className = "min-h-[300px]";
+    wrapper.className = "relative z-50 min-h-[300px] w-full overflow-visible";
     const safeScript = document.createElement("script");
 
     for (const attribute of Array.from(script.attributes)) {
@@ -46,7 +46,7 @@ export function DiscoverCarsWidget({ code }: { code: string }) {
     container.appendChild(wrapper);
   }, [code]);
 
-  return <div ref={containerRef} className="min-h-[320px]" />;
+  return <div ref={containerRef} className="relative z-50 min-h-[320px] w-full overflow-visible" />;
 }
 
 export function ReadMoreText({ preview, fullText, isRtl }: { preview: string; fullText: string; isRtl: boolean }) {

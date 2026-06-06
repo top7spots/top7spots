@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { GuideDetailArticle } from "@/components/guide-detail-article";
 import {
-  getDestinations,
+  getPublishedDestinations,
   getPublishedAttractions,
   getPublishedCities,
   getPublishedGuides,
@@ -43,7 +43,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   const { slug } = await params;
   const [guideMatches, destinations, attractions, cities, guides, restaurants] = await Promise.all([
     getPublishedGuidesBySlug(slug),
-    getDestinations(),
+    getPublishedDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedGuides(),

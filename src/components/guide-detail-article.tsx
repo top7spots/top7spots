@@ -13,6 +13,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import {
+  GuideArticleToc,
+  ReadingProgress,
+  type GuideTocItem,
+} from "@/components/guides/guide-article-enhancements";
 import { GuideEntityCard, type GuideEntityCardItem } from "@/components/guides/guide-entity-card";
 import {
   buildGuideArticleJsonLd,
@@ -205,6 +210,97 @@ export function GuideDetailArticle({
     : [];
   const useTwoColumnContent = !isListGuideLayout && supportPageBlocks.length > 0 && primaryPageBlocks.length > 0;
   const selectedItemListItems = guideItemListEntries(allListingBlocks);
+  const renderedListingBlocks = hasPageBlocks ? contentListingBlocks : listingBlocks;
+  const tocItems = buildGuideTocItems({
+    city,
+    hasPageBlocks,
+    pageBlocks: mainPageBlocks,
+    legacyBlocks: contentBlocks,
+    renderedListingBlocks,
+    visibleFaqItems,
+  });
+  const guideArticleBody = hasPageBlocks ? (
+    <>
+      <div
+        className={
+          useTwoColumnContent
+            ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
+            : "grid gap-8"
+        }
+      >
+        <div className="grid min-w-0 gap-8">
+          <GuidePageBlocks
+            guide={guide}
+            blocks={primaryPageBlocks}
+            listingBlocks={listingBlocks}
+            cities={cities}
+            destinations={listingDestinations ?? destinations}
+            attractions={attractions}
+            restaurants={restaurants}
+            guides={guides}
+          />
+          {!useTwoColumnContent && supportPageBlocks.length > 0 ? (
+            <GuidePageBlocks
+              guide={guide}
+              blocks={supportPageBlocks}
+              listingBlocks={listingBlocks}
+              cities={cities}
+              destinations={listingDestinations ?? destinations}
+              attractions={attractions}
+              restaurants={restaurants}
+              guides={guides}
+            />
+          ) : null}
+        </div>
+        {useTwoColumnContent ? (
+          <GuideSupportColumn
+            guide={guide}
+            blocks={supportPageBlocks}
+            listingBlocks={listingBlocks}
+            cities={cities}
+            destinations={listingDestinations ?? destinations}
+            attractions={attractions}
+            restaurants={restaurants}
+            guides={guides}
+          />
+        ) : null}
+      </div>
+      {faqPageBlocks.length > 0 ? (
+        <div className="mt-8 grid gap-8">
+          <GuidePageBlocks
+            guide={guide}
+            blocks={faqPageBlocks}
+            listingBlocks={listingBlocks}
+            cities={cities}
+            destinations={listingDestinations ?? destinations}
+            attractions={attractions}
+            restaurants={restaurants}
+            guides={guides}
+          />
+        </div>
+      ) : legacyFaqItems.length > 0 ? (
+        <div className="mt-8 grid gap-8">
+          <ServerGuideFaqAccordion faqs={legacyFaqItems} />
+        </div>
+      ) : null}
+    </>
+  ) : (
+    <div className="mx-auto grid min-w-0 max-w-4xl gap-8">
+      <WhyVisitSection guide={guide} city={city} description={heroDescription} />
+      {contentBlocks.map((block) => (
+        <ArticleBlockGroup
+          key={block.key}
+          block={block}
+          entities={contextualEntities}
+          contextualSection={contextualSections.get(block.key)}
+        />
+      ))}
+      {listingBlocks.map((block) => (
+        <GuideListingBlockSection key={block.id} block={block} />
+      ))}
+      <ServerGuideFaqAccordion faqs={legacyFaqItems} />
+    </div>
+  );
   const jsonLd = [
     buildGuideArticleJsonLd({ guide, canonicalPath }),
     buildGuideBreadcrumbJsonLd({
@@ -223,6 +319,7 @@ export function GuideDetailArticle({
 
   return (
     <div className="min-h-screen bg-[#F4F7FB]">
+      <ReadingProgress />
       {jsonLd.map((data) => (
         <JsonLd key={String(data["@id"] || data["@type"])} data={data} />
       ))}
@@ -281,87 +378,13 @@ export function GuideDetailArticle({
         </section>
 
         <article className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-          {hasPageBlocks ? (
-            <>
-              <div
-                className={
-                  useTwoColumnContent
-                    ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
-                    : "grid gap-8"
-                }
-              >
-                <div className="grid min-w-0 gap-8">
-                  <GuidePageBlocks
-                    guide={guide}
-                    blocks={primaryPageBlocks}
-                    listingBlocks={listingBlocks}
-                    cities={cities}
-                    destinations={listingDestinations ?? destinations}
-                    attractions={attractions}
-                    restaurants={restaurants}
-                    guides={guides}
-                  />
-                  {!useTwoColumnContent && supportPageBlocks.length > 0 ? (
-                    <GuidePageBlocks
-                      guide={guide}
-                      blocks={supportPageBlocks}
-                      listingBlocks={listingBlocks}
-                      cities={cities}
-                      destinations={listingDestinations ?? destinations}
-                      attractions={attractions}
-                      restaurants={restaurants}
-                      guides={guides}
-                    />
-                  ) : null}
-                </div>
-                {useTwoColumnContent ? (
-                  <GuideSupportColumn
-                    guide={guide}
-                    blocks={supportPageBlocks}
-                    listingBlocks={listingBlocks}
-                    cities={cities}
-                    destinations={listingDestinations ?? destinations}
-                    attractions={attractions}
-                    restaurants={restaurants}
-                    guides={guides}
-                  />
-                ) : null}
-              </div>
-              {faqPageBlocks.length > 0 ? (
-                <div className="mt-8 grid gap-8">
-                  <GuidePageBlocks
-                    guide={guide}
-                    blocks={faqPageBlocks}
-                    listingBlocks={listingBlocks}
-                    cities={cities}
-                    destinations={listingDestinations ?? destinations}
-                    attractions={attractions}
-                    restaurants={restaurants}
-                    guides={guides}
-                  />
-                </div>
-              ) : legacyFaqItems.length > 0 ? (
-                <div className="mt-8 grid gap-8">
-                  <ServerGuideFaqAccordion faqs={legacyFaqItems} />
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <div className="mx-auto grid min-w-0 max-w-4xl gap-8">
-              <WhyVisitSection guide={guide} city={city} description={heroDescription} />
-              {contentBlocks.map((block) => (
-                <ArticleBlockGroup
-                  key={block.key}
-                  block={block}
-                  entities={contextualEntities}
-                  contextualSection={contextualSections.get(block.key)}
-                />
-              ))}
-              {listingBlocks.map((block) => (
-                <GuideListingBlockSection key={block.id} block={block} />
-              ))}
-              <ServerGuideFaqAccordion faqs={legacyFaqItems} />
+          {tocItems.length > 0 ? (
+            <div className="grid gap-8 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
+              <GuideArticleToc items={tocItems} />
+              <div className="min-w-0">{guideArticleBody}</div>
             </div>
+          ) : (
+            guideArticleBody
           )}
         </article>
 
@@ -421,6 +444,77 @@ function GuideCtaLink({ href, children }: { href: string; children: ReactNode })
       {children}
     </Link>
   );
+}
+
+function buildGuideTocItems({
+  city,
+  hasPageBlocks,
+  pageBlocks,
+  legacyBlocks,
+  renderedListingBlocks,
+  visibleFaqItems,
+}: {
+  city?: City;
+  hasPageBlocks: boolean;
+  pageBlocks: GuideCmsBlock[];
+  legacyBlocks: GuideArticleContentBlock[];
+  renderedListingBlocks: ResolvedGuideListingBlock[];
+  visibleFaqItems: GuideFaqItem[];
+}) {
+  const tocItems: GuideTocItem[] = [];
+  const usedIds = new Set<string>();
+
+  const addItem = (id: string, title: string, level: 2 | 3 = 2) => {
+    const normalizedId = id.trim();
+    const normalizedTitle = title.trim();
+
+    if (!normalizedId || !normalizedTitle || usedIds.has(normalizedId)) {
+      return;
+    }
+
+    usedIds.add(normalizedId);
+    tocItems.push({ id: normalizedId, title: normalizedTitle, level });
+  };
+
+  if (hasPageBlocks) {
+    pageBlocks.forEach((block) => {
+      if (block.type === "faq") {
+        if ((block.faqs || []).length > 0) {
+          addItem("guide-faq-heading", block.title || "Common questions");
+        }
+        return;
+      }
+
+      const title = guideContentBlockTocTitle(block);
+      if (!title) {
+        return;
+      }
+
+      addItem(guideContentBlockTocId(block, title), title);
+    });
+  } else {
+    addItem("why-visit", city ? `Why visit ${city.name}` : "Why this guide matters");
+
+    legacyBlocks.forEach((block) => {
+      if (block.kind === "heading") {
+        addItem(block.id, block.title, block.level);
+      }
+
+      if (block.kind === "list") {
+        addItem(block.id, block.section.title);
+      }
+    });
+  }
+
+  renderedListingBlocks.forEach((block) => {
+    addItem(`listing-block-${slugify(block.id || block.title)}`, block.title);
+  });
+
+  if (visibleFaqItems.length > 0) {
+    addItem("guide-faq-heading", "Common questions");
+  }
+
+  return tocItems.length >= 2 ? tocItems : [];
 }
 
 function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
@@ -832,6 +926,8 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
       {block.ctaHref ? (
         <Link
           href={block.ctaHref}
+          target={block.ctaTargetBlank ? "_blank" : undefined}
+          rel={ctaRelAttribute(block)}
           className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
         >
           {block.ctaLabel || "Learn more"}
@@ -839,6 +935,26 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
       ) : null}
     </section>
   );
+}
+
+function ctaRelAttribute(block: GuideCmsBlock) {
+  const relValues = new Set<string>();
+
+  if (block.ctaTargetBlank) {
+    relValues.add("noopener");
+    relValues.add("noreferrer");
+  }
+
+  if (block.ctaRel === "nofollow") {
+    relValues.add("nofollow");
+  }
+
+  if (block.ctaRel === "sponsored") {
+    relValues.add("sponsored");
+    relValues.add("nofollow");
+  }
+
+  return relValues.size > 0 ? Array.from(relValues).join(" ") : undefined;
 }
 
 function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallbackTitle: string }) {
@@ -1109,10 +1225,52 @@ function renderInlineContent(text: string, entities: ContextualEntity[] = []): R
         return;
       }
 
-      nodes.push(...renderEntityLinks(part, entities, `text-${index}`));
+      nodes.push(...renderMarkdownAndEntityLinks(part, entities, `text-${index}`));
     });
 
   return nodes;
+}
+
+function renderMarkdownAndEntityLinks(text: string, entities: ContextualEntity[], keyPrefix: string): ReactNode[] {
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g;
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  let index = 0;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > cursor) {
+      nodes.push(...renderEntityLinks(text.slice(cursor, match.index), entities, `${keyPrefix}-text-${index}`));
+    }
+
+    const label = match[1].trim();
+    const href = match[2].trim();
+
+    if (label && isSafeInlineHref(href)) {
+      nodes.push(
+        <Link
+          key={`${keyPrefix}-link-${index}-${href}`}
+          href={href}
+          target={isExternalHref(href) ? "_blank" : undefined}
+          rel={isExternalHref(href) ? "noopener noreferrer" : undefined}
+          className="font-medium text-[#1D4ED8] underline decoration-blue-200 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66]"
+        >
+          {label}
+        </Link>,
+      );
+    } else {
+      nodes.push(match[0]);
+    }
+
+    cursor = match.index + match[0].length;
+    index += 1;
+  }
+
+  if (cursor < text.length) {
+    nodes.push(...renderEntityLinks(text.slice(cursor), entities, `${keyPrefix}-text-end`));
+  }
+
+  return nodes.length > 0 ? nodes : renderEntityLinks(text, entities, keyPrefix);
 }
 
 function renderEntityLinks(text: string, entities: ContextualEntity[], keyPrefix: string): ReactNode[] {
@@ -1148,6 +1306,14 @@ function renderEntityLinks(text: string, entities: ContextualEntity[], keyPrefix
   }
 
   return nodes;
+}
+
+function isSafeInlineHref(href: string) {
+  return href.startsWith("/") || /^https?:\/\//i.test(href);
+}
+
+function isExternalHref(href: string) {
+  return /^https?:\/\//i.test(href);
 }
 
 function SimilarGuidesGrid({ guides }: { guides: Guide[] }) {
@@ -2026,6 +2192,55 @@ function selectedBlockFallbackTitle(type: GuideCmsBlock["type"]) {
   if (type === "selected-activities") return "Selected activities";
   if (type === "related-guides") return "Related guides";
   return "";
+}
+
+function guideContentBlockTocId(block: GuideCmsBlock, title: string) {
+  return isSelectedEntityBlock(block.type)
+    ? `listing-block-${slugify(block.id || title)}`
+    : block.id;
+}
+
+function guideContentBlockTocTitle(block: GuideCmsBlock) {
+  if (isSelectedEntityBlock(block.type)) {
+    return block.title || selectedBlockFallbackTitle(block.type);
+  }
+
+  if (block.type === "quick-info") {
+    return block.title || "Quick info";
+  }
+
+  if (block.type === "map") {
+    return block.title || "Map";
+  }
+
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
+    return block.title || tipsFallbackTitle(block.type);
+  }
+
+  if (block.type === "cta" || block.type === "car-rental-cta" || block.type === "newsletter-cta") {
+    return block.title || ctaFallbackTitle(block.type);
+  }
+
+  if (block.type === "intro") {
+    return block.title || "Introduction";
+  }
+
+  if (block.type === "overview") {
+    return block.title || "Overview";
+  }
+
+  return block.title || "";
+}
+
+function isSelectedEntityBlock(type: GuideCmsBlock["type"]) {
+  return (
+    type === "selected-destinations" ||
+    type === "selected-cities" ||
+    type === "selected-countries" ||
+    type === "selected-restaurants" ||
+    type === "selected-activities" ||
+    type === "related-guides"
+  );
 }
 
 function ctaFallbackTitle(type: GuideCmsBlock["type"]) {

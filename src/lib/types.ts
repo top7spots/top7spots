@@ -78,6 +78,8 @@ export type GuideContentBlock = {
   mapLabel?: string;
   ctaLabel?: string;
   ctaHref?: string;
+  ctaTargetBlank?: boolean;
+  ctaRel?: "normal" | "nofollow" | "sponsored";
 };
 
 export type City = {

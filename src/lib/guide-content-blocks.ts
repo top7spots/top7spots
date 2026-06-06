@@ -64,6 +64,8 @@ function normalizeGuideContentBlock(block: Record<string, unknown>, index: numbe
     mapLabel: optionalString(block.mapLabel),
     ctaLabel: optionalString(block.ctaLabel),
     ctaHref: optionalString(block.ctaHref),
+    ctaTargetBlank: booleanValue(block.ctaTargetBlank),
+    ctaRel: ctaRelValue(block.ctaRel),
   };
 
   if (!hasBlockContent(normalizedBlock)) {
@@ -83,7 +85,8 @@ function hasBlockContent(block: GuideContentBlock) {
       block.tips?.length ||
       block.faqs?.length ||
       block.mapEmbedUrl ||
-      block.ctaHref,
+      block.ctaHref ||
+      block.ctaLabel,
   );
 }
 
@@ -138,6 +141,15 @@ function parseJson(value: string) {
 
 function optionalString(value: unknown) {
   return stringValue(value) || undefined;
+}
+
+function booleanValue(value: unknown) {
+  return value === true || value === "true" || value === "on";
+}
+
+function ctaRelValue(value: unknown) {
+  const rel = stringValue(value);
+  return rel === "nofollow" || rel === "sponsored" ? rel : "normal";
 }
 
 function stringValue(value: unknown) {

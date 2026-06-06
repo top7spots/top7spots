@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { GuideDetailArticle } from "@/components/guide-detail-article";
 import {
   getCityBySlug,
-  getDestinations,
   getDestinationsByCity,
   getGuideByCityAndSlug,
   getPublishedAttractions,
   getPublishedCities,
+  getPublishedDestinations,
   getPublishedGuides,
   getPublishedRestaurants,
 } from "@/lib/data";
@@ -52,7 +52,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     getGuideByCityAndSlug(citySlug, guideSlug),
     getPublishedGuides(),
     getDestinationsByCity(citySlug),
-    getDestinations(),
+    getPublishedDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedRestaurants(),

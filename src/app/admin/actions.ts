@@ -248,6 +248,33 @@ async function revalidateGuideRoutes(guide: Guide) {
   }
 }
 
+async function guideContentBlocksFromForm(formData: FormData, title: string, existingGuide?: Guide) {
+  if (!formData.has("contentBlocks")) {
+    return existingGuide?.contentBlocks ?? [];
+  }
+
+  const blocks = normalizeGuideContentBlocks(formData.get("contentBlocks"));
+
+  try {
+    const uploadedBlocks = await Promise.all(
+      blocks.map(async (block, index) => {
+        const fieldName = `contentBlockImage_${block.id}`;
+        const image = await getImagePathFromForm(formData, {
+          fieldName,
+          folder: "guides",
+          currentImage: block.image || "",
+          fallbackName: `${slugify(title) || "guide"}-${block.id || index + 1}`,
+        });
+
+        return { ...block, image };
+      }),
+    );
+    return normalizeGuideContentBlocks(uploadedBlocks);
+  } catch (error) {
+    redirectWithUploadError(error);
+  }
+}
+
 export async function loginAction(formData: FormData) {
   const email = value(formData, "email");
   const password = value(formData, "password");
@@ -440,9 +467,7 @@ export async function saveGuideAction(formData: FormData) {
     listingBlocks: formData.has("listingBlocks")
       ? normalizeGuideListingBlocks(formData.get("listingBlocks"))
       : existingGuide?.listingBlocks ?? [],
-    contentBlocks: formData.has("contentBlocks")
-      ? normalizeGuideContentBlocks(formData.get("contentBlocks"))
-      : existingGuide?.contentBlocks ?? [],
+    contentBlocks: await guideContentBlocksFromForm(formData, title, existingGuide),
     createdAt: timestamp(formData),
     updatedAt: new Date().toISOString(),
   };

@@ -48,6 +48,8 @@ import { DestinationAiContentImport } from "@/components/admin/destination-ai-co
 import { GuideContentBlocksField } from "@/components/admin/guide-content-blocks-field";
 import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
+import { GuideRelatedSlugsField } from "@/components/admin/guide-related-slugs-field";
+import { GuideSeoPreviewPanel } from "@/components/admin/guide-seo-preview-panel";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { TravelGuideAiContentImport } from "@/components/admin/travel-guide-ai-content-import";
 import { BrandLogo } from "@/components/brand-logo";
@@ -1241,9 +1243,11 @@ function GuideForm({
   guide?: Guide;
   backHref: string;
 }) {
+  const guideCanonicalPath = guide ? getGuideHref(guide) : "/guides/[slug]";
+
   return (
     <EditShell title={title} backHref={backHref}>
-      <form action={saveGuideAction} className="grid gap-6">
+      <form action={saveGuideAction} encType="multipart/form-data" className="grid gap-6">
         <input type="hidden" name="id" value={guide?.id ?? ""} />
         <HiddenTimestamps createdAt={guide?.createdAt} />
         <TravelGuideAiContentImport
@@ -1319,16 +1323,22 @@ function GuideForm({
               id: city.id,
               label: city.name,
               meta: [city.country, city.region].filter(Boolean).join(" - "),
+              href: `/${city.slug}`,
+              type: "City",
             }))}
             countries={countryOptions(cities).map((country) => ({
               id: country.id,
               label: country.label,
               meta: country.meta,
+              href: `/countries/${country.id}`,
+              type: "Country",
             }))}
             destinations={destinations.map((destination) => ({
               id: destination.id,
               label: destination.name,
               meta: [destination.city, destination.category].filter(Boolean).join(" - "),
+              href: getCanonicalDestinationPath(destination, cities.find((city) => city.slug === destination.citySlug)),
+              type: "Destination",
             }))}
             guides={guides
               .filter((item) => item.id !== guide?.id)
@@ -1336,16 +1346,22 @@ function GuideForm({
                 id: item.id,
                 label: item.title,
                 meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+                href: getGuideHref(item),
+                type: "Guide",
               }))}
             restaurants={restaurantOptions(restaurants, cities).map((restaurant) => ({
               id: restaurant.id,
               label: restaurant.label,
               meta: restaurant.meta,
+              href: `/restaurants/${restaurant.slug}`,
+              type: "Restaurant",
             }))}
             activities={attractions.map((attraction) => ({
               id: attraction.id,
               label: attraction.name,
               meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+              href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+              type: "Attraction",
             }))}
           />
         </FormSection>
@@ -1401,20 +1417,49 @@ function GuideForm({
             placeholder="rent a car muscat, muscat airport car rental, self drive oman"
             helperText="Comma-separated keywords for search targeting."
           />
-          <Field
-            label="Related guide slugs"
-            name="relatedGuideSlugs"
-            defaultValue={commaList(guide?.relatedGuideSlugs)}
-            helperText="Comma-separated guide slugs."
+          <GuideSeoPreviewPanel
+            canonicalPath={guideCanonicalPath}
+            defaultTitle={guide?.title}
+            defaultExcerpt={guide?.excerpt}
+            defaultSeoTitle={guide?.seoTitle}
+            defaultSeoDescription={guide?.seoDescription}
+            defaultCoverImageAlt={guide?.coverImageAlt}
           />
-          <Field
-            label="Related place slugs"
-            name="relatedPlaceSlugs"
-            defaultValue={commaList(guide?.relatedPlaceSlugs)}
-            helperText="Comma-separated place slugs."
+          <GuideRelatedSlugsField
+            defaultGuideSlugs={guide?.relatedGuideSlugs}
+            defaultPlaceSlugs={guide?.relatedPlaceSlugs}
+            guideOptions={guides
+              .filter((item) => item.id !== guide?.id)
+              .map((item) => ({
+                slug: item.slug,
+                label: item.title,
+                meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+              }))}
+            placeOptions={[
+              ...destinations.map((destination) => ({
+                slug: destination.slug,
+                label: destination.name,
+                meta: [destination.city, destination.category].filter(Boolean).join(" - "),
+              })),
+              ...cities.map((city) => ({
+                slug: city.slug,
+                label: city.name,
+                meta: [city.country, city.region].filter(Boolean).join(" - "),
+              })),
+              ...attractions.map((attraction) => ({
+                slug: attraction.slug,
+                label: attraction.name,
+                meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+              })),
+            ]}
           />
         </FormSection>
-        <FormActions backHref={backHref} label="Save guide" />
+        <FormActions
+          backHref={backHref}
+          label="Save guide"
+          previewHref={guide ? `/admin/guides/preview/${encodeURIComponent(guide.id)}` : undefined}
+          previewUnavailableText="Save this guide once to enable admin preview."
+        />
       </form>
     </EditShell>
   );
@@ -2401,7 +2446,7 @@ function EditShell({ title, backHref, children }: { title: string; backHref: str
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-          <p className="mt-1 text-sm text-slate-600">Only this form is open. Save to update local JSON data.</p>
+          <p className="mt-1 text-sm text-slate-600">Only this form is open. Save to update the live content record.</p>
         </div>
         <Link href={backHref} className={buttonVariants({ variant: "outline", className: "mt-4 rounded-full md:mt-0" })}>
           Back to list
@@ -2433,12 +2478,36 @@ function FormSection({
   );
 }
 
-function FormActions({ backHref, label }: { backHref: string; label: string }) {
+function FormActions({
+  backHref,
+  label,
+  previewHref,
+  previewUnavailableText,
+}: {
+  backHref: string;
+  label: string;
+  previewHref?: string;
+  previewUnavailableText?: string;
+}) {
   return (
     <div className="sticky bottom-4 z-10 flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur">
       <Button type="submit" className="rounded-full bg-[#0A2A66] px-5 text-white hover:bg-[#1D4ED8]">
         {label}
       </Button>
+      {previewHref ? (
+        <Link
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "secondary", className: "rounded-full" })}
+        >
+          Preview guide
+        </Link>
+      ) : previewUnavailableText ? (
+        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
+          {previewUnavailableText}
+        </span>
+      ) : null}
       <Link href={backHref} className={buttonVariants({ variant: "outline", className: "rounded-full" })}>
         Cancel
       </Link>
@@ -2744,6 +2813,7 @@ function restaurantCitySlug(cities: City[], restaurant?: Restaurant) {
 function restaurantOptions(restaurants: Restaurant[], cities: City[]) {
   return restaurants.map((restaurant) => ({
     id: restaurant.id,
+    slug: restaurant.slug,
     label: restaurant.name,
     meta: [restaurant.cuisineType, restaurantCityLabel(cities, restaurant)].filter(Boolean).join(" - "),
     description: restaurant.shortDescription || restaurant.address,

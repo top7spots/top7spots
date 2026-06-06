@@ -1,6 +1,7 @@
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
+import { getGuideHref } from "@/lib/guide-routes";
 import type {
   City,
   Destination,
@@ -232,9 +233,7 @@ export function getListingBlockHref(
   }
 
   if (type === "guides" && isGuide(item)) {
-    return item.targetType === "city" && item.citySlug
-      ? `/${item.citySlug}/guides/${item.slug}`
-      : `/guides/${item.slug}`;
+    return getGuideHref(item);
   }
 
   if (type === "restaurants" && isRestaurant(item)) {

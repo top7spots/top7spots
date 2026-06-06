@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
+import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, type CityProgrammaticContent, type CitySeoPageConfig } from "@/lib/programmatic-seo";
 import type { Attraction, City, Destination } from "@/lib/types";
@@ -219,7 +220,7 @@ export function CityTopicGuidePage({
                   {relatedGuides.map((guide) => (
                     <Link
                       key={guide.id}
-                      href={guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+                      href={getGuideHref(guide)}
                       className="rounded-2xl bg-white/10 p-3 text-sm font-semibold leading-6 text-white transition hover:bg-white/15"
                     >
                       {guide.title}

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { getPublishedCities, getPublishedGuides, getPublishedRestaurant } from "@/lib/data";
 import { slugify } from "@/lib/format";
+import { getGuideHref } from "@/lib/guide-routes";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -184,7 +185,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                 {relatedGuides.map((guide) => (
                   <Link
                     key={guide.id}
-                    href={guide.targetType === "city" && guide.citySlug ? `/${guide.citySlug}/guides/${guide.slug}` : `/guides/${guide.slug}`}
+                    href={getGuideHref(guide)}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-blue-50"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">

@@ -8,11 +8,14 @@ import type {
   GuideFaq,
   GuideQuickInfoItem,
 } from "@/lib/types";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type SelectableItem = {
   id: string;
   label: string;
   meta?: string;
+  href?: string;
+  type?: string;
 };
 
 type GuideContentBlocksFieldProps = {
@@ -62,6 +65,8 @@ const blockTypes = [...manualBlockTypes, ...entityBlockTypes];
 const selectorBlockTypes = entityBlockTypes.map((type) => type.value);
 const listTextBlockTypes: GuideContentBlockType[] = ["travel-tips", "warnings", "best-time-to-visit"];
 const ctaBlockTypes: GuideContentBlockType[] = ["cta", "car-rental-cta", "newsletter-cta"];
+const imageBlockTypes: GuideContentBlockType[] = ["hero", "intro", "overview"];
+const ctaRelOptions = ["normal", "nofollow", "sponsored"] as const;
 
 export function GuideContentBlocksField({
   defaultBlocks = [],
@@ -130,8 +135,8 @@ export function GuideContentBlocksField({
 
       {invalidCount > 0 ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {invalidCount} {invalidCount === 1 ? "block needs" : "blocks need"} attention. Invalid blocks are not saved
-          until the highlighted fields are completed.
+          {invalidCount} {invalidCount === 1 ? "block needs" : "blocks need"} attention. Review the highlighted
+          guidance before saving so the public guide renders cleanly.
         </div>
       ) : null}
 
@@ -169,6 +174,9 @@ export function GuideContentBlocksField({
                   </BlockButton>
                   <BlockButton onClick={() => toggleCollapsedBlock(block.id, setCollapsedBlockIds)}>
                     {isCollapsed ? "Expand" : "Collapse"}
+                  </BlockButton>
+                  <BlockButton onClick={() => setBlocks((current) => duplicateBlock(current, blockIndex))}>
+                    Duplicate
                   </BlockButton>
                   <button
                     type="button"
@@ -272,12 +280,9 @@ function BlockEditor({
 
   if (block.type === "faq") {
     return (
-      <KeyValueTextarea
-        label="FAQ"
-        value={formatFaqs(block.faqs)}
-        onChange={(faqs) => updateBlock(blockIndex, { faqs: parseFaqs(faqs) }, setBlocks)}
-        helperText="Use one Question/Answer pair per FAQ."
-        placeholder={"Question: Is this guide suitable for first-time visitors?\nAnswer: Yes, it is written for simple planning."}
+      <FaqEditor
+        faqs={block.faqs || []}
+        onChange={(faqs) => updateBlock(blockIndex, { faqs }, setBlocks)}
       />
     );
   }
@@ -302,6 +307,7 @@ function BlockEditor({
           value={block.body || ""}
           onChange={(body) => updateBlock(blockIndex, { body }, setBlocks)}
           placeholder={manualBodyPlaceholder(block.type)}
+          linkItems={allLinkItems(selectorItems)}
         />
         <KeyValueTextarea
           label={listFieldLabel(block.type)}
@@ -315,27 +321,60 @@ function BlockEditor({
 
   if (ctaBlockTypes.includes(block.type)) {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         <div className="md:col-span-2">
           <LargeTextField
-            label="CTA text"
+            label="CTA description"
             value={block.body || ""}
             onChange={(body) => updateBlock(blockIndex, { body }, setBlocks)}
             placeholder="Invite readers to book, enquire, subscribe, or continue planning."
           />
         </div>
-        <SmallField
-          label="Button text"
-          value={block.ctaLabel || ""}
-          onChange={(ctaLabel) => updateBlock(blockIndex, { ctaLabel }, setBlocks)}
-          placeholder="Start planning"
+        <div className="grid gap-4 md:grid-cols-2">
+          <SmallField
+            label="Button label"
+            value={block.ctaLabel || ""}
+            onChange={(ctaLabel) => updateBlock(blockIndex, { ctaLabel }, setBlocks)}
+            placeholder="Start planning"
+          />
+          <SmallField
+            label="Button URL"
+            value={block.ctaHref || ""}
+            onChange={(ctaHref) => updateBlock(blockIndex, { ctaHref }, setBlocks)}
+            placeholder="/contact"
+          />
+        </div>
+        <InternalLinkPicker
+          items={allLinkItems(selectorItems)}
+          onPick={(item) => updateBlock(blockIndex, { ctaLabel: block.ctaLabel || item.label, ctaHref: item.href || "" }, setBlocks)}
+          label="Use internal page for CTA"
         />
-        <SmallField
-          label="Button link"
-          value={block.ctaHref || ""}
-          onChange={(ctaHref) => updateBlock(blockIndex, { ctaHref }, setBlocks)}
-          placeholder="/contact"
-        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2">
+            <span className="text-xs font-semibold text-slate-600">Rel type</span>
+            <select
+              value={block.ctaRel || "normal"}
+              onChange={(event) =>
+                updateBlock(blockIndex, { ctaRel: event.target.value as GuideContentBlock["ctaRel"] }, setBlocks)
+              }
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+            >
+              {ctaRelOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={Boolean(block.ctaTargetBlank)}
+              onChange={(event) => updateBlock(blockIndex, { ctaTargetBlank: event.target.checked }, setBlocks)}
+            />
+            Open button in a new tab
+          </label>
+        </div>
       </div>
     );
   }
@@ -360,6 +399,7 @@ function BlockEditor({
             label="Intro text"
             value={block.body || ""}
             onChange={(body) => updateBlock(blockIndex, { body }, setBlocks)}
+            linkItems={allLinkItems(selectorItems)}
           />
         </div>
       </div>
@@ -373,8 +413,9 @@ function BlockEditor({
         value={block.body || ""}
         onChange={(body) => updateBlock(blockIndex, { body }, setBlocks)}
         placeholder={block.type === "intro" ? "Write the opening intro for this guide." : "Write the block text."}
+        linkItems={allLinkItems(selectorItems)}
       />
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <SmallField
           label="Eyebrow"
           value={block.eyebrow || ""}
@@ -382,18 +423,27 @@ function BlockEditor({
           placeholder="Travel guide"
         />
         <SmallField
-          label="Image URL"
+          label="Image URL fallback"
           value={block.image || ""}
           onChange={(image) => updateBlock(blockIndex, { image }, setBlocks)}
           placeholder="/uploads/guides/example.jpg"
         />
+      </div>
+      {imageBlockTypes.includes(block.type) ? (
+        <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]">
+          <ImageUploadField
+            fieldName={`contentBlockImage_${block.id}`}
+            label="Block image upload"
+            currentImage={block.image}
+          />
         <SmallField
           label="Image alt text"
           value={block.imageAlt || ""}
           onChange={(imageAlt) => updateBlock(blockIndex, { imageAlt }, setBlocks)}
           placeholder="Scenic travel image"
         />
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -470,6 +520,92 @@ function ItemSelector({
   );
 }
 
+function FaqEditor({
+  faqs,
+  onChange,
+}: {
+  faqs: GuideFaq[];
+  onChange: (faqs: GuideFaq[]) => void;
+}) {
+  return (
+    <div className="grid gap-3">
+      <div>
+        <p className="text-sm font-semibold text-slate-700">FAQ manager</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          Add reader questions one by one. Empty questions or answers are ignored on save.
+        </p>
+      </div>
+      {faqs.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+          No FAQs yet.
+        </div>
+      ) : null}
+      {faqs.map((faq, index) => {
+        const warning = !faq.question.trim() || !faq.answer.trim();
+
+        return (
+          <div key={`${faq.question}-${index}`} className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">FAQ {index + 1}</p>
+              <div className="flex flex-wrap gap-2">
+                <BlockButton disabled={index === 0} onClick={() => onChange(moveBlock(faqs, index, index - 1))}>
+                  Move up
+                </BlockButton>
+                <BlockButton disabled={index === faqs.length - 1} onClick={() => onChange(moveBlock(faqs, index, index + 1))}>
+                  Move down
+                </BlockButton>
+                <button
+                  type="button"
+                  className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                  onClick={() => onChange(faqs.filter((_, faqIndex) => faqIndex !== index))}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+            {warning ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                Add both a question and an answer.
+              </div>
+            ) : null}
+            <SmallField
+              label="Question"
+              value={faq.question}
+              onChange={(question) => updateFaq(index, { question }, faqs, onChange)}
+              placeholder="Is this guide suitable for first-time visitors?"
+            />
+            <label className="grid gap-2">
+              <span className="text-xs font-semibold text-slate-600">Answer</span>
+              <textarea
+                value={faq.answer}
+                onChange={(event) => updateFaq(index, { answer: event.target.value }, faqs, onChange)}
+                rows={3}
+                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+              />
+            </label>
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[#0A2A66] shadow-sm transition hover:border-[#2563EB] hover:bg-blue-50"
+        onClick={() => onChange([...faqs, { question: "", answer: "" }])}
+      >
+        Add FAQ
+      </button>
+    </div>
+  );
+}
+
+function updateFaq(
+  faqIndex: number,
+  patch: Partial<GuideFaq>,
+  faqs: GuideFaq[],
+  onChange: (faqs: GuideFaq[]) => void,
+) {
+  onChange(faqs.map((faq, index) => (index === faqIndex ? { ...faq, ...patch } : faq)));
+}
+
 function SmallField({
   label,
   value,
@@ -499,23 +635,88 @@ function LargeTextField({
   value,
   onChange,
   placeholder,
+  linkItems,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  linkItems?: SelectableItem[];
 }) {
+  const appendText = (text: string) => {
+    const separator = value.trim() ? " " : "";
+    onChange(`${value}${separator}${text}`);
+  };
+
   return (
-    <label className="grid gap-2">
-      <span className="text-xs font-semibold text-slate-600">{label}</span>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={4}
-        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-      />
-    </label>
+    <div className="grid gap-2">
+      <label className="grid gap-2">
+        <span className="text-xs font-semibold text-slate-600">{label}</span>
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          rows={4}
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+        />
+      </label>
+      {linkItems?.length ? (
+        <InternalLinkPicker
+          items={linkItems}
+          onPick={(item) => appendText(`[${item.label}](${item.href})`)}
+          label="Insert internal link"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function InternalLinkPicker({
+  items,
+  onPick,
+  label,
+}: {
+  items: SelectableItem[];
+  onPick: (item: SelectableItem) => void;
+  label: string;
+}) {
+  const linkItems = items.filter((item) => item.href);
+  const [selectedHref, setSelectedHref] = useState(linkItems[0]?.href || "");
+  const selectedItem = linkItems.find((item) => item.href === selectedHref);
+
+  if (linkItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <label className="grid gap-1">
+        <span className="text-xs font-semibold text-[#0A2A66]">{label}</span>
+        <select
+          value={selectedHref}
+          onChange={(event) => setSelectedHref(event.target.value)}
+          className="h-9 rounded-md border border-blue-100 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+        >
+          {linkItems.map((item) => (
+            <option key={`${item.type}-${item.id}-${item.href}`} value={item.href}>
+              {item.label} {item.type ? `(${item.type})` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        disabled={!selectedItem}
+        className="rounded-full border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-[#0A2A66] transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={() => {
+          if (selectedItem) {
+            onPick(selectedItem);
+          }
+        }}
+      >
+        Insert
+      </button>
+    </div>
   );
 }
 
@@ -576,7 +777,7 @@ function toggleCollapsedBlock(blockId: string, setCollapsedBlockIds: Dispatch<Se
   );
 }
 
-function moveBlock(blocks: GuideContentBlock[], fromIndex: number, toIndex: number) {
+function moveBlock<T>(blocks: T[], fromIndex: number, toIndex: number) {
   if (toIndex < 0 || toIndex >= blocks.length || fromIndex === toIndex) {
     return blocks;
   }
@@ -584,6 +785,23 @@ function moveBlock(blocks: GuideContentBlock[], fromIndex: number, toIndex: numb
   const nextBlocks = [...blocks];
   const [movedBlock] = nextBlocks.splice(fromIndex, 1);
   nextBlocks.splice(toIndex, 0, movedBlock);
+  return nextBlocks;
+}
+
+function duplicateBlock(blocks: GuideContentBlock[], blockIndex: number) {
+  const sourceBlock = blocks[blockIndex];
+
+  if (!sourceBlock) {
+    return blocks;
+  }
+
+  const duplicatedBlock: GuideContentBlock = {
+    ...sourceBlock,
+    id: `guide-block-${Date.now()}`,
+    title: sourceBlock.title ? `${sourceBlock.title} copy` : "",
+  };
+  const nextBlocks = [...blocks];
+  nextBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
   return nextBlocks;
 }
 
@@ -607,6 +825,8 @@ function blockDefaultsForType(type: GuideContentBlockType): Partial<GuideContent
     mapEmbedUrl: "",
     ctaLabel: "",
     ctaHref: "",
+    ctaTargetBlank: false,
+    ctaRel: "normal",
   };
 }
 
@@ -620,7 +840,30 @@ function itemsForType(type: GuideContentBlockType, items: SelectorItems) {
   return [];
 }
 
+function allLinkItems(items: SelectorItems) {
+  return [
+    ...items.guides,
+    ...items.cities,
+    ...items.destinations,
+    ...items.activities,
+    ...items.restaurants,
+  ].filter((item) => item.href);
+}
+
+function isValidHref(value?: string) {
+  const href = value?.trim();
+  return Boolean(href && (href.startsWith("/") || /^https?:\/\//i.test(href)));
+}
+
+function ctaRelValue(value: GuideContentBlock["ctaRel"]): NonNullable<GuideContentBlock["ctaRel"]> {
+  return value === "nofollow" || value === "sponsored" ? value : "normal";
+}
+
 function blockValidation(block: GuideContentBlock, selectorItems: SelectorItems) {
+  if (block.image?.trim() && !block.imageAlt?.trim()) {
+    return "Add image alt text so this block is accessible and ready for search previews.";
+  }
+
   if (selectorBlockTypes.includes(block.type)) {
     const availableIds = new Set(itemsForType(block.type, selectorItems).map((item) => item.id));
     const selectedAvailableIds = uniqueStrings(block.itemIds || []).filter((id) => availableIds.has(id));
@@ -628,7 +871,15 @@ function blockValidation(block: GuideContentBlock, selectorItems: SelectorItems)
   }
 
   if (block.type === "faq") {
-    return block.faqs?.length ? "" : "Add at least one FAQ using Question and Answer lines.";
+    const faqs = block.faqs || [];
+
+    if (faqs.length === 0) {
+      return "Add at least one FAQ.";
+    }
+
+    return faqs.every((faq) => faq.question.trim() && faq.answer.trim())
+      ? ""
+      : "Each FAQ needs both a question and an answer.";
   }
 
   if (block.type === "quick-info") {
@@ -644,7 +895,27 @@ function blockValidation(block: GuideContentBlock, selectorItems: SelectorItems)
   }
 
   if (ctaBlockTypes.includes(block.type)) {
-    return block.body?.trim() || block.ctaLabel?.trim() || block.ctaHref?.trim() ? "" : "Add CTA text, button text, or a button link.";
+    const hasBody = Boolean(block.body?.trim());
+    const hasLabel = Boolean(block.ctaLabel?.trim());
+    const hasHref = Boolean(block.ctaHref?.trim());
+
+    if (!hasBody && !hasLabel && !hasHref) {
+      return "Add CTA text, button text, and a button link.";
+    }
+
+    if (!hasLabel || !hasHref) {
+      return "Add both button text and a button link for this CTA.";
+    }
+
+    if (block.ctaHref?.trim() && !isValidHref(block.ctaHref)) {
+      return "Use a relative path or https URL for this CTA.";
+    }
+
+    return "";
+  }
+
+  if (!block.title?.trim() && block.type !== "intro" && block.type !== "hero") {
+    return "Add a clear block title so readers can scan the guide.";
   }
 
   return block.title?.trim() || block.body?.trim() || block.image?.trim() ? "" : "Add a title, text, or image for this block.";
@@ -668,6 +939,8 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
       mapLabel: clean(block.mapLabel),
       ctaLabel: clean(block.ctaLabel),
       ctaHref: clean(block.ctaHref),
+      ctaTargetBlank: Boolean(block.ctaTargetBlank),
+      ctaRel: ctaRelValue(block.ctaRel),
     }))
     .filter((block) =>
       Boolean(
@@ -697,24 +970,6 @@ function parseQuickInfo(value: string): GuideQuickInfoItem[] {
 
 function formatQuickInfo(items?: GuideQuickInfoItem[]) {
   return (items || []).map((item) => `${item.label} | ${item.value}`).join("\n");
-}
-
-function parseFaqs(value: string): GuideFaq[] {
-  return value
-    .split(/\n\s*\n/)
-    .map((block) => {
-      const questionMatch = block.match(/(?:^|\n)\s*Question:\s*(.+)/i);
-      const answerMatch = block.match(/(?:^|\n)\s*Answer:\s*([\s\S]+)/i);
-      return {
-        question: clean(questionMatch?.[1]),
-        answer: clean(answerMatch?.[1]),
-      };
-    })
-    .filter((faq): faq is GuideFaq => Boolean(faq.question && faq.answer));
-}
-
-function formatFaqs(faqs?: GuideFaq[]) {
-  return (faqs || []).map((faq) => `Question: ${faq.question}\nAnswer: ${faq.answer}`).join("\n\n");
 }
 
 function lines(value: string) {

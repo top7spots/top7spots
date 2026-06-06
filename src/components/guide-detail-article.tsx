@@ -224,11 +224,11 @@ export function GuideDetailArticle({
       <div
         className={
           useTwoColumnContent
-            ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
-            : "grid gap-8"
+            ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
+            : "grid gap-6"
         }
       >
-        <div className="grid min-w-0 gap-8">
+        <div className="grid min-w-0 gap-6">
           <GuidePageBlocks
             guide={guide}
             blocks={primaryPageBlocks}
@@ -266,7 +266,7 @@ export function GuideDetailArticle({
         ) : null}
       </div>
       {faqPageBlocks.length > 0 ? (
-        <div className="mt-8 grid gap-8">
+        <div className="mt-6 grid gap-6">
           <GuidePageBlocks
             guide={guide}
             blocks={faqPageBlocks}
@@ -279,13 +279,13 @@ export function GuideDetailArticle({
           />
         </div>
       ) : legacyFaqItems.length > 0 ? (
-        <div className="mt-8 grid gap-8">
+        <div className="mt-6 grid gap-6">
           <ServerGuideFaqAccordion faqs={legacyFaqItems} />
         </div>
       ) : null}
     </>
   ) : (
-    <div className="mx-auto grid min-w-0 max-w-4xl gap-8">
+    <div className="mx-auto grid min-w-0 max-w-3xl gap-6">
       <WhyVisitSection guide={guide} city={city} description={heroDescription} />
       {contentBlocks.map((block) => (
         <ArticleBlockGroup
@@ -343,10 +343,10 @@ export function GuideDetailArticle({
                 <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#1D4ED8] hover:bg-blue-50">
                   {heroBlock?.eyebrow || guide.category || "Travel guide"}
                 </Badge>
-                <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#111827] md:text-5xl">
+                <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.08] tracking-tight text-[#111827] md:text-5xl">
                   {heroTitle}
                 </h1>
-                <p className="mt-5 max-w-3xl text-[1.0625rem] leading-8 text-slate-700">
+                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 md:text-[1.0625rem]">
                   {heroDescription}
                 </p>
                 <HeroQuickChips guide={guide} city={city} />
@@ -377,9 +377,9 @@ export function GuideDetailArticle({
           </div>
         </section>
 
-        <article className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <article className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           {tocItems.length > 0 ? (
-            <div className="grid gap-8 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
+            <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
               <GuideArticleToc items={tocItems} />
               <div className="min-w-0">{guideArticleBody}</div>
             </div>
@@ -527,17 +527,17 @@ function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
   return (
     <section className="scroll-mt-24 [content-visibility:auto] [contain-intrinsic-size:1px_520px]" aria-labelledby="guide-faq-heading">
       <p className="text-sm font-medium text-[#1D4ED8]">FAQs</p>
-      <h2 id="guide-faq-heading" className="mt-2 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">
+      <h2 id="guide-faq-heading" className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
         Common questions
       </h2>
-      <div className="mt-7 grid gap-4">
+      <div className="mt-5 grid gap-3">
         {validFaqs.map((faq, index) => (
           <details key={faq.question} open={index === 0} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition-colors hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3.5 text-left text-sm font-semibold leading-6 text-[#111827] transition-colors hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden md:text-base">
               <span>{faq.question}</span>
               <ChevronDown className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
             </summary>
-            <p className="px-5 pb-5 text-sm leading-7 text-slate-600">{faq.answer}</p>
+            <p className="px-5 pb-4 text-sm leading-6 text-slate-600 md:leading-7">{faq.answer}</p>
           </details>
         ))}
       </div>
@@ -549,14 +549,14 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
   const blockHeadingId = `listing-block-${slugify(block.id || block.title)}`;
 
   return (
-    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.045)] [content-visibility:auto] [contain-intrinsic-size:1px_720px] md:p-7">
-      <div className="mb-6">
+    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_720px] md:p-6">
+      <div className="mb-5">
         <p className="text-sm font-medium text-[#1D4ED8]">Selected places</p>
-        <h2 id={blockHeadingId} className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">
+        <h2 id={blockHeadingId} className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
           {block.title}
         </h2>
       </div>
-      <div className="grid gap-5">
+      <div className="grid gap-4">
         {block.items.map((item, index) => (
           <GuideListingRowCard
             key={item.key}
@@ -613,7 +613,7 @@ function GuideListingRowCard({
           </Link>
         </h3>
         {item.description ? (
-          <p className="mt-3 text-base leading-7 text-slate-600">{item.description}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600 md:text-base md:leading-7">{item.description}</p>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-2">
           {item.badge ? (
@@ -685,10 +685,10 @@ function WhyVisitSection({
     "Use this guide as a focused starting point for planning the best places, practical stops, and next steps.";
 
   return (
-    <section id="why-visit" className="min-w-0 scroll-mt-24 rounded-[1.75rem] border border-blue-100 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-8">
+    <section id="why-visit" className="min-w-0 scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.045)] md:p-6">
       <p className="text-sm font-medium text-[#1D4ED8]">Why visit</p>
-      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">{title}</h2>
-      <p className="mt-5 max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg">{text}</p>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{title}</h2>
+      <p className="mt-4 max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem] md:leading-7">{text}</p>
     </section>
   );
 }
@@ -829,16 +829,16 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
   const image = resolveImagePath(block.image || "");
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.045)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-8">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-6">
       {block.eyebrow ? <p className="text-sm font-medium text-[#1D4ED8]">{block.eyebrow}</p> : null}
       {block.title ? (
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">{block.title}</h2>
+        <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title}</h2>
       ) : null}
       {block.body ? (
-        <MarkdownContent content={block.body} className="mt-5" />
+        <MarkdownContent content={block.body} className="mt-4" />
       ) : null}
       {block.image ? (
-        <div className="relative mt-6 aspect-[16/10] min-h-72 overflow-hidden rounded-3xl bg-slate-100">
+        <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-3xl bg-slate-100">
           <Image
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
@@ -862,13 +862,13 @@ function QuickInfoBlock({ block }: { block: GuideCmsBlock }) {
   }
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-3xl border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.035)] md:p-6">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6">
       <BlockHeading block={block} fallbackTitle="Quick info" />
-      <div className="mt-5 grid gap-3">
+      <div className="mt-4 grid gap-2.5">
         {items.map((item) => (
           <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">{item.label}</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#111827]">{item.value}</p>
+            <p className="mt-1.5 text-sm font-semibold leading-6 text-[#1F2937]">{item.value}</p>
           </div>
         ))}
       </div>
@@ -880,13 +880,13 @@ function TipsBlock({ block }: { block: GuideCmsBlock }) {
   const tips = block.tips || [];
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-[#FCFDFF] p-6 shadow-[0_16px_40px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-8">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-[#FCFDFF] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.035)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-6">
       <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
-      {block.body ? <MarkdownContent content={block.body} className="mt-5" /> : null}
+      {block.body ? <MarkdownContent content={block.body} className="mt-4" /> : null}
       {tips.length > 0 ? (
-        <div className="mt-5 grid gap-3">
+        <div className="mt-4 grid gap-2.5">
           {tips.map((tip) => (
-            <div key={tip} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold leading-6 text-[#111827] shadow-sm">
+            <div key={tip} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold leading-6 text-[#1F2937] shadow-sm">
               {tip}
             </div>
           ))}
@@ -902,9 +902,9 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
   }
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.045)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-8">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-6">
       <BlockHeading block={block} fallbackTitle="Map" />
-      <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-[#EEF3F8] shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-[#EEF3F8] shadow-sm">
         <iframe
           src={block.mapEmbedUrl}
           title={block.mapLabel || block.title || "Guide map"}
@@ -919,16 +919,16 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
 
 function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.75rem] bg-[#0A2A66] p-6 text-white shadow-[0_18px_45px_rgba(10,42,102,0.18)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-8">
+    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] bg-[#0A2A66] p-5 text-white shadow-[0_16px_38px_rgba(10,42,102,0.16)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-6">
       {block.eyebrow ? <p className="text-sm font-medium text-orange-200">{block.eyebrow}</p> : null}
-      <h2 className="mt-2 text-3xl font-semibold tracking-tight">{block.title || ctaFallbackTitle(block.type)}</h2>
-      {block.body ? <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-50">{renderInlineContent(block.body)}</p> : null}
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight md:text-3xl">{block.title || ctaFallbackTitle(block.type)}</h2>
+      {block.body ? <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 md:leading-7">{renderInlineContent(block.body)}</p> : null}
       {block.ctaHref ? (
         <Link
           href={block.ctaHref}
           target={block.ctaTargetBlank ? "_blank" : undefined}
           rel={ctaRelAttribute(block)}
-          className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
+          className="mt-4 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
         >
           {block.ctaLabel || "Learn more"}
         </Link>
@@ -961,7 +961,7 @@ function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallback
   return (
     <div>
       {block.eyebrow ? <p className="text-sm font-medium text-[#1D4ED8]">{block.eyebrow}</p> : null}
-      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">{block.title || fallbackTitle}</h2>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title || fallbackTitle}</h2>
     </div>
   );
 }
@@ -988,8 +988,8 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
     const HeadingTag = block.level === 2 ? "h2" : "h3";
     const headingClassName =
       block.level === 2
-        ? "group flex max-w-5xl scroll-mt-24 items-center gap-2 border-t border-slate-200/80 pt-12 text-3xl font-semibold leading-tight tracking-tight text-[#111827] first:border-t-0 first:pt-0 md:text-4xl"
-        : "group flex max-w-4xl scroll-mt-24 items-center gap-2 pt-1 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.75rem]";
+        ? "group flex max-w-4xl scroll-mt-24 items-center gap-2 border-t border-slate-200/80 pt-8 text-2xl font-semibold leading-tight tracking-tight text-[#111827] first:border-t-0 first:pt-0 md:text-3xl"
+        : "group flex max-w-3xl scroll-mt-24 items-center gap-2 pt-0 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-2xl";
 
     return (
       <HeadingTag id={block.id} className={headingClassName}>
@@ -1011,7 +1011,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
 
   if (block.kind === "bullets") {
     return (
-      <ul className="max-w-[48rem] list-disc space-y-2 pl-6 text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+      <ul className="max-w-[44rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
         {block.items.map((item, index) => (
           <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
         ))}
@@ -1020,11 +1020,11 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
   }
 
   if (block.kind === "divider") {
-    return <hr className="my-2 border-slate-200" />;
+    return <hr className="my-1 border-slate-200" />;
   }
 
   return (
-    <p className="max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+    <p className="max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
       {renderInlineContent(block.text, entities)}
     </p>
   );
@@ -1032,10 +1032,10 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
 
 function InlineCardListSection({ id, section }: { id: string; section: InlineListSection }) {
   return (
-    <section className="scroll-mt-24 rounded-3xl border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.035)] md:p-6" aria-labelledby={id}>
-      <div className="mb-4">
+    <section className="scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6" aria-labelledby={id}>
+      <div className="mb-3.5">
         <p className="text-sm font-medium text-[#1D4ED8]">Quick notes</p>
-        <h2 id={id} className="group mt-2 flex items-center gap-2 text-3xl font-semibold tracking-tight text-[#111827]">
+        <h2 id={id} className="group mt-1.5 flex items-center gap-2 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
           <span>{section.title}</span>
           <a
             href={`#${id}`}
@@ -1046,10 +1046,10 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
           </a>
         </h2>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         {section.items.map((item, index) => (
-          <div key={`${item}-${index}`} className="min-h-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold leading-6 text-[#111827]">{item}</p>
+          <div key={`${item}-${index}`} className="min-h-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold leading-6 text-[#1F2937]">{item}</p>
           </div>
         ))}
       </div>
@@ -1059,12 +1059,12 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
 
 function ContextualEntitySectionCards({ section }: { section: ContextualEntitySection }) {
   return (
-    <section className="min-w-0 rounded-3xl border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.035)] md:p-6" aria-label={section.title}>
-      <div className="mb-5">
+    <section className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6" aria-label={section.title}>
+      <div className="mb-4">
         <p className="text-sm font-medium text-[#1D4ED8]">Connected travel ideas</p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">{section.title}</h3>
+        <h3 className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-[#111827] md:text-2xl">{section.title}</h3>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {section.items.map((item) => (
           <GuideEntityCard
             key={item.key}
@@ -1096,14 +1096,14 @@ function MarkdownContent({
   const blocks = parseMarkdownBlocks(content);
 
   return (
-    <div className={`grid gap-5 ${className}`}>
+    <div className={`grid gap-4 ${className}`}>
       {blocks.map((block) => {
         if (block.kind === "heading") {
           const HeadingTag = block.level === 2 ? "h2" : "h3";
           const headingClassName =
             block.level === 2
-              ? "mt-2 max-w-5xl scroll-mt-24 text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl"
-              : "max-w-4xl scroll-mt-24 text-2xl font-semibold tracking-tight text-[#111827]";
+              ? "mt-1 max-w-4xl scroll-mt-24 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl"
+              : "max-w-3xl scroll-mt-24 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-2xl";
 
           return (
             <HeadingTag key={block.key} className={headingClassName}>
@@ -1114,7 +1114,7 @@ function MarkdownContent({
 
         if (block.kind === "list") {
           return (
-            <ul key={block.key} className="max-w-[48rem] list-disc space-y-2 pl-6 text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+            <ul key={block.key} className="max-w-[44rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
               {block.items.map((item, index) => (
                 <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
               ))}
@@ -1127,7 +1127,7 @@ function MarkdownContent({
         }
 
         return (
-          <p key={block.key} className="max-w-[48rem] text-[1.0625rem] leading-8 text-slate-700 md:text-lg md:leading-9">
+          <p key={block.key} className="max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
             {renderInlineContent(block.text, entities)}
           </p>
         );

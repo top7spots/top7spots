@@ -112,7 +112,11 @@ function RelatedPicker({
             </button>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-500">
+          No {title.toLowerCase()} selected yet.
+        </p>
+      )}
       <label className="grid gap-2">
         <span className="text-xs font-semibold text-slate-600">Search records</span>
         <input

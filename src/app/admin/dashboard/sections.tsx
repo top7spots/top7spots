@@ -1458,7 +1458,8 @@ function GuideForm({
           backHref={backHref}
           label="Save guide"
           previewHref={guide ? `/admin/guides/preview/${encodeURIComponent(guide.id)}` : undefined}
-          previewUnavailableText="Save this guide once to enable admin preview."
+          previewUnavailableText="Save the guide first to preview it."
+          previewNote={guide ? "Preview shows the last saved version." : undefined}
         />
       </form>
     </EditShell>
@@ -2483,11 +2484,13 @@ function FormActions({
   label,
   previewHref,
   previewUnavailableText,
+  previewNote,
 }: {
   backHref: string;
   label: string;
   previewHref?: string;
   previewUnavailableText?: string;
+  previewNote?: string;
 }) {
   return (
     <div className="sticky bottom-4 z-10 flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur">
@@ -2511,6 +2514,11 @@ function FormActions({
       <Link href={backHref} className={buttonVariants({ variant: "outline", className: "rounded-full" })}>
         Cancel
       </Link>
+      {previewNote ? (
+        <span className="basis-full px-1 text-xs font-medium text-slate-500 sm:basis-auto sm:self-center">
+          {previewNote}
+        </span>
+      ) : null}
     </div>
   );
 }

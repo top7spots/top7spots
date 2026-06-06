@@ -142,7 +142,7 @@ export function GuideContentBlocksField({
 
       {blocks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
-          No page-builder blocks yet. Existing paragraph content and listing blocks will continue to render.
+          No content blocks yet. Add a block to build the article layout, or keep using the preserved legacy content below.
         </div>
       ) : null}
 
@@ -154,28 +154,54 @@ export function GuideContentBlocksField({
           return (
             <section key={block.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                    Block {blockIndex + 1}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                      Block {blockIndex + 1}
+                    </p>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                      {blockTypeLabel(block.type)}
+                    </span>
+                    {validation ? (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-amber-700">
+                        Needs review
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-emerald-700">
+                        Ready
+                      </span>
+                    )}
+                  </div>
                   <h4 className="mt-1 text-sm font-semibold text-slate-800">
                     {block.title?.trim() || blockTypeLabel(block.type)}
                   </h4>
                   <p className="mt-1 text-xs text-slate-500">
-                    {blockTypeLabel(block.type)} - {blockSummary(block)}
+                    {blockSummary(block)}
+                    {isCollapsed && validation ? ` - ${validation}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <BlockButton disabled={blockIndex === 0} onClick={() => setBlocks((current) => moveBlock(current, blockIndex, blockIndex - 1))}>
+                  <BlockButton
+                    disabled={blockIndex === 0}
+                    title="Move this block one position up"
+                    onClick={() => setBlocks((current) => moveBlock(current, blockIndex, blockIndex - 1))}
+                  >
                     Move up
                   </BlockButton>
-                  <BlockButton disabled={blockIndex === blocks.length - 1} onClick={() => setBlocks((current) => moveBlock(current, blockIndex, blockIndex + 1))}>
+                  <BlockButton
+                    disabled={blockIndex === blocks.length - 1}
+                    title="Move this block one position down"
+                    onClick={() => setBlocks((current) => moveBlock(current, blockIndex, blockIndex + 1))}
+                  >
                     Move down
                   </BlockButton>
-                  <BlockButton onClick={() => toggleCollapsedBlock(block.id, setCollapsedBlockIds)}>
+                  <BlockButton
+                    title={isCollapsed ? "Expand this block for editing" : "Collapse this block for scanning"}
+                    onClick={() => toggleCollapsedBlock(block.id, setCollapsedBlockIds)}
+                  >
                     {isCollapsed ? "Expand" : "Collapse"}
                   </BlockButton>
-                  <BlockButton onClick={() => setBlocks((current) => duplicateBlock(current, blockIndex))}>
+                  <BlockButton title="Duplicate this block below" onClick={() => setBlocks((current) => duplicateBlock(current, blockIndex))}>
                     Duplicate
                   </BlockButton>
                   <button
@@ -748,11 +774,22 @@ function KeyValueTextarea({
   );
 }
 
-function BlockButton({ children, disabled, onClick }: { children: string; disabled?: boolean; onClick: () => void }) {
+function BlockButton({
+  children,
+  disabled,
+  title,
+  onClick,
+}: {
+  children: string;
+  disabled?: boolean;
+  title?: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       disabled={disabled}
+      title={title}
       className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
       onClick={onClick}
     >

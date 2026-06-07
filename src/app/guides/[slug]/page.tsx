@@ -4,6 +4,7 @@ import { GuideDetailArticle } from "@/components/guide-detail-article";
 import {
   getPublishedDestinations,
   getPublishedAttractions,
+  getActiveAuthors,
   getPublishedCities,
   getPublishedGuides,
   getPublishedGuidesBySlug,
@@ -41,13 +42,14 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { slug } = await params;
-  const [guideMatches, destinations, attractions, cities, guides, restaurants] = await Promise.all([
+  const [guideMatches, destinations, attractions, cities, guides, restaurants, authors] = await Promise.all([
     getPublishedGuidesBySlug(slug),
     getPublishedDestinations(),
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedGuides(),
     getPublishedRestaurants(),
+    getActiveAuthors(),
   ]);
   const resolvedGuide = resolveGenericGuide(guideMatches);
 
@@ -66,10 +68,12 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     guide.targetType === "city" && guide.citySlug
       ? cities.find((city) => city.slug === guide.citySlug)
       : undefined;
+  const author = authors.find((item) => item.id === guide.authorId);
 
   return (
     <GuideDetailArticle
       guide={guide}
+      author={author}
       city={parentCity}
       canonicalPath={canonicalPath}
       breadcrumbItems={[

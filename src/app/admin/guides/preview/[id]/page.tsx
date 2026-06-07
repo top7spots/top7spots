@@ -4,6 +4,7 @@ import { GuideDetailArticle } from "@/components/guide-detail-article";
 import { requireAdmin } from "@/lib/admin-auth";
 import {
   getAttractions,
+  getAuthors,
   getCities,
   getDestinations,
   getGuides,
@@ -30,12 +31,13 @@ export default async function GuidePreviewPage({ params }: GuidePreviewPageProps
   await requireAdmin();
 
   const { id } = await params;
-  const [guides, cities, destinations, attractions, restaurants] = await Promise.all([
+  const [guides, cities, destinations, attractions, restaurants, authors] = await Promise.all([
     getGuides(),
     getCities(),
     getDestinations(),
     getAttractions(),
     getRestaurants(),
+    getAuthors(),
   ]);
   const guide = guides.find((item) => item.id === id);
 
@@ -48,6 +50,7 @@ export default async function GuidePreviewPage({ params }: GuidePreviewPageProps
   return (
     <GuideDetailArticle
       guide={guide}
+      author={authors.find((item) => item.id === guide.authorId)}
       city={parentCity}
       canonicalPath={getGuideCanonicalPath(guide)}
       includeCityInBreadcrumbJson={guide.targetType === "city"}

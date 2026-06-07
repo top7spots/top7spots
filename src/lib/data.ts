@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   AdminCollection,
+  Author,
   Attraction,
   CarRentalPage,
   City,
@@ -29,6 +30,7 @@ type CollectionMap = {
   cities: City;
   destinations: Destination;
   guides: Guide;
+  authors: Author;
   attractions: Attraction;
   restaurants: Restaurant;
   homepage_reviews: HomepageReview;
@@ -40,6 +42,7 @@ type CollectionMap = {
 type CityRow = Record<string, unknown>;
 type DestinationRow = Record<string, unknown>;
 type GuideRow = Record<string, unknown>;
+type AuthorRow = Record<string, unknown>;
 type AttractionRow = Record<string, unknown>;
 type RestaurantRow = Record<string, unknown>;
 type HomepageReviewRow = Record<string, unknown>;
@@ -51,6 +54,7 @@ type RowMap = {
   cities: CityRow;
   destinations: DestinationRow;
   guides: GuideRow;
+  authors: AuthorRow;
   attractions: AttractionRow;
   restaurants: RestaurantRow;
   homepage_reviews: HomepageReviewRow;
@@ -63,6 +67,7 @@ const tableNames: Record<AdminCollection, string> = {
   cities: "cities",
   destinations: "destinations",
   guides: "guides",
+  authors: "authors",
   attractions: "attractions",
   restaurants: "restaurants",
   homepage_reviews: "homepage_reviews",
@@ -72,6 +77,7 @@ const tableNames: Record<AdminCollection, string> = {
 };
 
 const structuredGuideRowKeys = [
+  "author_id",
   "target_type",
   "country_id",
   "destination_id",
@@ -351,6 +357,7 @@ function mapGuide(row: GuideRow): Guide {
     content: arrayValue(getField(row, "content")),
     coverImage: stringField(row, "cover_image", "coverImage") || image,
     image,
+    authorId: stringField(row, "author_id", "authorId"),
     author: stringField(row, "author"),
     readTime: stringField(row, "read_time", "readTime"),
     category: stringField(row, "category"),
@@ -367,6 +374,38 @@ function mapGuide(row: GuideRow): Guide {
     tableOfContents: tableOfContentsValue(getField(row, "table_of_contents", "tableOfContents")),
     listingBlocks: normalizeGuideListingBlocks(getField(row, "listing_blocks", "listingBlocks")),
     contentBlocks: normalizeGuideContentBlocks(getField(row, "content_blocks", "contentBlocks")),
+    createdAt: stringField(row, "created_at", "createdAt"),
+    updatedAt: stringField(row, "updated_at", "updatedAt"),
+  };
+}
+
+function authorStatus(value?: string | null) {
+  return value?.toLowerCase() === "inactive" ? "inactive" : "active";
+}
+
+function mapAuthor(row: AuthorRow): Author {
+  const name = stringField(row, "name");
+
+  return {
+    id: stringField(row, "id"),
+    name,
+    slug: slugify(stringField(row, "slug") || name),
+    role: stringField(row, "role"),
+    shortBio: stringField(row, "short_bio", "shortBio"),
+    fullBio: stringField(row, "full_bio", "fullBio"),
+    profileImage: stringField(row, "profile_image", "profileImage"),
+    profileImageAlt: stringField(row, "profile_image_alt", "profileImageAlt"),
+    expertise: stringListValue(getField(row, "expertise"), { splitString: true }),
+    location: stringField(row, "location"),
+    websiteUrl: stringField(row, "website_url", "websiteUrl"),
+    linkedinUrl: stringField(row, "linkedin_url", "linkedinUrl"),
+    instagramUrl: stringField(row, "instagram_url", "instagramUrl"),
+    xUrl: stringField(row, "x_url", "xUrl"),
+    email: stringField(row, "email"),
+    seoTitle: stringField(row, "seo_title", "seoTitle"),
+    seoDescription: stringField(row, "seo_description", "seoDescription"),
+    status: authorStatus(stringField(row, "status")),
+    displayOrder: numberField(row, "display_order", "displayOrder"),
     createdAt: stringField(row, "created_at", "createdAt"),
     updatedAt: stringField(row, "updated_at", "updatedAt"),
   };
@@ -580,6 +619,7 @@ function toGuideRow(item: Guide): GuideRow {
     content: item.content,
     cover_image: item.coverImage || item.image,
     image: item.image || item.coverImage,
+    author_id: item.authorId || null,
     author: item.author,
     read_time: item.readTime,
     category: item.category,
@@ -596,6 +636,32 @@ function toGuideRow(item: Guide): GuideRow {
     table_of_contents: item.tableOfContents || [],
     listing_blocks: item.listingBlocks || [],
     content_blocks: item.contentBlocks || [],
+    created_at: item.createdAt,
+    updated_at: item.updatedAt,
+  };
+}
+
+function toAuthorRow(item: Author): AuthorRow {
+  return {
+    id: item.id,
+    name: item.name,
+    slug: slugify(item.slug || item.name),
+    role: item.role,
+    short_bio: item.shortBio,
+    full_bio: item.fullBio,
+    profile_image: item.profileImage,
+    profile_image_alt: item.profileImageAlt,
+    expertise: item.expertise || [],
+    location: item.location,
+    website_url: item.websiteUrl,
+    linkedin_url: item.linkedinUrl,
+    instagram_url: item.instagramUrl,
+    x_url: item.xUrl,
+    email: item.email,
+    seo_title: item.seoTitle,
+    seo_description: item.seoDescription,
+    status: item.status,
+    display_order: item.displayOrder,
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   };
@@ -783,6 +849,7 @@ function isOptionalHomepageCollection(collection: AdminCollection) {
   return (
     collection === "homepage_reviews" ||
     collection === "homepage_faqs" ||
+    collection === "authors" ||
     collection === "restaurants" ||
     collection === "site_pages" ||
     collection === "car_rental_pages"
@@ -809,6 +876,10 @@ async function readCollection<T extends AdminCollection>(
 
   if (collection === "guides") {
     return (rows as GuideRow[]).map(mapGuide).sort(byDisplayOrder) as CollectionMap[T][];
+  }
+
+  if (collection === "authors") {
+    return (rows as AuthorRow[]).map(mapAuthor).sort(byDisplayOrder) as CollectionMap[T][];
   }
 
   if (collection === "attractions") {
@@ -847,6 +918,10 @@ function itemToRow<T extends AdminCollection>(collection: T, item: CollectionMap
 
   if (collection === "guides") {
     return toGuideRow(item as Guide) as RowMap[T];
+  }
+
+  if (collection === "authors") {
+    return toAuthorRow(item as Author) as RowMap[T];
   }
 
   if (collection === "attractions") {
@@ -929,6 +1004,31 @@ export async function getGuides() {
 export async function getPublishedGuides() {
   const guides = await getGuides();
   return guides.filter((guide) => guide.status === "published");
+}
+
+export async function getAuthors() {
+  return readCollection("authors");
+}
+
+export async function getActiveAuthors() {
+  const authors = await getAuthors();
+  return authors.filter((author) => author.status === "active");
+}
+
+export async function getAuthorBySlug(slug: string) {
+  const normalizedSlug = slugify(slug);
+  const authors = await getActiveAuthors();
+  return authors.find((author) => author.slug === normalizedSlug);
+}
+
+export async function getAuthorById(id: string) {
+  const authors = await getAuthors();
+  return authors.find((author) => author.id === id);
+}
+
+export async function getPublishedGuidesByAuthor(authorId: string) {
+  const guides = await getPublishedGuides();
+  return sortGuidesNewestFirst(guides.filter((guide) => guide.authorId === authorId));
 }
 
 export async function getPublishedGuidesBySlug(slug: string) {
@@ -1129,6 +1229,7 @@ export async function getAdminData() {
     cities,
     destinations,
     guides,
+    authors,
     attractions,
     restaurants,
     restaurantTableMissing,
@@ -1141,6 +1242,7 @@ export async function getAdminData() {
     getCities(),
     getDestinations(),
     getGuides(),
+    getAuthors(),
     getAttractions(),
     getRestaurants(),
     isRestaurantTableMissing(),
@@ -1155,6 +1257,7 @@ export async function getAdminData() {
     cities,
     destinations,
     guides,
+    authors,
     attractions,
     restaurants,
     restaurantTableMissing,

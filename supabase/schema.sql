@@ -54,6 +54,30 @@ create table if not exists public.destinations (
   unique (city_slug, slug)
 );
 
+create table if not exists public.authors (
+  id text primary key,
+  name text not null,
+  slug text not null unique,
+  role text,
+  short_bio text,
+  full_bio text,
+  profile_image text,
+  profile_image_alt text,
+  expertise text[] not null default '{}',
+  location text,
+  website_url text,
+  linkedin_url text,
+  instagram_url text,
+  x_url text,
+  email text,
+  seo_title text,
+  seo_description text,
+  status text not null default 'active' check (status in ('active', 'inactive')),
+  display_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.guides (
   id text primary key,
   target_type text not null default 'city' check (target_type in ('country', 'city', 'destination')),
@@ -67,6 +91,7 @@ create table if not exists public.guides (
   content text[] not null default '{}',
   cover_image text,
   image text,
+  author_id text references public.authors(id) on delete set null,
   author text,
   read_time text,
   category text,
@@ -89,6 +114,7 @@ create table if not exists public.guides (
 );
 
 alter table public.guides add column if not exists target_type text not null default 'city';
+alter table public.guides add column if not exists author_id text references public.authors(id) on delete set null;
 alter table public.guides add column if not exists country_id text not null default '';
 alter table public.guides add column if not exists destination_id text references public.destinations(id) on delete set null;
 alter table public.guides alter column city_slug set default '';
@@ -246,6 +272,8 @@ create table if not exists public.site_settings (
 create index if not exists cities_status_display_order_idx on public.cities (status, display_order);
 create index if not exists destinations_city_status_display_order_idx on public.destinations (city_slug, status, display_order);
 create index if not exists guides_city_status_display_order_idx on public.guides (city_slug, status, display_order);
+create index if not exists authors_status_display_order_idx on public.authors (status, display_order);
+create index if not exists guides_author_status_updated_idx on public.guides (author_id, status, updated_at);
 create index if not exists guides_country_status_updated_idx on public.guides (country_id, status, updated_at);
 create index if not exists guides_destination_status_updated_idx on public.guides (destination_id, status, updated_at);
 create index if not exists attractions_city_status_display_order_idx on public.attractions (city_slug, status, display_order);
@@ -267,6 +295,7 @@ create index if not exists site_settings_updated_at_idx on public.site_settings 
 alter table public.cities enable row level security;
 alter table public.destinations enable row level security;
 alter table public.guides enable row level security;
+alter table public.authors enable row level security;
 alter table public.attractions enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.homepage_reviews enable row level security;
@@ -279,6 +308,7 @@ alter table public.site_settings enable row level security;
 drop policy if exists "Public cities are readable" on public.cities;
 drop policy if exists "Published destinations are readable" on public.destinations;
 drop policy if exists "Published guides are readable" on public.guides;
+drop policy if exists "Active authors are readable" on public.authors;
 drop policy if exists "Published attractions are readable" on public.attractions;
 drop policy if exists "Published restaurants are readable" on public.restaurants;
 drop policy if exists "Published homepage reviews are readable" on public.homepage_reviews;
@@ -301,6 +331,11 @@ create policy "Published guides are readable"
   on public.guides for select
   to anon
   using (status = 'published');
+
+create policy "Active authors are readable"
+  on public.authors for select
+  to anon
+  using (status = 'active');
 
 create policy "Published attractions are readable"
   on public.attractions for select

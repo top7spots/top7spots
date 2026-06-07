@@ -17,6 +17,7 @@ export type UploadFolder =
   | "cities"
   | "destinations"
   | "guides"
+  | "authors"
   | "attractions"
   | "restaurants"
   | "homepage"

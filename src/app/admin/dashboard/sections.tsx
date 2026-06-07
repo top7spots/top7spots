@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   Trash2,
   Utensils,
+  UserRound,
 } from "lucide-react";
 import {
   CarRentalJsonTextarea,
@@ -33,6 +34,7 @@ import {
 } from "@/components/admin/car-rental-json-fields";
 import {
   saveAttractionAction,
+  saveAuthorAction,
   saveDestinationAction,
   saveGuideAction,
   saveHomepageFaqAction,
@@ -69,6 +71,7 @@ import {
 } from "@/lib/home-hero-settings";
 import type {
   AdminCollection,
+  Author,
   Attraction,
   CarRentalPage,
   City,
@@ -87,6 +90,7 @@ type AdminSection =
   | "cities"
   | "destinations"
   | "guides"
+  | "authors"
   | "attractions"
   | "restaurants"
   | "homepage_reviews"
@@ -104,6 +108,7 @@ type AdminCrudProps = {
     cities: City[];
     destinations: Destination[];
     guides: Guide[];
+    authors: Author[];
     attractions: Attraction[];
     restaurants: Restaurant[];
     restaurantTableMissing?: boolean;
@@ -121,6 +126,7 @@ const navigation: Array<{ section: AdminSection; label: string; icon: ReactNode 
   { section: "cities", label: "Cities", icon: <Building2 className="size-4" /> },
   { section: "destinations", label: "Destinations / Spots", icon: <Compass className="size-4" /> },
   { section: "guides", label: "Travel Guides", icon: <BookOpen className="size-4" /> },
+  { section: "authors", label: "Authors", icon: <UserRound className="size-4" /> },
   { section: "attractions", label: "Attractions", icon: <MapPin className="size-4" /> },
   { section: "restaurants", label: "Restaurants", icon: <Utensils className="size-4" /> },
   { section: "homepage_reviews", label: "Homepage Reviews", icon: <Quote className="size-4" /> },
@@ -205,6 +211,7 @@ export function AdminCrud({ data, searchParams }: AdminCrudProps) {
           <DestinationsSection data={data} searchParams={searchParams} />
         ) : null}
         {activeSection === "guides" ? <GuidesSection data={data} searchParams={searchParams} /> : null}
+        {activeSection === "authors" ? <AuthorsSection data={data} searchParams={searchParams} /> : null}
         {activeSection === "attractions" ? (
           <AttractionsSection data={data} searchParams={searchParams} />
         ) : null}
@@ -245,6 +252,7 @@ function DashboardOverview({ data }: { data: AdminCrudProps["data"] }) {
     { label: "Published cities", value: data.cities.filter(isPublished).length, icon: <Globe2 className="size-5" /> },
     { label: "Total destinations", value: data.destinations.length, icon: <Compass className="size-5" /> },
     { label: "Total guides", value: data.guides.length, icon: <BookOpen className="size-5" /> },
+    { label: "Active authors", value: data.authors.filter((item) => item.status === "active").length, icon: <UserRound className="size-5" /> },
     { label: "Total attractions", value: data.attractions.length, icon: <MapPin className="size-5" /> },
     { label: "Total restaurants", value: data.restaurants.length, icon: <Utensils className="size-5" /> },
     { label: "Homepage reviews", value: data.homepageReviews.length, icon: <Quote className="size-5" /> },
@@ -467,6 +475,7 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
         cities={data.cities}
         destinations={data.destinations}
         guides={data.guides}
+        authors={data.authors}
         restaurants={data.restaurants}
         attractions={data.attractions}
         guide={guide}
@@ -498,7 +507,12 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
           rows={filtered.map((item) => ({
             key: item.id,
             cells: [
-              <EntityCell key="entity" image={item.coverImage || item.image} title={item.title} subtitle={item.author} />,
+              <EntityCell
+                key="entity"
+                image={item.coverImage || item.image}
+                title={item.title}
+                subtitle={guideAuthorLabel(item, data.authors)}
+              />,
               guideTargetLabel(item, data.cities, data.destinations),
               item.category || "Guide",
               item.readTime || "Quick read",
@@ -516,6 +530,77 @@ function GuidesSection({ data, searchParams }: AdminCrudProps) {
         />
       ) : (
         <EmptyState title="No guides found" text="Create a city-assigned travel guide to populate this list." />
+      )}
+    </ManagementShell>
+  );
+}
+
+function AuthorsSection({ data, searchParams }: AdminCrudProps) {
+  const mode = getCrudMode(searchParams);
+  const id = getParam(searchParams.id);
+  const author = data.authors.find((item) => item.id === id);
+  const isForm = mode === "add" || (mode === "edit" && author);
+  const filters = getContentFilters(searchParams);
+  const filtered = data.authors.filter((item) => {
+    const matchesQuery = searchBlob(item.name, item.role, item.shortBio, item.location, ...item.expertise).includes(filters.q);
+    return matchesQuery && matchesAuthorStatus(item.status, filters.status);
+  });
+
+  if (isForm) {
+    return (
+      <AuthorForm
+        title={author ? `Edit ${author.name}` : "Add new author"}
+        author={author}
+        backHref={adminHref("authors")}
+      />
+    );
+  }
+
+  return (
+    <ManagementShell
+      title="Authors"
+      description="Manage guide author profiles, public bios, expertise, and author page SEO."
+      addHref={adminHref("authors", { mode: "add" })}
+      addLabel="Add New Author"
+      filters={
+        <CommonFilters
+          section="authors"
+          searchLabel="Search author"
+          q={filters.q}
+          status={filters.status}
+          draftLabel="Inactive"
+        />
+      }
+    >
+      {filtered.length > 0 ? (
+        <EntityTable
+          headers={["Author", "Role", "Expertise", "Status", "Guides", "Actions"]}
+          rows={filtered.map((item) => ({
+            key: item.id,
+            cells: [
+              <EntityCell
+                key="entity"
+                image={item.profileImage}
+                title={item.name}
+                subtitle={item.location || item.shortBio}
+              />,
+              item.role || "Contributor",
+              item.expertise.slice(0, 3).join(", ") || "General travel",
+              <AuthorStatusBadge key="status" status={item.status} />,
+              String(data.guides.filter((guide) => guide.authorId === item.id).length),
+              <RowActions
+                key="actions"
+                collection="authors"
+                viewHref={`/authors/${item.slug}`}
+                editHref={adminHref("authors", { mode: "edit", id: item.id })}
+                redirectTo="/admin/dashboard?section=authors&deleted=authors"
+                hidden={{ id: item.id, slug: item.slug }}
+              />,
+            ],
+          }))}
+        />
+      ) : (
+        <EmptyState title="No authors found" text="Add author profiles to power guide bylines, author pages, and article schema." />
       )}
     </ManagementShell>
   );
@@ -1224,11 +1309,93 @@ function DestinationForm({
   );
 }
 
+function AuthorForm({
+  title,
+  author,
+  backHref,
+}: {
+  title: string;
+  author?: Author;
+  backHref: string;
+}) {
+  return (
+    <EditShell title={title} backHref={backHref}>
+      <form action={saveAuthorAction} encType="multipart/form-data" className="grid gap-6">
+        <input type="hidden" name="id" value={author?.id ?? ""} />
+        <HiddenTimestamps createdAt={author?.createdAt} />
+        <FormSection title="Profile basics">
+          <Field label="Name" name="name" defaultValue={author?.name} placeholder="Safir T" />
+          <Field label="Slug" name="slug" defaultValue={author?.slug} placeholder="safir-t" />
+          <Field label="Role" name="role" defaultValue={author?.role} placeholder="Travel editor" />
+          <AuthorStatusSelect defaultValue={author?.status} />
+          <Field label="Display order" name="displayOrder" type="number" defaultValue={author?.displayOrder ?? 0} />
+          <Field label="Location" name="location" defaultValue={author?.location} placeholder="Muscat, Oman" />
+        </FormSection>
+        <FormSection title="Profile image" columns={1}>
+          <ImageUploadField
+            fieldName="profileImage"
+            label="Profile image"
+            currentImage={author?.profileImage}
+          />
+          <Field
+            label="Profile image alt text"
+            name="profileImageAlt"
+            defaultValue={author?.profileImageAlt}
+            placeholder="Portrait of Safir T"
+          />
+        </FormSection>
+        <FormSection title="Bio and expertise" columns={1}>
+          <Area
+            label="Short bio"
+            name="shortBio"
+            defaultValue={author?.shortBio}
+            placeholder="Travel editor focused on practical city guides, routes, and destination planning."
+            rows={3}
+          />
+          <Area
+            label="Full bio"
+            name="fullBio"
+            defaultValue={author?.fullBio}
+            placeholder="Add the longer author biography shown on the public author page."
+            rows={7}
+          />
+          <Area
+            label="Expertise, one per line"
+            name="expertise"
+            defaultValue={lines(author?.expertise)}
+            placeholder={"Oman travel\nCity guides\nRoad trips"}
+            rows={5}
+          />
+        </FormSection>
+        <FormSection title="Links and contact">
+          <Field label="Website URL" name="websiteUrl" defaultValue={author?.websiteUrl} placeholder="https://example.com" />
+          <Field label="LinkedIn URL" name="linkedinUrl" defaultValue={author?.linkedinUrl} placeholder="https://linkedin.com/in/..." />
+          <Field label="Instagram URL" name="instagramUrl" defaultValue={author?.instagramUrl} placeholder="https://instagram.com/..." />
+          <Field label="X URL" name="xUrl" defaultValue={author?.xUrl} placeholder="https://x.com/..." />
+          <Field label="Email" name="email" type="email" defaultValue={author?.email} placeholder="editor@top7spots.com" />
+        </FormSection>
+        <FormSection title="SEO" columns={1}>
+          <Field label="SEO title" name="seoTitle" defaultValue={author?.seoTitle} />
+          <Field label="SEO description" name="seoDescription" defaultValue={author?.seoDescription} />
+        </FormSection>
+        <FormActions
+          backHref={backHref}
+          label="Save author"
+          previewHref={author ? `/authors/${author.slug}` : undefined}
+          previewUnavailableText="Save the author first to view the public page."
+          previewNote={author ? "Inactive authors are hidden publicly." : undefined}
+        />
+      </form>
+    </EditShell>
+  );
+}
+
 function GuideForm({
   title,
   cities,
   destinations,
   guides,
+  authors,
   restaurants,
   attractions,
   guide,
@@ -1238,6 +1405,7 @@ function GuideForm({
   cities: City[];
   destinations: Destination[];
   guides: Guide[];
+  authors: Author[];
   restaurants: Restaurant[];
   attractions: Attraction[];
   guide?: Guide;
@@ -1288,7 +1456,14 @@ function GuideForm({
           <Field label="Title" name="title" defaultValue={guide?.title} placeholder="Best places in Muscat" />
           <Field label="Slug" name="slug" defaultValue={guide?.slug} placeholder="best-places-in-muscat" />
           <Field label="Category" name="category" defaultValue={guide?.category} placeholder="Planning" />
-          <Field label="Author" name="author" defaultValue={guide?.author} placeholder="Top7Spots editorial" />
+          <AuthorSelect authors={authors} defaultValue={guide?.authorId} />
+          <Field
+            label="Legacy author fallback"
+            name="author"
+            defaultValue={guide?.author}
+            placeholder="Top7Spots editorial"
+            helperText="Used only when no structured author profile is selected."
+          />
           <Field label="Read time" name="readTime" defaultValue={guide?.readTime} placeholder="5 min read" />
           <StatusSelect defaultValue={guide?.status} />
           <Field label="Display order" name="displayOrder" type="number" defaultValue={guide?.displayOrder ?? 0} />
@@ -2638,11 +2813,41 @@ function CitySelect({ cities, defaultValue }: { cities: City[]; defaultValue?: s
   );
 }
 
+function AuthorSelect({ authors, defaultValue }: { authors: Author[]; defaultValue?: string }) {
+  const activeAuthors = authors.filter((author) => author.status === "active");
+  const selectedInactiveAuthor = authors.find((author) => author.id === defaultValue && author.status !== "active");
+
+  return (
+    <SelectField label="Author profile" name="authorId" defaultValue={defaultValue || ""}>
+      <option value="">No structured author</option>
+      {selectedInactiveAuthor ? (
+        <option value={selectedInactiveAuthor.id}>
+          {selectedInactiveAuthor.name} (inactive)
+        </option>
+      ) : null}
+      {activeAuthors.map((author) => (
+        <option key={author.id} value={author.id}>
+          {[author.name, author.role].filter(Boolean).join(" - ")}
+        </option>
+      ))}
+    </SelectField>
+  );
+}
+
 function StatusSelect({ defaultValue }: { defaultValue?: string }) {
   return (
     <SelectField label="Status" name="status" defaultValue={defaultValue || "published"}>
       <option value="published">Published</option>
       <option value="draft">Draft</option>
+    </SelectField>
+  );
+}
+
+function AuthorStatusSelect({ defaultValue }: { defaultValue?: string }) {
+  return (
+    <SelectField label="Status" name="status" defaultValue={defaultValue || "active"}>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
     </SelectField>
   );
 }
@@ -2688,6 +2893,20 @@ function PublishBadge({ published }: { published: boolean }) {
       )}
     >
       {published ? "Published" : "Unpublished"}
+    </span>
+  );
+}
+
+function AuthorStatusBadge({ status }: { status: Author["status"] }) {
+  const active = status === "active";
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-semibold",
+        active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600",
+      )}
+    >
+      {active ? "Active" : "Inactive"}
     </span>
   );
 }
@@ -2792,6 +3011,11 @@ function matchesStatus(status: string, filterValue: string) {
   return !filterValue || filterValue === "all" || status === filterValue;
 }
 
+function matchesAuthorStatus(status: Author["status"], filterValue: string) {
+  const normalizedFilter = filterValue === "draft" ? "inactive" : filterValue === "published" ? "active" : filterValue;
+  return !normalizedFilter || normalizedFilter === "all" || status === normalizedFilter;
+}
+
 function matchesPublication(isPublished: boolean, filterValue: string) {
   return !filterValue || filterValue === "all" || (filterValue === "published" ? isPublished : !isPublished);
 }
@@ -2828,6 +3052,10 @@ function restaurantOptions(restaurants: Restaurant[], cities: City[]) {
     image: restaurant.image,
     badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
   }));
+}
+
+function guideAuthorLabel(guide: Guide, authors: Author[]) {
+  return authors.find((author) => author.id === guide.authorId)?.name || guide.author || "No author";
 }
 
 function countryOptions(cities: City[]) {

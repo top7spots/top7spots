@@ -4,6 +4,7 @@ import { GuideDetailArticle } from "@/components/guide-detail-article";
 import {
   getCityBySlug,
   getDestinationsByCity,
+  getActiveAuthors,
   getGuideByCityAndSlug,
   getPublishedAttractions,
   getPublishedCities,
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
 export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
   const { citySlug, guideSlug } = await params;
-  const [city, guide, guides, destinations, allDestinations, attractions, cities, restaurants] = await Promise.all([
+  const [city, guide, guides, destinations, allDestinations, attractions, cities, restaurants, authors] = await Promise.all([
     getCityBySlug(citySlug),
     getGuideByCityAndSlug(citySlug, guideSlug),
     getPublishedGuides(),
@@ -56,6 +57,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
     getPublishedAttractions(),
     getPublishedCities(),
     getPublishedRestaurants(),
+    getActiveAuthors(),
   ]);
 
   if (!city || !guide) {
@@ -65,6 +67,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   return (
     <GuideDetailArticle
       guide={guide}
+      author={authors.find((item) => item.id === guide.authorId)}
       city={city}
       canonicalPath={getGuideCanonicalPath(guide)}
       includeCityInBreadcrumbJson

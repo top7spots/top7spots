@@ -7,7 +7,7 @@ import {
   siteBaseUrl,
   siteName,
 } from "@/lib/seo";
-import type { City, Guide } from "@/lib/types";
+import type { Author, City, Guide } from "@/lib/types";
 
 type BreadcrumbItem = {
   name: string;
@@ -249,12 +249,15 @@ type GuideBreadcrumbInput = {
 export function buildGuideArticleJsonLd({
   guide,
   canonicalPath,
+  author,
 }: {
   guide: Guide;
   canonicalPath: string;
+  author?: Author;
 }) {
   const url = absoluteUrl(cleanPath(canonicalPath));
   const image = guide.coverImage || guide.image;
+  const authorName = author?.name || guide.author;
 
   if (!guide.title) {
     return null;
@@ -269,10 +272,19 @@ export function buildGuideArticleJsonLd({
     description: guide.seoDescription || guide.excerpt || undefined,
     image: image ? absoluteImageUrl(image) : undefined,
     url,
-    author: {
-      "@type": guide.author ? "Person" : "Organization",
-      name: guide.author || siteName,
-    },
+    author: author
+      ? compactObject({
+          "@type": "Person",
+          name: author.name,
+          url: absoluteUrl(cleanPath(`/authors/${author.slug}`)),
+          image: author.profileImage ? absoluteImageUrl(author.profileImage) : undefined,
+          jobTitle: author.role || undefined,
+          description: author.shortBio || undefined,
+        })
+      : {
+          "@type": authorName ? "Person" : "Organization",
+          name: authorName || siteName,
+        },
     publisher: {
       "@type": "Organization",
       name: siteName,

@@ -148,6 +148,7 @@ export type Guide = {
   content: string[];
   coverImage: string;
   image: string;
+  authorId: string;
   author: string;
   readTime: string;
   category: string;
@@ -164,6 +165,32 @@ export type Guide = {
   tableOfContents: GuideTableOfContentsItem[];
   listingBlocks: GuideListingBlock[];
   contentBlocks: GuideContentBlock[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthorStatus = "active" | "inactive";
+
+export type Author = {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  shortBio: string;
+  fullBio: string;
+  profileImage: string;
+  profileImageAlt: string;
+  expertise: string[];
+  location: string;
+  websiteUrl: string;
+  linkedinUrl: string;
+  instagramUrl: string;
+  xUrl: string;
+  email: string;
+  seoTitle: string;
+  seoDescription: string;
+  status: AuthorStatus;
+  displayOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -342,6 +369,7 @@ export type AdminCollection =
   | "cities"
   | "destinations"
   | "guides"
+  | "authors"
   | "attractions"
   | "restaurants"
   | "homepage_reviews"

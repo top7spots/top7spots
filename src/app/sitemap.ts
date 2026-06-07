@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import {
   getPublishedAttractions,
+  getActiveAuthors,
   getPublishedCarRentalPages,
   getPublishedCities,
   getPublishedDestinations,
@@ -29,13 +30,14 @@ function lastModified(...dates: Array<string | undefined>) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [cities, destinations, guides, attractions, sitePages, carRentalPages] = await Promise.all([
+  const [cities, destinations, guides, attractions, sitePages, carRentalPages, authors] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
     getPublishedAttractions(),
     getPublishedSitePages(),
     getPublishedCarRentalPages(),
+    getActiveAuthors(),
   ]);
   const countries = buildCountryHubs({ cities, destinations, guides, attractions });
   const guideSitemapEntries = uniqueSitemapEntries(
@@ -138,6 +140,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
     ...guideSitemapEntries,
+    ...authors.map((author) => ({
+      url: absoluteUrl(`/authors/${slugify(author.slug)}`),
+      lastModified: lastModified(author.updatedAt, author.createdAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
     ...attractions
       .filter((attraction) => attraction.citySlug)
       .map((attraction) => ({

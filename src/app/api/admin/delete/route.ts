@@ -8,6 +8,7 @@ const adminCollections: AdminCollection[] = [
   "cities",
   "destinations",
   "guides",
+  "authors",
   "attractions",
   "restaurants",
   "homepage_reviews",
@@ -92,6 +93,12 @@ function revalidateDeletedContent(collection: AdminCollection, formData: FormDat
       revalidatePath(`/${citySlug}/guides/${slug}`);
       revalidatePath(`/guides/${slug}`);
     }
+  }
+
+  if (collection === "authors" && slug) {
+    revalidatePath(`/authors/${slug}`);
+    revalidatePath("/guides");
+    revalidatePath("/sitemap.xml");
   }
 
   if (collection === "attractions" && citySlug && slug) {

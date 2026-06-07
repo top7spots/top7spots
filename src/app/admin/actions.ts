@@ -11,7 +11,14 @@ import {
   normalizeCarRentalPageDraft,
   parseJsonArray,
 } from "@/lib/car-rental-pages";
-import { deleteItem, getCities, getCityBySlug, getDestinations, getGuides, upsertItem } from "@/lib/data";
+import {
+  deleteItem,
+  getCities,
+  getCityBySlug,
+  getDestinations,
+  getGuides,
+  upsertItem,
+} from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
@@ -22,6 +29,7 @@ import {
 import { saveSiteSettings } from "@/lib/site-settings";
 import type {
   AdminCollection,
+  Author,
   Attraction,
   CarRentalPage,
   ContentStatus,
@@ -44,6 +52,10 @@ function value(formData: FormData, key: string) {
 
 function statusValue(formData: FormData): ContentStatus {
   return value(formData, "status") === "draft" ? "draft" : "published";
+}
+
+function authorStatusValue(formData: FormData): Author["status"] {
+  return value(formData, "status") === "inactive" ? "inactive" : "active";
 }
 
 function carRentalLanguageValue(formData: FormData) {
@@ -434,6 +446,7 @@ export async function saveGuideAction(formData: FormData) {
     readTime: value(formData, "readTime"),
     image,
     coverImage: image,
+    authorId: value(formData, "authorId"),
     author: value(formData, "author"),
     excerpt: value(formData, "excerpt"),
     content: listFromTextarea(formData.get("content")),
@@ -498,6 +511,58 @@ export async function deleteGuideAction(formData: FormData) {
   }
   revalidatePath("/guides");
   redirect("/admin/dashboard?section=guides&deleted=guides");
+}
+
+export async function saveAuthorAction(formData: FormData) {
+  const name = value(formData, "name");
+  const id = value(formData, "id");
+  const slug = value(formData, "slug") || slugify(name);
+  let profileImage: string;
+
+  try {
+    profileImage = await getImagePathFromForm(formData, {
+      fieldName: "profileImage",
+      folder: "authors",
+      fallbackName: slug || slugify(name),
+    });
+  } catch (error) {
+    redirectWithUploadError(error);
+  }
+
+  const item: Author = {
+    id: id || idFrom("author", name),
+    name,
+    slug,
+    role: value(formData, "role"),
+    shortBio: value(formData, "shortBio"),
+    fullBio: value(formData, "fullBio"),
+    profileImage,
+    profileImageAlt: value(formData, "profileImageAlt"),
+    expertise: listFromTextarea(formData.get("expertise")),
+    location: value(formData, "location"),
+    websiteUrl: value(formData, "websiteUrl"),
+    linkedinUrl: value(formData, "linkedinUrl"),
+    instagramUrl: value(formData, "instagramUrl"),
+    xUrl: value(formData, "xUrl"),
+    email: value(formData, "email"),
+    seoTitle: value(formData, "seoTitle"),
+    seoDescription: value(formData, "seoDescription"),
+    status: authorStatusValue(formData),
+    displayOrder: numberValue(formData, "displayOrder"),
+    createdAt: timestamp(formData),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await upsertItem("authors", item);
+  } catch (error) {
+    redirectWithSaveError("authors", error, item.id);
+  }
+
+  revalidatePath("/guides");
+  revalidatePath(`/authors/${item.slug}`);
+  revalidatePath("/sitemap.xml");
+  redirectToAdminSection("authors");
 }
 
 export async function saveAttractionAction(formData: FormData) {

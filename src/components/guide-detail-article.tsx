@@ -11,6 +11,7 @@ import {
   Hash,
   MapPin,
   Sparkles,
+  UserRound,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import {
@@ -42,6 +43,7 @@ import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type {
   Attraction,
+  Author,
   City,
   Destination,
   Guide,
@@ -62,6 +64,7 @@ type GuideFaqItem = {
 
 type GuideDetailArticleProps = {
   guide: Guide;
+  author?: Author;
   city?: City;
   canonicalPath: string;
   breadcrumbItems: BreadcrumbItem[];
@@ -130,6 +133,7 @@ type EntityMention = {
 
 export function GuideDetailArticle({
   guide,
+  author,
   city,
   canonicalPath,
   breadcrumbItems,
@@ -302,7 +306,7 @@ export function GuideDetailArticle({
     </div>
   );
   const jsonLd = [
-    buildGuideArticleJsonLd({ guide, canonicalPath }),
+    buildGuideArticleJsonLd({ guide, canonicalPath, author }),
     buildGuideBreadcrumbJsonLd({
       guide,
       canonicalPath,
@@ -349,6 +353,7 @@ export function GuideDetailArticle({
                 <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 md:text-[1.0625rem]">
                   {heroDescription}
                 </p>
+                <GuideAuthorByline guide={guide} author={author} />
                 <HeroQuickChips guide={guide} city={city} />
               </div>
               <div className="relative min-h-72 bg-slate-100 sm:min-h-96 lg:min-h-full">
@@ -386,6 +391,7 @@ export function GuideDetailArticle({
           ) : (
             guideArticleBody
           )}
+          <GuideAuthorBioCard guide={guide} author={author} />
         </article>
 
         <GuidePlanningCta city={city} destinations={ctaDestinations} />
@@ -443,6 +449,120 @@ function GuideCtaLink({ href, children }: { href: string; children: ReactNode })
     >
       {children}
     </Link>
+  );
+}
+
+function GuideAuthorByline({ guide, author }: { guide: Guide; author?: Author }) {
+  const authorName = author?.name || guide.author;
+
+  if (!authorName) {
+    return null;
+  }
+
+  const byline = (
+    <div className="mt-5 flex items-center gap-3 text-sm text-slate-600">
+      <AuthorAvatar author={author} fallbackName={authorName} size="sm" />
+      <div>
+        <p className="font-semibold text-[#1F2937]">{authorName}</p>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">
+          {author?.role || "Top7Spots editorial"}
+        </p>
+      </div>
+    </div>
+  );
+
+  return author ? (
+    <Link href={`/authors/${author.slug}`} className="inline-flex rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]">
+      {byline}
+    </Link>
+  ) : (
+    byline
+  );
+}
+
+function GuideAuthorBioCard({ guide, author }: { guide: Guide; author?: Author }) {
+  const authorName = author?.name || guide.author;
+
+  if (!authorName) {
+    return null;
+  }
+
+  return (
+    <section className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] md:p-6" aria-label="About the author">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <AuthorAvatar author={author} fallbackName={authorName} size="lg" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-[#1D4ED8]">Written by</p>
+          <h2 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-[#111827]">
+            {authorName}
+          </h2>
+          {author?.role || author?.location ? (
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              {[author.role, author.location].filter(Boolean).join(" - ")}
+            </p>
+          ) : null}
+          {author?.shortBio ? (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+              {author.shortBio}
+            </p>
+          ) : (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+              Top7Spots editorial guides focus on practical, easy-to-scan travel planning.
+            </p>
+          )}
+          {author?.expertise?.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {author.expertise.slice(0, 5).map((item) => (
+                <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {author ? (
+            <Link
+              href={`/authors/${author.slug}`}
+              className="mt-5 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+            >
+              View author profile
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AuthorAvatar({
+  author,
+  fallbackName,
+  size,
+}: {
+  author?: Author;
+  fallbackName: string;
+  size: "sm" | "lg";
+}) {
+  const image = author?.profileImage ? resolveImagePath(author.profileImage) : "";
+  const className = size === "sm" ? "size-11" : "size-20";
+  const iconClassName = size === "sm" ? "size-5" : "size-8";
+
+  return (
+    <span className={`relative inline-flex shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 ${className}`}>
+      {image ? (
+        <Image
+          src={image}
+          alt={author?.profileImageAlt || fallbackName}
+          fill
+          sizes={size === "sm" ? "44px" : "80px"}
+          className="object-cover"
+          unoptimized
+        />
+      ) : (
+        <span className="flex size-full items-center justify-center text-slate-400">
+          <UserRound className={iconClassName} aria-hidden="true" />
+        </span>
+      )}
+    </span>
   );
 }
 

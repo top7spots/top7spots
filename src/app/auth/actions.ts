@@ -7,6 +7,7 @@ import {
   safeNextPath,
   syncUserProfile,
 } from "@/lib/public-auth";
+import { siteBaseUrl } from "@/lib/seo";
 
 export async function signInAction(formData: FormData) {
   const email = value(formData, "email");
@@ -46,7 +47,7 @@ export async function signUpAction(formData: FormData) {
       data: {
         full_name: fullName || undefined,
       },
-      emailRedirectTo: `${await requestOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: await authCallbackUrl(next),
     },
   });
 
@@ -68,7 +69,7 @@ export async function googleSignInAction(formData: FormData) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${await requestOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: await authCallbackUrl(next),
     },
   });
 
@@ -92,13 +93,63 @@ function value(formData: FormData, name: string) {
 
 async function requestOrigin() {
   const headerStore = await headers();
-  const origin = headerStore.get("origin");
+  const forwardedHost = headerStore.get("x-forwarded-host");
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const origin = normalizeOrigin(headerStore.get("origin"));
+  const host = forwardedHost || headerStore.get("host");
+  const requestOrigin = origin || normalizeOrigin(host ? `${forwardedProto || protocolForHost(host)}://${host}` : "");
 
-  if (origin) {
-    return origin;
+  if (isLocalOrigin(requestOrigin)) {
+    return requestOrigin;
   }
 
-  const host = headerStore.get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
-  return `${protocol}://${host}`;
+  return configuredProductionOrigin() || normalizeOrigin(siteBaseUrl);
+}
+
+async function authCallbackUrl(next: string) {
+  const origin = await requestOrigin();
+  return `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+}
+
+function configuredProductionOrigin() {
+  return normalizeOrigin(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.SITE_URL ||
+      process.env.AUTH_SITE_URL ||
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+      "",
+  );
+}
+
+function normalizeOrigin(value?: string | null) {
+  const rawValue = value?.trim();
+
+  if (!rawValue) {
+    return "";
+  }
+
+  try {
+    const withProtocol = /^https?:\/\//i.test(rawValue) ? rawValue : `https://${rawValue}`;
+    return new URL(withProtocol).origin;
+  } catch {
+    return "";
+  }
+}
+
+function isLocalOrigin(origin: string) {
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    const host = new URL(origin).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function protocolForHost(host: string) {
+  return host.includes("localhost") || host.startsWith("127.0.0.1") || host.startsWith("[::1]") ? "http" : "https";
 }

@@ -425,7 +425,7 @@ function GuideInfoBar({
   const pathItems = [{ label: "Home", href: "/" }, ...breadcrumbItems];
 
   return (
-    <div className="sticky top-16 z-30 border-b border-white/50 bg-[#F8F5EE]/82 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl sm:px-6 lg:px-8">
+    <div className="hidden border-b border-white/50 bg-[#F8F5EE]/82 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl md:sticky md:top-16 md:z-30 md:block sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <Link

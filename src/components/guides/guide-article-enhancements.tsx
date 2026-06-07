@@ -93,17 +93,17 @@ export function GuideArticleToc({ items }: { items: GuideTocItem[] }) {
   return (
     <>
       <aside className="hidden xl:block">
-        <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">On this page</p>
+        <div className="sticky top-32 rounded-[1.35rem] border border-orange-100 bg-white/88 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF6B00]">In this guide</p>
           <TocLinks items={items} activeId={activeId} onSelect={() => undefined} className="mt-3" />
         </div>
       </aside>
 
-      <details className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:hidden">
+      <details className="mb-6 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm xl:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-[#111827] [&::-webkit-details-marker]:hidden">
           <span className="inline-flex items-center gap-2">
-            <ListTree className="size-4 text-[#1D4ED8]" aria-hidden="true" />
-            Jump to section
+            <ListTree className="size-4 text-[#FF6B00]" aria-hidden="true" />
+            In this guide
           </span>
           <ChevronDown className="size-4 text-slate-500" aria-hidden="true" />
         </summary>
@@ -112,7 +112,7 @@ export function GuideArticleToc({ items }: { items: GuideTocItem[] }) {
 
       <button
         type="button"
-        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-950/20 transition hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] xl:hidden"
+        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-[#0A2A66] px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-950/20 transition hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00] xl:hidden"
         aria-label="Open table of contents"
         onClick={() => setMobileOpen(true)}
       >
@@ -124,10 +124,10 @@ export function GuideArticleToc({ items }: { items: GuideTocItem[] }) {
         <div className="fixed inset-0 z-50 bg-slate-950/40 p-4 backdrop-blur-sm xl:hidden" role="dialog" aria-modal="true" aria-label="Jump to section">
           <div className="ml-auto flex max-h-[80vh] max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-4">
-              <p className="text-sm font-semibold text-[#111827]">Jump to section</p>
+              <p className="text-sm font-semibold text-[#111827]">In this guide</p>
               <button
                 type="button"
-                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+                className="rounded-full p-2 text-slate-500 transition hover:bg-orange-50 hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
                 aria-label="Close table of contents"
                 onClick={() => setMobileOpen(false)}
               >
@@ -174,8 +174,8 @@ function TocLinks({
               item.level === 3 ? "ml-3 text-xs" : ""
             } ${
               active
-                ? "bg-blue-50 text-[#1D4ED8]"
-                : "text-slate-600 hover:bg-slate-50 hover:text-[#111827]"
+                ? "bg-orange-50 text-[#C24A00]"
+                : "text-slate-600 hover:bg-orange-50/70 hover:text-[#111827]"
             }`}
           >
             {item.title}
@@ -198,8 +198,8 @@ export function GuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
   }
 
   return (
-    <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10" aria-labelledby="guide-faq-heading">
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">FAQs</p>
+    <section className="mt-10 rounded-3xl border border-orange-100 bg-white p-6 shadow-sm md:p-10" aria-labelledby="guide-faq-heading">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF6B00]">FAQs</p>
       <h2 id="guide-faq-heading" className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
         Common questions
       </h2>
@@ -209,10 +209,10 @@ export function GuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
           const answerId = `guide-faq-answer-${index}`;
 
           return (
-            <div key={faq.question} className="rounded-2xl border border-slate-200 bg-slate-50">
+            <div key={faq.question} className="rounded-2xl border border-slate-200 bg-[#FCFBF8]">
               <button
                 type="button"
-                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8]"
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold leading-7 text-[#111827] transition hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF6B00]"
                 aria-expanded={open}
                 aria-controls={answerId}
                 onClick={() => setOpenQuestion(open ? "" : faq.question)}

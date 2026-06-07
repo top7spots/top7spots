@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
-  ChevronDown,
   Clock,
   Globe2,
   Hash,
@@ -13,7 +12,6 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
-import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import {
   GuideArticleToc,
   ReadingProgress,
@@ -28,7 +26,6 @@ import {
   JsonLd,
 } from "@/components/seo-json-ld";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
@@ -155,6 +152,7 @@ export function GuideDetailArticle({
   const heroImage = heroBlock?.image || guide.coverImage || guide.image;
   const image = resolveImagePath(heroImage);
   const imageAlt = heroBlock?.imageAlt || guide.coverImageAlt || guide.title;
+  const updatedDate = formatDate(guide.updatedAt || guide.createdAt);
   const similarGuides = resolveSimilarGuides(guide, guides, city).slice(0, 10);
   const listingBlocks = resolveGuideListingBlocks({
     blocks: guide.listingBlocks,
@@ -322,69 +320,64 @@ export function GuideDetailArticle({
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB]">
+    <div className="min-h-screen bg-[#F6F4EF] text-[#111827]">
       <ReadingProgress />
       {jsonLd.map((data) => (
         <JsonLd key={String(data["@id"] || data["@type"])} data={data} />
       ))}
       <SiteHeader />
+      <GuideInfoBar
+        breadcrumbItems={breadcrumbItems}
+        backHref={backHref}
+        backLabel={backLabel}
+        readTime={guide.readTime}
+        updatedDate={updatedDate}
+      />
       <main>
-        <section className="bg-[#F4F7FB] px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl">
-            <BreadcrumbTrail items={breadcrumbItems} />
-            <Link
-              href={backHref}
-              className={buttonVariants({
-                variant: "ghost",
-                className: "mb-3 rounded-full px-0 text-slate-600 hover:bg-transparent",
-              })}
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              {backLabel}
-            </Link>
-            <div className="grid overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1fr)_42%]">
-              <div className="min-w-0 p-6 sm:p-8 lg:p-10">
-                <Badge className="rounded-full bg-blue-50 px-3 py-1 text-[#1D4ED8] hover:bg-blue-50">
-                  {heroBlock?.eyebrow || guide.category || "Travel guide"}
-                </Badge>
-                <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-[1.08] tracking-tight text-[#111827] md:text-5xl">
-                  {heroTitle}
-                </h1>
-                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 md:text-[1.0625rem]">
-                  {heroDescription}
-                </p>
-                <GuideAuthorByline guide={guide} author={author} />
-                <HeroQuickChips guide={guide} city={city} />
-              </div>
-              <div className="relative min-h-72 bg-slate-100 sm:min-h-96 lg:min-h-full">
-                {heroImage ? (
-                  <Image
-                    src={image}
-                    alt={imageAlt}
-                    fill
-                    priority
-                    sizes="(min-width: 1024px) 470px, 100vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex size-full min-h-72 items-center justify-center bg-[#EAF1F8] text-sm font-semibold text-[#1D4ED8]">
-                    {city?.name || guide.category || "Travel guide"}
+        <section className="px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="relative isolate min-h-[34rem] overflow-hidden rounded-[2rem] border border-white/45 bg-[#0A2A66] shadow-[0_30px_90px_rgba(15,23,42,0.22)] md:min-h-[40rem]">
+              {heroImage ? (
+                <Image
+                  src={image}
+                  alt={imageAlt}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-[#071E45]/68" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,30,69,0.86),rgba(7,30,69,0.48)_52%,rgba(7,30,69,0.2))]" />
+              <div className="relative z-10 flex min-h-[34rem] items-end p-6 sm:p-8 md:min-h-[40rem] lg:p-12">
+                <div className="max-w-4xl">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {guide.isFeatured ? (
+                      <Badge className="rounded-full bg-[#FF6B00] px-3 py-1 text-white hover:bg-[#FF6B00]">
+                        Featured guide
+                      </Badge>
+                    ) : null}
+                    <Badge className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-white backdrop-blur hover:bg-white/12">
+                      {heroBlock?.eyebrow || guide.category || "Travel guide"}
+                    </Badge>
                   </div>
-                )}
-                <div className="absolute bottom-5 left-5 max-w-[calc(100%-2.5rem)] rounded-2xl bg-white/92 px-4 py-3 shadow-lg shadow-slate-900/10 backdrop-blur">
-                  <p className="text-xs font-semibold text-slate-500">Featured guide</p>
-                  <p className="mt-1 text-sm font-semibold text-[#111827]">
-                    {[city?.name, city?.country || guide.countryId, guide.category].filter(Boolean).join(" - ")}
+                  <h1 className="mt-5 text-4xl font-semibold leading-[1.04] tracking-tight text-white md:text-6xl lg:text-7xl">
+                    {heroTitle}
+                  </h1>
+                  <p className="mt-5 max-w-3xl text-base leading-7 text-white/82 md:text-lg md:leading-8">
+                    {heroDescription}
                   </p>
+                  <GuideAuthorByline guide={guide} author={author} tone="dark" />
+                  <HeroQuickChips guide={guide} city={city} updatedDate={updatedDate} tone="dark" />
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <article className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <article className="mx-auto max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
           {tocItems.length > 0 ? (
-            <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
+            <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start">
               <GuideArticleToc items={tocItems} />
               <div className="min-w-0">{guideArticleBody}</div>
             </div>
@@ -410,7 +403,7 @@ function GuidePlanningCta({ city, destinations }: { city?: City; destinations: D
 
   return (
     <section className="border-y border-slate-200 bg-white px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-6xl gap-5 rounded-3xl bg-[#0A2A66] p-6 text-white shadow-xl shadow-blue-950/10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-center lg:p-7">
+      <div className="mx-auto grid max-w-7xl gap-5 rounded-[2rem] bg-[#0A2A66] p-6 text-white shadow-xl shadow-blue-950/10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-center lg:p-8">
         <div>
           <Sparkles className="size-7 text-orange-300" aria-hidden="true" />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">Use this guide to shape a route</h2>
@@ -452,19 +445,88 @@ function GuideCtaLink({ href, children }: { href: string; children: ReactNode })
   );
 }
 
-function GuideAuthorByline({ guide, author }: { guide: Guide; author?: Author }) {
+function GuideInfoBar({
+  breadcrumbItems,
+  backHref,
+  backLabel,
+  readTime,
+  updatedDate,
+}: {
+  breadcrumbItems: BreadcrumbItem[];
+  backHref: string;
+  backLabel: string;
+  readTime: string;
+  updatedDate: string;
+}) {
+  const pathItems = [{ label: "Home", href: "/" }, ...breadcrumbItems];
+
+  return (
+    <div className="sticky top-16 z-30 border-b border-white/50 bg-[#F8F5EE]/82 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href={backHref}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-orange-200 bg-white text-[#0A2A66] shadow-sm transition hover:border-[#FF6B00] hover:text-[#FF6B00]"
+            aria-label={backLabel}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+          </Link>
+          <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+            {pathItems.map((item, index) => (
+              <span key={`${item.label}-${item.href || "current"}`} className="flex min-w-0 items-center gap-2">
+                {index > 0 ? <span className="text-slate-300">/</span> : null}
+                {item.href ? (
+                  <Link href={item.href} className="max-w-[12rem] truncate transition hover:text-[#FF6B00] md:max-w-[16rem]">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="max-w-[14rem] truncate text-slate-700 md:max-w-[22rem]">{item.label}</span>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+          {readTime ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 shadow-sm">
+              <Clock className="size-3.5 text-[#FF6B00]" aria-hidden="true" />
+              {readTime}
+            </span>
+          ) : null}
+          {updatedDate ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 shadow-sm">
+              <CalendarDays className="size-3.5 text-[#FF6B00]" aria-hidden="true" />
+              Updated {updatedDate}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GuideAuthorByline({
+  guide,
+  author,
+  tone = "light",
+}: {
+  guide: Guide;
+  author?: Author;
+  tone?: "light" | "dark";
+}) {
   const authorName = author?.name || guide.author;
 
   if (!authorName) {
     return null;
   }
+  const isDark = tone === "dark";
 
   const byline = (
-    <div className="mt-5 flex items-center gap-3 text-sm text-slate-600">
+    <div className={`mt-5 flex items-center gap-3 text-sm ${isDark ? "text-white/78" : "text-slate-600"}`}>
       <AuthorAvatar author={author} fallbackName={authorName} size="sm" />
       <div>
-        <p className="font-semibold text-[#1F2937]">{authorName}</p>
-        <p className="mt-0.5 text-xs leading-5 text-slate-500">
+        <p className={`font-semibold ${isDark ? "text-white" : "text-[#1F2937]"}`}>{authorName}</p>
+        <p className={`mt-0.5 text-xs leading-5 ${isDark ? "text-white/66" : "text-slate-500"}`}>
           {author?.role || "Top7Spots editorial"}
         </p>
       </div>
@@ -472,7 +534,7 @@ function GuideAuthorByline({ guide, author }: { guide: Guide; author?: Author })
   );
 
   return author ? (
-    <Link href={`/authors/${author.slug}`} className="inline-flex rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]">
+    <Link href={`/authors/${author.slug}`} className="inline-flex rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
       {byline}
     </Link>
   ) : (
@@ -488,11 +550,11 @@ function GuideAuthorBioCard({ guide, author }: { guide: Guide; author?: Author }
   }
 
   return (
-    <section className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] md:p-6" aria-label="About the author">
+    <section className="mt-8 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7" aria-label="About the author">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <AuthorAvatar author={author} fallbackName={authorName} size="lg" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-[#1D4ED8]">Written by</p>
+          <p className="text-sm font-semibold text-[#FF6B00]">Written by</p>
           <h2 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-[#111827]">
             {authorName}
           </h2>
@@ -513,7 +575,7 @@ function GuideAuthorBioCard({ guide, author }: { guide: Guide; author?: Author }
           {author?.expertise?.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {author.expertise.slice(0, 5).map((item) => (
-                <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                <span key={item} className="rounded-full border border-orange-100 bg-[#FCFBF8] px-3 py-1 text-xs font-semibold text-slate-600">
                   {item}
                 </span>
               ))}
@@ -522,7 +584,7 @@ function GuideAuthorBioCard({ guide, author }: { guide: Guide; author?: Author }
           {author ? (
             <Link
               href={`/authors/${author.slug}`}
-              className="mt-5 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+              className="mt-5 inline-flex rounded-full border border-orange-100 bg-[#FCFBF8] px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:border-[#FF6B00] hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
             >
               View author profile
             </Link>
@@ -645,17 +707,20 @@ function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
   }
 
   return (
-    <section className="scroll-mt-24 [content-visibility:auto] [contain-intrinsic-size:1px_520px]" aria-labelledby="guide-faq-heading">
-      <p className="text-sm font-medium text-[#1D4ED8]">FAQs</p>
+    <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-7" aria-labelledby="guide-faq-heading">
+      <p className="text-sm font-semibold text-[#FF6B00]">FAQs</p>
       <h2 id="guide-faq-heading" className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
         Common questions
       </h2>
       <div className="mt-5 grid gap-3">
         {validFaqs.map((faq, index) => (
-          <details key={faq.question} open={index === 0} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3.5 text-left text-sm font-semibold leading-6 text-[#111827] transition-colors hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1D4ED8] [&::-webkit-details-marker]:hidden md:text-base">
+          <details key={faq.question} open={index === 0} className="group rounded-2xl border border-slate-200 bg-[#FCFBF8] shadow-sm">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3.5 text-left text-sm font-semibold leading-6 text-[#111827] transition-colors hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF6B00] [&::-webkit-details-marker]:hidden md:text-base">
               <span>{faq.question}</span>
-              <ChevronDown className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-[#FF6B00] shadow-sm">
+                <span className="text-lg leading-none group-open:hidden">+</span>
+                <span className="hidden text-xl leading-none group-open:block">-</span>
+              </span>
             </summary>
             <p className="px-5 pb-4 text-sm leading-6 text-slate-600 md:leading-7">{faq.answer}</p>
           </details>
@@ -669,9 +734,9 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
   const blockHeadingId = `listing-block-${slugify(block.id || block.title)}`;
 
   return (
-    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_720px] md:p-6">
+    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_720px] md:p-7">
       <div className="mb-5">
-        <p className="text-sm font-medium text-[#1D4ED8]">Selected places</p>
+        <p className="text-sm font-semibold text-[#FF6B00]">Selected places</p>
         <h2 id={blockHeadingId} className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
           {block.title}
         </h2>
@@ -702,7 +767,7 @@ function GuideListingRowCard({
   const image = item.image ? resolveImagePath(item.image) : "";
 
   return (
-    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#FCFDFF] shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-blue-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
+    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#FCFBF8] shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-orange-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
       <Link href={item.href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 md:aspect-auto md:min-h-64" aria-label={`Explore ${item.title}`}>
         {image ? (
           <Image
@@ -715,20 +780,20 @@ function GuideListingRowCard({
             className="object-cover"
           />
         ) : (
-          <div className="flex size-full items-center justify-center bg-[#EAF1F8] text-sm font-semibold text-[#1D4ED8]">
+          <div className="flex size-full items-center justify-center bg-orange-50 text-sm font-semibold text-[#C24A00]">
             {item.badge || "Guide"}
           </div>
         )}
-        <span className="absolute left-4 top-4 inline-flex size-11 items-center justify-center rounded-full bg-white text-sm font-bold text-[#0A2A66] shadow-md">
+        <span className="absolute left-4 top-4 inline-flex size-11 items-center justify-center rounded-full bg-white text-sm font-bold text-[#FF6B00] shadow-md">
           {String(index + 1).padStart(2, "0")}
         </span>
       </Link>
       <div className="flex min-w-0 flex-col p-5 sm:p-6">
         {item.badge ? (
-          <p className="text-sm font-medium text-[#1D4ED8]">{item.badge}</p>
+          <p className="text-sm font-semibold text-[#FF6B00]">{item.badge}</p>
         ) : null}
         <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
-          <Link href={item.href} className="hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]">
+          <Link href={item.href} className="hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
             {item.title}
           </Link>
         </h3>
@@ -737,17 +802,17 @@ function GuideListingRowCard({
         ) : null}
         <div className="mt-5 flex flex-wrap gap-2">
           {item.badge ? (
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+            <span className="rounded-full border border-orange-100 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
               {item.badge}
             </span>
           ) : null}
-          <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+          <span className="rounded-full border border-orange-100 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
             Selected stop
           </span>
         </div>
         <Link
           href={item.href}
-          className="mt-6 inline-flex w-fit rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+          className="mt-6 inline-flex w-fit rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
         >
           Explore
         </Link>
@@ -756,31 +821,46 @@ function GuideListingRowCard({
   );
 }
 
-function HeroQuickChips({ guide, city }: { guide: Guide; city?: City }) {
-  const date = formatDate(guide.updatedAt || guide.createdAt);
+function HeroQuickChips({
+  guide,
+  city,
+  updatedDate,
+  tone = "light",
+}: {
+  guide: Guide;
+  city?: City;
+  updatedDate?: string;
+  tone?: "light" | "dark";
+}) {
+  const date = updatedDate || formatDate(guide.updatedAt || guide.createdAt);
+  const iconClassName = tone === "dark" ? "size-4 text-[#FFB36B]" : "size-4 text-[#FF6B00]";
   const chips: Array<{ label: string; icon: ReactNode } | undefined> = [
     city
-      ? { label: city.name, icon: <MapPin className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      ? { label: city.name, icon: <MapPin className={iconClassName} aria-hidden="true" /> }
       : undefined,
     city?.country || guide.countryId
-      ? { label: city?.country || guide.countryId, icon: <Globe2 className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      ? { label: city?.country || guide.countryId, icon: <Globe2 className={iconClassName} aria-hidden="true" /> }
       : undefined,
     guide.category
-      ? { label: guide.category, icon: <BookOpen className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
-      : { label: "Travel guide", icon: <BookOpen className="size-4 text-[#1D4ED8]" aria-hidden="true" /> },
+      ? { label: guide.category, icon: <BookOpen className={iconClassName} aria-hidden="true" /> }
+      : { label: "Travel guide", icon: <BookOpen className={iconClassName} aria-hidden="true" /> },
     guide.readTime
-      ? { label: guide.readTime, icon: <Clock className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      ? { label: guide.readTime, icon: <Clock className={iconClassName} aria-hidden="true" /> }
       : undefined,
     date
-      ? { label: `Updated ${date}`, icon: <CalendarDays className="size-4 text-[#1D4ED8]" aria-hidden="true" /> }
+      ? { label: `Updated ${date}`, icon: <CalendarDays className={iconClassName} aria-hidden="true" /> }
       : undefined,
   ];
   const visibleChips = chips.filter((item): item is { label: string; icon: ReactNode } => Boolean(item));
+  const chipClassName =
+    tone === "dark"
+      ? "inline-flex min-h-10 items-center gap-2 rounded-full border border-white/18 bg-white/12 px-3.5 py-2 text-white/88 shadow-sm backdrop-blur"
+      : "inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 shadow-sm";
 
   return (
-    <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-medium text-slate-600">
+    <div className={`mt-6 flex flex-wrap gap-2.5 text-sm font-medium ${tone === "dark" ? "text-white/86" : "text-slate-600"}`}>
       {visibleChips.map((item) => (
-        <span key={item.label} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 shadow-sm">
+        <span key={item.label} className={chipClassName}>
           {item.icon}
           {item.label}
         </span>
@@ -805,10 +885,10 @@ function WhyVisitSection({
     "Use this guide as a focused starting point for planning the best places, practical stops, and next steps.";
 
   return (
-    <section id="why-visit" className="min-w-0 scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.045)] md:p-6">
-      <p className="text-sm font-medium text-[#1D4ED8]">Why visit</p>
+    <section id="why-visit" className="min-w-0 scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7">
+      <p className="text-sm font-semibold text-[#FF6B00]">Why visit</p>
       <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{title}</h2>
-      <p className="mt-4 max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem] md:leading-7">{text}</p>
+      <p className="mt-4 max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem] md:leading-7">{text}</p>
     </section>
   );
 }
@@ -949,8 +1029,8 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
   const image = resolveImagePath(block.image || "");
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-6">
-      {block.eyebrow ? <p className="text-sm font-medium text-[#1D4ED8]">{block.eyebrow}</p> : null}
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-7">
+      {block.eyebrow ? <p className="text-sm font-semibold text-[#FF6B00]">{block.eyebrow}</p> : null}
       {block.title ? (
         <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title}</h2>
       ) : null}
@@ -958,7 +1038,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
         <MarkdownContent content={block.body} className="mt-4" />
       ) : null}
       {block.image ? (
-        <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-3xl bg-slate-100">
+        <div className="relative mt-6 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-inner">
           <Image
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
@@ -982,11 +1062,11 @@ function QuickInfoBlock({ block }: { block: GuideCmsBlock }) {
   }
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6">
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7">
       <BlockHeading block={block} fallbackTitle="Quick info" />
-      <div className="mt-4 grid gap-2.5">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {items.map((item) => (
-          <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-slate-200 bg-[#FCFBF8] p-4 shadow-sm ring-1 ring-orange-100/40">
             <p className="text-sm font-medium text-slate-500">{item.label}</p>
             <p className="mt-1.5 text-sm font-semibold leading-6 text-[#1F2937]">{item.value}</p>
           </div>
@@ -1000,13 +1080,13 @@ function TipsBlock({ block }: { block: GuideCmsBlock }) {
   const tips = block.tips || [];
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-[#FCFDFF] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.035)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-6">
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-7">
       <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
       {block.body ? <MarkdownContent content={block.body} className="mt-4" /> : null}
       {tips.length > 0 ? (
         <div className="mt-4 grid gap-2.5">
           {tips.map((tip) => (
-            <div key={tip} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold leading-6 text-[#1F2937] shadow-sm">
+            <div key={tip} className="rounded-2xl border border-orange-100 bg-[#FCFBF8] p-4 text-sm font-semibold leading-6 text-[#1F2937] shadow-sm">
               {tip}
             </div>
           ))}
@@ -1022,13 +1102,13 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
   }
 
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-6">
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_620px] md:p-7">
       <BlockHeading block={block} fallbackTitle="Map" />
-      <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-[#EEF3F8] shadow-sm">
+      <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#EEF3F8] shadow-sm">
         <iframe
           src={block.mapEmbedUrl}
           title={block.mapLabel || block.title || "Guide map"}
-          className="h-[24rem] w-full"
+          className="h-[26rem] w-full md:h-[32rem]"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
@@ -1039,7 +1119,7 @@ function MapBlock({ block }: { block: GuideCmsBlock }) {
 
 function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
   return (
-    <section id={block.id} className="scroll-mt-24 rounded-[1.5rem] bg-[#0A2A66] p-5 text-white shadow-[0_16px_38px_rgba(10,42,102,0.16)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-6">
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] bg-[#0A2A66] p-5 text-white shadow-[0_20px_50px_rgba(10,42,102,0.2)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-7">
       {block.eyebrow ? <p className="text-sm font-medium text-orange-200">{block.eyebrow}</p> : null}
       <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight md:text-3xl">{block.title || ctaFallbackTitle(block.type)}</h2>
       {block.body ? <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 md:leading-7">{renderInlineContent(block.body)}</p> : null}
@@ -1048,7 +1128,7 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
           href={block.ctaHref}
           target={block.ctaTargetBlank ? "_blank" : undefined}
           rel={ctaRelAttribute(block)}
-          className="mt-4 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:bg-orange-100"
+          className="mt-5 inline-flex rounded-full bg-[#FF6B00] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E85F00]"
         >
           {block.ctaLabel || "Learn more"}
         </Link>
@@ -1080,7 +1160,7 @@ function ctaRelAttribute(block: GuideCmsBlock) {
 function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallbackTitle: string }) {
   return (
     <div>
-      {block.eyebrow ? <p className="text-sm font-medium text-[#1D4ED8]">{block.eyebrow}</p> : null}
+      {block.eyebrow ? <p className="text-sm font-semibold text-[#FF6B00]">{block.eyebrow}</p> : null}
       <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title || fallbackTitle}</h2>
     </div>
   );
@@ -1116,7 +1196,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
         <span>{block.title}</span>
         <a
           href={`#${block.id}`}
-          className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+          className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-orange-50 hover:text-[#C24A00] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00] group-hover:inline-flex"
           aria-label={`Link to ${block.title}`}
         >
           <Hash className="size-4" aria-hidden="true" />
@@ -1131,7 +1211,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
 
   if (block.kind === "bullets") {
     return (
-      <ul className="max-w-[44rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+      <ul className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
         {block.items.map((item, index) => (
           <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
         ))}
@@ -1144,7 +1224,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
   }
 
   return (
-    <p className="max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+    <p className="max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
       {renderInlineContent(block.text, entities)}
     </p>
   );
@@ -1152,14 +1232,14 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
 
 function InlineCardListSection({ id, section }: { id: string; section: InlineListSection }) {
   return (
-    <section className="scroll-mt-24 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6" aria-labelledby={id}>
+    <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] md:p-7" aria-labelledby={id}>
       <div className="mb-3.5">
-        <p className="text-sm font-medium text-[#1D4ED8]">Quick notes</p>
+        <p className="text-sm font-semibold text-[#FF6B00]">Quick notes</p>
         <h2 id={id} className="group mt-1.5 flex items-center gap-2 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
           <span>{section.title}</span>
           <a
             href={`#${id}`}
-            className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-white hover:text-[#1D4ED8] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] group-hover:inline-flex"
+            className="hidden rounded-full p-1 text-slate-300 transition-colors hover:bg-white hover:text-[#C24A00] focus-visible:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00] group-hover:inline-flex"
             aria-label={`Link to ${section.title}`}
           >
             <Hash className="size-4" aria-hidden="true" />
@@ -1168,7 +1248,7 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         {section.items.map((item, index) => (
-          <div key={`${item}-${index}`} className="min-h-20 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={`${item}-${index}`} className="min-h-20 rounded-2xl border border-orange-100 bg-[#FCFBF8] p-4 shadow-sm">
             <p className="text-sm font-semibold leading-6 text-[#1F2937]">{item}</p>
           </div>
         ))}
@@ -1179,9 +1259,9 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
 
 function ContextualEntitySectionCards({ section }: { section: ContextualEntitySection }) {
   return (
-    <section className="min-w-0 rounded-[1.5rem] border border-blue-100 bg-[#F8FBFF] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.03)] md:p-6" aria-label={section.title}>
+    <section className="min-w-0 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] md:p-7" aria-label={section.title}>
       <div className="mb-4">
-        <p className="text-sm font-medium text-[#1D4ED8]">Connected travel ideas</p>
+        <p className="text-sm font-semibold text-[#FF6B00]">Connected travel ideas</p>
         <h3 className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-[#111827] md:text-2xl">{section.title}</h3>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -1234,7 +1314,7 @@ function MarkdownContent({
 
         if (block.kind === "list") {
           return (
-            <ul key={block.key} className="max-w-[44rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+            <ul key={block.key} className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
               {block.items.map((item, index) => (
                 <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
               ))}
@@ -1247,7 +1327,7 @@ function MarkdownContent({
         }
 
         return (
-          <p key={block.key} className="max-w-[44rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+          <p key={block.key} className="max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
             {renderInlineContent(block.text, entities)}
           </p>
         );
@@ -1373,7 +1453,7 @@ function renderMarkdownAndEntityLinks(text: string, entities: ContextualEntity[]
           href={href}
           target={isExternalHref(href) ? "_blank" : undefined}
           rel={isExternalHref(href) ? "noopener noreferrer" : undefined}
-          className="font-medium text-[#1D4ED8] underline decoration-blue-200 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66]"
+          className="font-medium text-[#C24A00] underline decoration-orange-200 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66]"
         >
           {label}
         </Link>,
@@ -1412,7 +1492,7 @@ function renderEntityLinks(text: string, entities: ContextualEntity[], keyPrefix
       <Link
         key={`${keyPrefix}-${mention.entity.key}-${mention.start}-${index}`}
         href={mention.entity.href}
-        className="rounded-md bg-blue-50/70 px-1 py-0.5 font-medium text-[#1D4ED8] transition-colors hover:bg-blue-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+        className="rounded-md bg-orange-50/80 px-1 py-0.5 font-medium text-[#C24A00] transition-colors hover:bg-orange-100 hover:text-[#0A2A66] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
         aria-label={`Open ${mention.entity.title}`}
       >
         {text.slice(mention.start, mention.end)}
@@ -1438,10 +1518,10 @@ function isExternalHref(href: string) {
 
 function SimilarGuidesGrid({ guides }: { guides: Guide[] }) {
   return (
-    <section className="bg-white px-4 pb-14 pt-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="bg-[#F6F4EF] px-4 pb-14 pt-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-6">
-          <p className="text-sm font-medium text-[#1D4ED8]">Keep planning</p>
+          <p className="text-sm font-semibold text-[#FF6B00]">Keep planning</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#111827]">
             More travel guides you may like
           </h2>
@@ -1461,7 +1541,7 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
   const image = guide.coverImage || guide.image ? resolveImagePath(guide.coverImage || guide.image) : "";
 
   return (
-    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#FCFDFF] shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-blue-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 sm:grid-cols-[11rem_minmax(0,1fr)]">
+    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-orange-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 sm:grid-cols-[11rem_minmax(0,1fr)]">
       <Link href={href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-auto" aria-label={`Explore ${guide.title}`}>
         {image ? (
           <Image
@@ -1474,15 +1554,15 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
             className="object-cover"
           />
         ) : (
-          <div className="flex size-full min-h-40 items-center justify-center bg-[#EAF1F8] text-sm font-semibold text-[#1D4ED8]">
+          <div className="flex size-full min-h-40 items-center justify-center bg-orange-50 text-sm font-semibold text-[#C24A00]">
             {guide.category || "Guide"}
           </div>
         )}
       </Link>
       <div className="flex min-w-0 flex-col p-5">
-        <p className="text-sm font-medium text-[#1D4ED8]">{[guide.category, guide.readTime].filter(Boolean).join(" - ") || "Travel guide"}</p>
+        <p className="text-sm font-semibold text-[#FF6B00]">{[guide.category, guide.readTime].filter(Boolean).join(" - ") || "Travel guide"}</p>
         <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-7 tracking-tight text-[#111827]">
-          <Link href={href} className="hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]">
+          <Link href={href} className="hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
             {guide.title}
           </Link>
         </h3>
@@ -1491,7 +1571,7 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
         ) : null}
         <Link
           href={href}
-          className="mt-5 inline-flex w-fit rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]"
+          className="mt-5 inline-flex w-fit rounded-full border border-orange-100 bg-[#FCFBF8] px-4 py-2.5 text-sm font-semibold text-[#0A2A66] transition-colors hover:border-[#FF6B00] hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
         >
           Explore
         </Link>

@@ -205,12 +205,7 @@ export function GuideDetailArticle({
     )
     .filter((block): block is ResolvedGuideListingBlock => Boolean(block));
   const allListingBlocks = [...listingBlocks, ...contentListingBlocks];
-  const isListGuideLayout = shouldUseListGuideLayout(guide, allListingBlocks);
-  const supportPageBlocks = hasPageBlocks && !isListGuideLayout ? mainPageBlocks.filter(isGuideSupportBlock) : [];
-  const primaryPageBlocks = hasPageBlocks
-    ? mainPageBlocks.filter((block) => !isGuideSupportBlock(block) && block.type !== "faq")
-    : [];
-  const useTwoColumnContent = !isListGuideLayout && supportPageBlocks.length > 0 && primaryPageBlocks.length > 0;
+  const primaryPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type !== "faq") : [];
   const selectedItemListItems = guideItemListEntries(allListingBlocks);
   const renderedListingBlocks = hasPageBlocks ? contentListingBlocks : listingBlocks;
   const tocItems = buildGuideTocItems({
@@ -223,13 +218,7 @@ export function GuideDetailArticle({
   });
   const guideArticleBody = hasPageBlocks ? (
     <>
-      <div
-        className={
-          useTwoColumnContent
-            ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
-            : "grid gap-5"
-        }
-      >
+      <div className="grid gap-5">
         <div className="grid min-w-0 gap-5">
           <GuidePageBlocks
             guide={guide}
@@ -241,31 +230,7 @@ export function GuideDetailArticle({
             restaurants={restaurants}
             guides={guides}
           />
-          {!useTwoColumnContent && supportPageBlocks.length > 0 ? (
-            <GuidePageBlocks
-              guide={guide}
-              blocks={supportPageBlocks}
-              listingBlocks={listingBlocks}
-              cities={cities}
-              destinations={listingDestinations ?? destinations}
-              attractions={attractions}
-              restaurants={restaurants}
-              guides={guides}
-            />
-          ) : null}
         </div>
-        {useTwoColumnContent ? (
-          <GuideSupportColumn
-            guide={guide}
-            blocks={supportPageBlocks}
-            listingBlocks={listingBlocks}
-            cities={cities}
-            destinations={listingDestinations ?? destinations}
-            attractions={attractions}
-            restaurants={restaurants}
-            guides={guides}
-          />
-        ) : null}
       </div>
       {faqPageBlocks.length > 0 ? (
         <div className="mt-6 grid gap-5">
@@ -927,44 +892,6 @@ function GuidePageBlocks({
         />
       ))}
     </>
-  );
-}
-
-function GuideSupportColumn({
-  guide,
-  blocks,
-  listingBlocks,
-  cities,
-  destinations,
-  attractions,
-  restaurants,
-  guides,
-}: {
-  guide: Guide;
-  blocks: GuideCmsBlock[];
-  listingBlocks: ResolvedGuideListingBlock[];
-  cities: City[];
-  destinations: Destination[];
-  attractions: Attraction[];
-  restaurants: Restaurant[];
-  guides: Guide[];
-}) {
-  return (
-    <aside className="grid gap-4 lg:sticky lg:top-32">
-      {blocks.map((block) => (
-        <GuidePageBlock
-          key={block.id}
-          guide={guide}
-          block={block}
-          listingBlocks={listingBlocks}
-          cities={cities}
-          destinations={destinations}
-          attractions={attractions}
-          restaurants={restaurants}
-          guides={guides}
-        />
-      ))}
-    </aside>
   );
 }
 
@@ -2464,24 +2391,6 @@ function tipsFallbackTitle(type: GuideCmsBlock["type"]) {
   }
 
   return "Travel tips";
-}
-
-function isGuideSupportBlock(block: GuideCmsBlock) {
-  return (
-    block.type === "quick-info" ||
-    block.type === "travel-tips" ||
-    block.type === "warnings" ||
-    block.type === "best-time-to-visit" ||
-    block.type === "car-rental-cta"
-  );
-}
-
-function shouldUseListGuideLayout(guide: Guide, blocks: ResolvedGuideListingBlock[]) {
-  if (blocks.some((block) => block.type === "destinations" || block.type === "activities" || block.type === "restaurants")) {
-    return true;
-  }
-
-  return /\b(best|top|places|destinations|beaches|hidden|spots|visit)\b/i.test(`${guide.title} ${guide.category}`);
 }
 
 function matchesEntityId(item: { id: string; slug?: string; name?: string; title?: string }, id: string) {

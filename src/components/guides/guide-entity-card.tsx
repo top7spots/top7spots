@@ -57,7 +57,7 @@ export function GuideEntityCard({
   return (
     <Link
       href={item.href}
-      className={`group flex h-[26.5rem] w-[19.5rem] max-w-[86vw] shrink-0 snap-start scroll-ml-4 transform-gpu flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm outline-none transition-[transform,border-color,box-shadow] duration-200 hover:border-orange-200 hover:shadow-md motion-safe:hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#FF6B00] sm:h-[27.5rem] sm:w-auto sm:max-w-none ${className}`}
+      className={`group flex h-[25.75rem] w-[19.5rem] max-w-[86vw] shrink-0 snap-start scroll-ml-4 transform-gpu flex-col overflow-hidden rounded-[1.35rem] bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.055)] outline-none ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#FF6B00] sm:h-[26.75rem] sm:w-auto sm:max-w-none ${className}`}
     >
       <div className="relative h-48 overflow-hidden bg-slate-100 sm:h-52">
         <GuideEntityCardImage
@@ -73,11 +73,11 @@ export function GuideEntityCard({
         ) : null}
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="line-clamp-3 text-xl font-semibold leading-7 tracking-tight text-[#111827] group-hover:text-[#C24A00]">
+        <h3 className="line-clamp-3 text-lg font-semibold leading-7 tracking-tight text-[#111827] group-hover:text-[#C24A00]">
           {item.title}
         </h3>
         {item.description ? (
-          <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">{item.description}</p>
+          <p className="mt-3 line-clamp-4 text-[0.95rem] leading-6 text-slate-600">{item.description}</p>
         ) : null}
         <span className="mt-auto inline-flex items-center justify-between gap-3 pt-5 text-sm font-semibold text-[#C24A00]">
           <span>Explore</span>

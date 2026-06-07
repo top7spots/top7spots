@@ -92,8 +92,8 @@ export function GuideArticleToc({ items }: { items: GuideTocItem[] }) {
 
   return (
     <>
-      <aside className="hidden xl:block">
-        <div className="sticky top-32 rounded-[1.35rem] border border-orange-100 bg-white/88 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
+      <aside className="hidden xl:sticky xl:top-32 xl:block xl:self-start">
+        <div className="rounded-[1.35rem] border border-orange-100 bg-white/88 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF6B00]">In this guide</p>
           <TocLinks items={items} activeId={activeId} onSelect={() => undefined} className="mt-3" />
         </div>

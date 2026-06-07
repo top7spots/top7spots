@@ -227,10 +227,10 @@ export function GuideDetailArticle({
         className={
           useTwoColumnContent
             ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
-            : "grid gap-6"
+            : "grid gap-5"
         }
       >
-        <div className="grid min-w-0 gap-6">
+        <div className="grid min-w-0 gap-5">
           <GuidePageBlocks
             guide={guide}
             blocks={primaryPageBlocks}
@@ -268,7 +268,7 @@ export function GuideDetailArticle({
         ) : null}
       </div>
       {faqPageBlocks.length > 0 ? (
-        <div className="mt-6 grid gap-6">
+        <div className="mt-6 grid gap-5">
           <GuidePageBlocks
             guide={guide}
             blocks={faqPageBlocks}
@@ -281,13 +281,13 @@ export function GuideDetailArticle({
           />
         </div>
       ) : legacyFaqItems.length > 0 ? (
-        <div className="mt-6 grid gap-6">
+        <div className="mt-6 grid gap-5">
           <ServerGuideFaqAccordion faqs={legacyFaqItems} />
         </div>
       ) : null}
     </>
   ) : (
-    <div className="mx-auto grid min-w-0 max-w-3xl gap-6">
+    <div className="mx-auto grid min-w-0 max-w-3xl gap-5">
       <WhyVisitSection guide={guide} city={city} description={heroDescription} />
       {contentBlocks.map((block) => (
         <ArticleBlockGroup
@@ -320,7 +320,7 @@ export function GuideDetailArticle({
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
   return (
-    <div className="min-h-screen bg-[#F6F4EF] text-[#111827]">
+    <div className="min-h-screen bg-[#FBFAF7] text-[#111827]">
       <ReadingProgress />
       {jsonLd.map((data) => (
         <JsonLd key={String(data["@id"] || data["@type"])} data={data} />
@@ -334,23 +334,23 @@ export function GuideDetailArticle({
         updatedDate={updatedDate}
       />
       <main>
-        <section className="px-4 pb-10 pt-5 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="relative isolate min-h-[34rem] overflow-hidden rounded-[2rem] border border-white/45 bg-[#0A2A66] shadow-[0_30px_90px_rgba(15,23,42,0.22)] md:min-h-[40rem]">
-              {heroImage ? (
-                <Image
-                  src={image}
-                  alt={imageAlt}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
-              ) : null}
-              <div className="absolute inset-0 bg-[#071E45]/68" />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,30,69,0.86),rgba(7,30,69,0.48)_52%,rgba(7,30,69,0.2))]" />
-              <div className="relative z-10 flex min-h-[34rem] items-end p-6 sm:p-8 md:min-h-[40rem] lg:p-12">
-                <div className="max-w-4xl">
+        <section className="pb-10">
+          <div className="relative isolate min-h-[27rem] overflow-hidden bg-[#0A2A66] shadow-[0_24px_70px_rgba(15,23,42,0.18)] md:min-h-[37rem]">
+            {heroImage ? (
+              <Image
+                src={image}
+                alt={imageAlt}
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover"
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-[#071E45]/20" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,30,69,0.84)_0%,rgba(7,30,69,0.58)_36%,rgba(7,30,69,0.16)_68%,rgba(7,30,69,0)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(7,30,69,0.58)_0%,rgba(7,30,69,0)_100%)]" />
+            <div className="relative z-10 mx-auto flex min-h-[27rem] max-w-7xl items-end px-4 py-6 sm:px-6 md:min-h-[37rem] md:py-8 lg:px-8 lg:py-12">
+              <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2.5">
                     {guide.isFeatured ? (
                       <Badge className="rounded-full bg-[#FF6B00] px-3 py-1 text-white hover:bg-[#FF6B00]">
@@ -361,25 +361,24 @@ export function GuideDetailArticle({
                       {heroBlock?.eyebrow || guide.category || "Travel guide"}
                     </Badge>
                   </div>
-                  <h1 className="mt-5 text-4xl font-semibold leading-[1.04] tracking-tight text-white md:text-6xl lg:text-7xl">
+                  <h1 className="mt-5 text-[2.1rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
                     {heroTitle}
                   </h1>
-                  <p className="mt-5 max-w-3xl text-base leading-7 text-white/82 md:text-lg md:leading-8">
+                  <p className="mt-5 max-w-2xl text-base leading-7 text-white/84 md:text-[1.0625rem] md:leading-8">
                     {heroDescription}
                   </p>
                   <GuideAuthorByline guide={guide} author={author} tone="dark" />
                   <HeroQuickChips guide={guide} city={city} updatedDate={updatedDate} tone="dark" />
-                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <article className="mx-auto max-w-7xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
+        <article className="mx-auto max-w-7xl px-4 pb-10 pt-1 sm:px-6 lg:px-8">
           {tocItems.length > 0 ? (
-            <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)] xl:items-start">
+            <div className="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
               <GuideArticleToc items={tocItems} />
-              <div className="min-w-0">{guideArticleBody}</div>
+              <div className="min-w-0 xl:self-start">{guideArticleBody}</div>
             </div>
           ) : (
             guideArticleBody
@@ -709,7 +708,7 @@ function ServerGuideFaqAccordion({ faqs }: { faqs: GuideFaqItem[] }) {
   return (
     <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-7" aria-labelledby="guide-faq-heading">
       <p className="text-sm font-semibold text-[#FF6B00]">FAQs</p>
-      <h2 id="guide-faq-heading" className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
+      <h2 id="guide-faq-heading" className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
         Common questions
       </h2>
       <div className="mt-5 grid gap-3">
@@ -734,14 +733,14 @@ function GuideListingBlockSection({ block }: { block: ResolvedGuideListingBlock 
   const blockHeadingId = `listing-block-${slugify(block.id || block.title)}`;
 
   return (
-    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_720px] md:p-7">
+    <section aria-labelledby={blockHeadingId} className="min-w-0 scroll-mt-32 [content-visibility:auto] [contain-intrinsic-size:1px_720px]">
       <div className="mb-5">
         <p className="text-sm font-semibold text-[#FF6B00]">Selected places</p>
-        <h2 id={blockHeadingId} className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
+        <h2 id={blockHeadingId} className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
           {block.title}
         </h2>
       </div>
-      <div className="grid gap-4">
+      <div className="grid gap-3.5">
         {block.items.map((item, index) => (
           <GuideListingRowCard
             key={item.key}
@@ -767,8 +766,8 @@ function GuideListingRowCard({
   const image = item.image ? resolveImagePath(item.image) : "";
 
   return (
-    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#FCFBF8] shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-orange-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(240px,38%)_minmax(0,1fr)]">
-      <Link href={item.href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 md:aspect-auto md:min-h-64" aria-label={`Explore ${item.title}`}>
+    <article className="group grid overflow-hidden rounded-[1.35rem] bg-white/92 shadow-[0_10px_28px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(220px,36%)_minmax(0,1fr)]">
+      <Link href={item.href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 md:aspect-auto md:min-h-56" aria-label={`Explore ${item.title}`}>
         {image ? (
           <Image
             src={image}
@@ -788,17 +787,17 @@ function GuideListingRowCard({
           {String(index + 1).padStart(2, "0")}
         </span>
       </Link>
-      <div className="flex min-w-0 flex-col p-5 sm:p-6">
+      <div className="flex min-w-0 flex-col p-5">
         {item.badge ? (
           <p className="text-sm font-semibold text-[#FF6B00]">{item.badge}</p>
         ) : null}
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[#111827]">
+        <h3 className="mt-2 text-xl font-semibold leading-7 tracking-tight text-[#111827] md:text-[1.35rem]">
           <Link href={item.href} className="hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
             {item.title}
           </Link>
         </h3>
         {item.description ? (
-          <p className="mt-2 text-sm leading-6 text-slate-600 md:text-base md:leading-7">{item.description}</p>
+          <p className="mt-2 text-[0.95rem] leading-6 text-slate-600">{item.description}</p>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-2">
           {item.badge ? (
@@ -854,11 +853,11 @@ function HeroQuickChips({
   const visibleChips = chips.filter((item): item is { label: string; icon: ReactNode } => Boolean(item));
   const chipClassName =
     tone === "dark"
-      ? "inline-flex min-h-10 items-center gap-2 rounded-full border border-white/18 bg-white/12 px-3.5 py-2 text-white/88 shadow-sm backdrop-blur"
-      : "inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 shadow-sm";
+      ? "inline-flex min-h-9 items-center gap-2 rounded-full border border-white/18 bg-white/12 px-3 py-1.5 text-white/88 shadow-sm backdrop-blur sm:min-h-10 sm:px-3.5 sm:py-2"
+      : "inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm sm:min-h-10 sm:px-3.5 sm:py-2";
 
   return (
-    <div className={`mt-6 flex flex-wrap gap-2.5 text-sm font-medium ${tone === "dark" ? "text-white/86" : "text-slate-600"}`}>
+    <div className={`mt-6 flex flex-wrap gap-2 text-xs font-medium sm:gap-2.5 sm:text-sm ${tone === "dark" ? "text-white/86" : "text-slate-600"}`}>
       {visibleChips.map((item) => (
         <span key={item.label} className={chipClassName}>
           {item.icon}
@@ -885,10 +884,10 @@ function WhyVisitSection({
     "Use this guide as a focused starting point for planning the best places, practical stops, and next steps.";
 
   return (
-    <section id="why-visit" className="min-w-0 scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7">
+    <section id="why-visit" className="min-w-0 scroll-mt-32">
       <p className="text-sm font-semibold text-[#FF6B00]">Why visit</p>
-      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{title}</h2>
-      <p className="mt-4 max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem] md:leading-7">{text}</p>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">{title}</h2>
+      <p className="mt-3 max-w-[48rem] text-base leading-7 text-slate-600">{text}</p>
     </section>
   );
 }
@@ -951,7 +950,7 @@ function GuideSupportColumn({
   guides: Guide[];
 }) {
   return (
-    <aside className="grid gap-4 lg:sticky lg:top-24">
+    <aside className="grid gap-4 lg:sticky lg:top-32">
       {blocks.map((block) => (
         <GuidePageBlock
           key={block.id}
@@ -1029,16 +1028,16 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
   const image = resolveImagePath(block.image || "");
 
   return (
-    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] [content-visibility:auto] [contain-intrinsic-size:1px_520px] md:p-7">
+    <section id={block.id} className="scroll-mt-32 [content-visibility:auto] [contain-intrinsic-size:1px_520px]">
       {block.eyebrow ? <p className="text-sm font-semibold text-[#FF6B00]">{block.eyebrow}</p> : null}
       {block.title ? (
-        <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title}</h2>
+        <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">{block.title}</h2>
       ) : null}
       {block.body ? (
-        <MarkdownContent content={block.body} className="mt-4" />
+        <MarkdownContent content={block.body} className="mt-3" />
       ) : null}
       {block.image ? (
-        <div className="relative mt-6 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-inner">
+        <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
           <Image
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
@@ -1121,7 +1120,7 @@ function GuideCtaBlock({ block }: { block: GuideCmsBlock }) {
   return (
     <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] bg-[#0A2A66] p-5 text-white shadow-[0_20px_50px_rgba(10,42,102,0.2)] [content-visibility:auto] [contain-intrinsic-size:1px_280px] md:p-7">
       {block.eyebrow ? <p className="text-sm font-medium text-orange-200">{block.eyebrow}</p> : null}
-      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight md:text-3xl">{block.title || ctaFallbackTitle(block.type)}</h2>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight md:text-[1.7rem]">{block.title || ctaFallbackTitle(block.type)}</h2>
       {block.body ? <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 md:leading-7">{renderInlineContent(block.body)}</p> : null}
       {block.ctaHref ? (
         <Link
@@ -1161,7 +1160,7 @@ function BlockHeading({ block, fallbackTitle }: { block: GuideCmsBlock; fallback
   return (
     <div>
       {block.eyebrow ? <p className="text-sm font-semibold text-[#FF6B00]">{block.eyebrow}</p> : null}
-      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">{block.title || fallbackTitle}</h2>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">{block.title || fallbackTitle}</h2>
     </div>
   );
 }
@@ -1188,8 +1187,8 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
     const HeadingTag = block.level === 2 ? "h2" : "h3";
     const headingClassName =
       block.level === 2
-        ? "group flex max-w-4xl scroll-mt-24 items-center gap-2 border-t border-slate-200/80 pt-8 text-2xl font-semibold leading-tight tracking-tight text-[#111827] first:border-t-0 first:pt-0 md:text-3xl"
-        : "group flex max-w-3xl scroll-mt-24 items-center gap-2 pt-0 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-2xl";
+        ? "group flex max-w-4xl scroll-mt-24 items-center gap-2 border-t border-slate-200/70 pt-7 text-2xl font-semibold leading-tight tracking-tight text-[#111827] first:border-t-0 first:pt-0 md:text-[1.7rem]"
+        : "group flex max-w-3xl scroll-mt-24 items-center gap-2 pt-0 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-[1.35rem]";
 
     return (
       <HeadingTag id={block.id} className={headingClassName}>
@@ -1211,7 +1210,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
 
   if (block.kind === "bullets") {
     return (
-      <ul className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+      <ul className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600">
         {block.items.map((item, index) => (
           <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
         ))}
@@ -1224,7 +1223,7 @@ function ContentBlock({ block, entities }: { block: GuideArticleContentBlock; en
   }
 
   return (
-    <p className="max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+    <p className="max-w-[48rem] text-base leading-7 text-slate-600">
       {renderInlineContent(block.text, entities)}
     </p>
   );
@@ -1235,7 +1234,7 @@ function InlineCardListSection({ id, section }: { id: string; section: InlineLis
     <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] md:p-7" aria-labelledby={id}>
       <div className="mb-3.5">
         <p className="text-sm font-semibold text-[#FF6B00]">Quick notes</p>
-        <h2 id={id} className="group mt-1.5 flex items-center gap-2 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
+        <h2 id={id} className="group mt-1.5 flex items-center gap-2 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
           <span>{section.title}</span>
           <a
             href={`#${id}`}
@@ -1262,7 +1261,7 @@ function ContextualEntitySectionCards({ section }: { section: ContextualEntitySe
     <section className="min-w-0 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] md:p-7" aria-label={section.title}>
       <div className="mb-4">
         <p className="text-sm font-semibold text-[#FF6B00]">Connected travel ideas</p>
-        <h3 className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-[#111827] md:text-2xl">{section.title}</h3>
+        <h3 className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.35rem]">{section.title}</h3>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {section.items.map((item) => (
@@ -1302,8 +1301,8 @@ function MarkdownContent({
           const HeadingTag = block.level === 2 ? "h2" : "h3";
           const headingClassName =
             block.level === 2
-              ? "mt-1 max-w-4xl scroll-mt-24 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl"
-              : "max-w-3xl scroll-mt-24 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-2xl";
+              ? "mt-1 max-w-4xl scroll-mt-24 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]"
+              : "max-w-3xl scroll-mt-24 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-[1.35rem]";
 
           return (
             <HeadingTag key={block.key} className={headingClassName}>
@@ -1314,7 +1313,7 @@ function MarkdownContent({
 
         if (block.kind === "list") {
           return (
-            <ul key={block.key} className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+            <ul key={block.key} className="max-w-[48rem] list-disc space-y-1.5 pl-6 text-base leading-7 text-slate-600">
               {block.items.map((item, index) => (
                 <li key={`${item}-${index}`}>{renderInlineContent(item, entities)}</li>
               ))}
@@ -1327,7 +1326,7 @@ function MarkdownContent({
         }
 
         return (
-          <p key={block.key} className="max-w-[48rem] text-base leading-7 text-slate-600 md:text-[1.0625rem]">
+          <p key={block.key} className="max-w-[48rem] text-base leading-7 text-slate-600">
             {renderInlineContent(block.text, entities)}
           </p>
         );
@@ -1518,7 +1517,7 @@ function isExternalHref(href: string) {
 
 function SimilarGuidesGrid({ guides }: { guides: Guide[] }) {
   return (
-    <section className="bg-[#F6F4EF] px-4 pb-14 pt-8 sm:px-6 lg:px-8">
+    <section className="bg-[#FBFAF7] px-4 pb-14 pt-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6">
           <p className="text-sm font-semibold text-[#FF6B00]">Keep planning</p>
@@ -1541,7 +1540,7 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
   const image = guide.coverImage || guide.image ? resolveImagePath(guide.coverImage || guide.image) : "";
 
   return (
-    <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-orange-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 sm:grid-cols-[11rem_minmax(0,1fr)]">
+    <article className="group grid overflow-hidden rounded-[1.35rem] bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-0.5 sm:grid-cols-[10.5rem_minmax(0,1fr)]">
       <Link href={href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-auto" aria-label={`Explore ${guide.title}`}>
         {image ? (
           <Image
@@ -1561,13 +1560,13 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
       </Link>
       <div className="flex min-w-0 flex-col p-5">
         <p className="text-sm font-semibold text-[#FF6B00]">{[guide.category, guide.readTime].filter(Boolean).join(" - ") || "Travel guide"}</p>
-        <h3 className="mt-2 line-clamp-2 text-xl font-semibold leading-7 tracking-tight text-[#111827]">
+        <h3 className="mt-2 line-clamp-2 text-lg font-semibold leading-7 tracking-tight text-[#111827]">
           <Link href={href} className="hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
             {guide.title}
           </Link>
         </h3>
         {guide.excerpt || guide.seoDescription ? (
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{guide.excerpt || guide.seoDescription}</p>
+          <p className="mt-3 line-clamp-3 text-[0.95rem] leading-6 text-slate-600">{guide.excerpt || guide.seoDescription}</p>
         ) : null}
         <Link
           href={href}

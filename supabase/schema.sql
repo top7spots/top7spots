@@ -263,6 +263,16 @@ create table if not exists public.contact_messages (
   created_at timestamptz default now()
 );
 
+create table if not exists public.user_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  full_name text,
+  avatar_url text,
+  provider text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.site_settings (
   key text primary key,
   value text not null default '',
@@ -290,6 +300,7 @@ create index if not exists car_rental_pages_translation_group_idx on public.car_
 create index if not exists car_rental_pages_country_idx on public.car_rental_pages (country_slug, language, status);
 create index if not exists car_rental_pages_city_idx on public.car_rental_pages (city_slug, language, status);
 create index if not exists contact_messages_status_created_at_idx on public.contact_messages (status, created_at);
+create index if not exists user_profiles_email_idx on public.user_profiles (email);
 create index if not exists site_settings_updated_at_idx on public.site_settings (updated_at);
 
 alter table public.cities enable row level security;
@@ -303,6 +314,7 @@ alter table public.homepage_faqs enable row level security;
 alter table public.site_pages enable row level security;
 alter table public.car_rental_pages enable row level security;
 alter table public.contact_messages enable row level security;
+alter table public.user_profiles enable row level security;
 alter table public.site_settings enable row level security;
 
 drop policy if exists "Public cities are readable" on public.cities;
@@ -316,6 +328,9 @@ drop policy if exists "Published homepage FAQs are readable" on public.homepage_
 drop policy if exists "Published site pages are readable" on public.site_pages;
 drop policy if exists "Published car rental pages are readable" on public.car_rental_pages;
 drop policy if exists "Site settings are readable" on public.site_settings;
+drop policy if exists "Users can read own profile" on public.user_profiles;
+drop policy if exists "Users can insert own profile" on public.user_profiles;
+drop policy if exists "Users can update own profile" on public.user_profiles;
 
 create policy "Public cities are readable"
   on public.cities for select
@@ -371,6 +386,22 @@ create policy "Site settings are readable"
   on public.site_settings for select
   to anon
   using (true);
+
+create policy "Users can read own profile"
+  on public.user_profiles for select
+  to authenticated
+  using (auth.uid() = id);
+
+create policy "Users can insert own profile"
+  on public.user_profiles for insert
+  to authenticated
+  with check (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on public.user_profiles for update
+  to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
 insert into public.site_pages (id, title, slug, content, meta_title, meta_description, status)
 values

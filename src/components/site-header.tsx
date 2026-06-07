@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, BookOpen, Building2, ChevronDown, Compass, Globe2, MapPin, Menu } from "lucide-react";
+import { signOutAction } from "@/app/auth/actions";
 import { BrandLogo } from "@/components/brand-logo";
 import { SearchBox } from "@/components/search-box";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
 import { getGuideHref } from "@/lib/guide-routes";
+import { getCurrentUser, userAvatarUrl, userDisplayName, userInitials } from "@/lib/public-auth";
 import type { City, Destination, Guide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -24,10 +26,11 @@ type SiteHeaderProps = {
 
 export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) {
   const isHomepage = variant === "homepage";
-  const [cities, destinations, guides] = await Promise.all([
+  const [cities, destinations, guides, user] = await Promise.all([
     getPublishedCities(),
     getPublishedDestinations(),
     getPublishedGuides(),
+    getCurrentUser(),
   ]);
   const cityBySlug = new Map(cities.map((city) => [city.slug, city]));
   const cityGroups = groupCitiesByCountry(cities);
@@ -83,6 +86,10 @@ export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) 
             <Globe2 className="size-4" aria-hidden="true" />
             EN
           </Button>
+        </div>
+
+        <div className="hidden items-center gap-2 md:flex">
+          <HeaderAuthControls user={user} variant={variant} />
         </div>
 
         <Sheet>
@@ -214,11 +221,131 @@ export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) 
                   Travel Guides
                 </Link>
               )}
+              <MobileAuthControls user={user} />
             </nav>
           </SheetContent>
         </Sheet>
       </div>
     </header>
+  );
+}
+
+function HeaderAuthControls({
+  user,
+  variant = "default",
+}: {
+  user: Awaited<ReturnType<typeof getCurrentUser>>;
+  variant?: SiteHeaderProps["variant"];
+}) {
+  const isHomepage = variant === "homepage";
+
+  if (!user) {
+    return (
+      <>
+        <Link
+          href="/signin"
+          className={cn(
+            "inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition",
+            isHomepage ? "bg-white/10 text-white hover:bg-white/15" : "bg-[#0A2A66] text-white hover:bg-[#123A7A]",
+          )}
+        >
+          Sign in
+        </Link>
+        <Link
+          href="/signup"
+          className={cn(
+            "inline-flex h-9 items-center rounded-full border px-4 text-sm font-semibold transition",
+            isHomepage
+              ? "border-white/25 text-white hover:bg-white/10"
+              : "border-slate-200 bg-white text-[#0A2A66] hover:bg-orange-50",
+          )}
+        >
+          Sign up
+        </Link>
+      </>
+    );
+  }
+
+  const displayName = userDisplayName(user);
+  const avatarUrl = userAvatarUrl(user);
+
+  return (
+    <details className="group relative">
+      <summary
+        className={cn(
+          "flex cursor-pointer list-none items-center gap-2 rounded-full border px-2 py-1 text-sm font-semibold shadow-sm transition [&::-webkit-details-marker]:hidden",
+          isHomepage
+            ? "border-white/25 bg-white/10 text-white hover:bg-white/15"
+            : "border-slate-200 bg-white text-[#0A2A66] hover:bg-orange-50",
+        )}
+        aria-label="Open account menu"
+      >
+        <UserAvatar name={displayName} avatarUrl={avatarUrl} className="size-8" />
+        <span className="max-w-24 truncate">{displayName}</span>
+        <ChevronDown className="size-3.5 transition group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+        <Link href="/account" className="block rounded-xl px-3 py-2 text-sm font-semibold transition hover:bg-orange-50 hover:text-[#0A2A66]">
+          Account
+        </Link>
+        <form action={signOutAction}>
+          <button type="submit" className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-orange-50 hover:text-[#0A2A66]">
+            Sign out
+          </button>
+        </form>
+      </div>
+    </details>
+  );
+}
+
+function MobileAuthControls({ user }: { user: Awaited<ReturnType<typeof getCurrentUser>> }) {
+  if (!user) {
+    return (
+      <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
+        <Link href="/signin" className="rounded-lg bg-white px-3 py-3 text-sm font-semibold text-[#0A2A66] transition hover:bg-orange-100">
+          Sign in
+        </Link>
+        <Link href="/signup" className="rounded-lg border border-white/15 px-3 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+          Create account
+        </Link>
+      </div>
+    );
+  }
+
+  const displayName = userDisplayName(user);
+  const avatarUrl = userAvatarUrl(user);
+
+  return (
+    <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
+      <div className="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-3">
+        <UserAvatar name={displayName} avatarUrl={avatarUrl} className="size-9" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+          <p className="truncate text-xs text-white/65">{user.email}</p>
+        </div>
+      </div>
+      <Link href="/account" className="rounded-lg px-3 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/10 hover:text-white">
+        Account
+      </Link>
+      <form action={signOutAction}>
+        <button type="submit" className="w-full rounded-lg px-3 py-3 text-left text-sm font-semibold text-white/85 transition hover:bg-white/10 hover:text-white">
+          Sign out
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function UserAvatar({ name, avatarUrl, className }: { name: string; avatarUrl: string; className?: string }) {
+  return (
+    <span className={cn("inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-50 text-xs font-bold text-[#C24A00] ring-1 ring-orange-100", className)}>
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt={name} className="size-full object-cover" referrerPolicy="no-referrer" />
+      ) : (
+        userInitials(name)
+      )}
+    </span>
   );
 }
 

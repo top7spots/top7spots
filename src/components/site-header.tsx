@@ -42,7 +42,7 @@ export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) 
       className={cn(
         "sticky top-0 z-[60] shadow-sm",
         isHomepage
-          ? "border-b border-white/10 bg-[#0A2A66]/95 text-white shadow-blue-950/20 backdrop-blur-xl"
+          ? "border-b border-white/10 bg-[#071B3A]/55 text-white shadow-blue-950/10 backdrop-blur-xl"
           : "border-b border-slate-200 bg-white/95 shadow-slate-950/5 backdrop-blur-xl",
       )}
     >

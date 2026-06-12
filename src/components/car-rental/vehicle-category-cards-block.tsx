@@ -13,6 +13,9 @@ type VehicleCategoryCardsBlockProps = {
   label?: string;
   variant?: "full" | "compact";
   className?: string;
+  affiliateLinkLabel?: string;
+  footerCtaLabel?: string;
+  headerCtaLabel?: string | null;
 };
 
 export async function VehicleCategoryCardsBlock({
@@ -21,17 +24,25 @@ export async function VehicleCategoryCardsBlock({
   label = "CAR RENTAL",
   variant = "full",
   className,
+  affiliateLinkLabel,
+  footerCtaLabel,
+  headerCtaLabel = "Compare cars",
 }: VehicleCategoryCardsBlockProps) {
   const page = await getPublishedCarRentalPage("en", globalCarRentalSlug);
-  const cards = page?.vehicleCategoryCards
+  if (!page) {
+    return null;
+  }
+
+  const cards = page.vehicleCategoryCards
     .filter((card) => card.title && card.visible !== false)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  if (!cards || cards.length === 0) {
+  if (cards.length === 0) {
     return null;
   }
 
   const isCompact = variant === "compact";
+  const affiliateHref = page.discovercarsAffiliateLink;
 
   return (
     <section
@@ -58,13 +69,23 @@ export async function VehicleCategoryCardsBlock({
             <p className={cn("mt-3 max-w-2xl leading-7 text-slate-600", isCompact ? "text-sm" : "text-base")}>
               {subtitle}
             </p>
+            {affiliateLinkLabel && affiliateHref ? (
+              <a
+                href={affiliateHref}
+                target="_blank"
+                rel="sponsored noopener noreferrer"
+                className="mt-3 inline-flex text-sm font-semibold text-[#1D4ED8] underline decoration-blue-300 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
+              >
+                {affiliateLinkLabel}
+              </a>
+            ) : null}
           </div>
-          {!isCompact ? (
+          {!isCompact && headerCtaLabel ? (
             <Link
               href={getDefaultCarRentalPath()}
               className="inline-flex w-fit rounded-full border border-blue-200 bg-blue-50 px-5 py-2 text-sm font-semibold text-[#0A2A66] transition hover:bg-blue-100"
             >
-              Compare cars
+              {headerCtaLabel}
             </Link>
           ) : null}
         </div>
@@ -74,6 +95,16 @@ export async function VehicleCategoryCardsBlock({
             <VehicleCategoryCard key={`${card.title}-${index}`} card={card} compact={isCompact} />
           ))}
         </div>
+        {footerCtaLabel ? (
+          <div className="mt-6 flex justify-center">
+            <Link
+              href={getDefaultCarRentalPath()}
+              className="inline-flex items-center justify-center rounded-full bg-[#C2410C] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#9A3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C2410C]"
+            >
+              {footerCtaLabel}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

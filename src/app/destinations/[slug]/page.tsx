@@ -5,15 +5,12 @@ import {
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
-import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { DestinationArticleContent } from "@/components/destination-article-content";
 import { DestinationAuthorSection, selectDestinationAuthor } from "@/components/destination-author-section";
 import { DestinationDetailHero } from "@/components/destination-detail-hero";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCarouselSection } from "@/components/destination-carousel-section";
-import { DestinationTravelInfoSections } from "@/components/destination-travel-info-sections";
-import { FaqSection } from "@/components/faq-section";
-import { SectionHeading } from "@/components/section-heading";
 import { ArticleJsonLd, BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -23,7 +20,6 @@ import { countryPath } from "@/lib/country-hubs";
 import { formatDisplayDate } from "@/lib/date-format";
 import {
   getActiveAuthors,
-  getAttractions,
   getDestination,
   getDestinations,
   getGuidesForDestination,
@@ -63,10 +59,9 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { slug } = await params;
-  const [destination, destinations, attractions, guides, destinationGuides, cities, authors] = await Promise.all([
+  const [destination, destinations, guides, destinationGuides, cities, authors] = await Promise.all([
     getDestination(slug),
     getDestinations(),
-    getAttractions(),
     getPublishedGuides(),
     getGuidesForDestination(slug),
     getPublishedCities(),
@@ -111,27 +106,9 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
   const destinationGuideIds = new Set(destinationGuides.map((guide) => guide.id));
   const cityGuideCards = cityGuides.filter((guide) => !destinationGuideIds.has(guide.id)).slice(0, 6);
   const cityGuideLabel = parentCity?.name || destination.city || "this city";
-  const nearbyAttractions =
-    attractions.filter(
-      (attraction) =>
-        attraction.city &&
-        destination.city &&
-        attraction.city.toLowerCase() === destination.city.toLowerCase(),
-    ) || [];
-  const attractionIdeas = nearbyAttractions.length > 0 ? nearbyAttractions : attractions;
   const author = selectDestinationAuthor(authors);
   const publishedDate = formatDisplayDate(destination.createdAt);
   const updatedDate = formatDisplayDate(destination.updatedAt || destination.createdAt);
-  const overviewParagraphs = splitParagraphs(
-    destination.description ||
-      "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route.",
-  );
-  const overviewFacts = [
-    { label: "Best time", value: destination.bestSeason },
-    { label: "Duration", value: destination.duration },
-    { label: "Location", value: location },
-    { label: "Curated pick", value: "Top7Spots" },
-  ].filter((fact) => Boolean(fact.value));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 md:pb-0">
@@ -217,78 +194,23 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <article className="space-y-8">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                OVERVIEW
-              </p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#111827] md:text-3xl">
-                Why visit {destination.name}
-              </h2>
-              <div className="mt-5 space-y-4 text-base leading-8 text-slate-600">
-                {overviewParagraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
-              {overviewFacts.length > 0 ? (
-                <div className="mt-6 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {overviewFacts.map((fact) => (
-                    <div key={fact.label} className="rounded-xl bg-slate-50 px-4 py-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        {fact.label}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-[#111827]">{fact.value}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">Highlights</h2>
-              <div className="flex flex-wrap gap-2.5">
-                {(destination.highlights.length > 0
-                  ? destination.highlights
-                  : ["Signature views", "Local character", "Flexible route planning"]
-                ).map((highlight) => (
-                  <div
-                    key={highlight}
-                    className="max-w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium leading-6 text-slate-700 shadow-sm"
-                  >
-                    {highlight}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <DestinationTravelInfoSections
-              bestSeason={destination.bestSeason}
-              howToGo={destination.howToGo}
-              practicalInfo={destination.practicalInfo}
-              travelTips={destination.travelTips}
-            />
-          </article>
-        </section>
+        <DestinationArticleContent
+          bestSeason={destination.bestSeason}
+          description={destination.description}
+          destinationName={destination.name}
+          faqs={destination.faqs}
+          highlights={destination.highlights}
+          howToGo={destination.howToGo}
+          practicalInfo={destination.practicalInfo}
+          travelTips={destination.travelTips}
+        />
 
         <DestinationGuideSection
           title={`Travel guides for ${destination.name}`}
           guides={destinationGuides.slice(0, 6)}
         />
         <DestinationGuideSection title={`More travel guides for ${cityGuideLabel}`} guides={cityGuideCards} />
-        <FaqSection title={`FAQs about ${destination.name}`} faqs={destination.faqs} />
         <DestinationAuthorSection author={author} />
-
-        <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">
-            Complement the destination with nearby landmarks, viewpoints, and cultural stops.
-          </SectionHeading>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {attractionIdeas.map((attraction) => (
-              <AttractionCard key={attraction.id} attraction={attraction} />
-            ))}
-          </div>
-        </section>
 
         <DestinationCarouselSection
           title={`Keep exploring ${cityGuideLabel}`}
@@ -308,11 +230,4 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
       <SiteFooter />
     </div>
   );
-}
-
-function splitParagraphs(text: string) {
-  return text
-    .split(/\r?\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
 }

@@ -209,14 +209,6 @@ export function GuideDetailArticle({
   const primaryPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type !== "faq") : [];
   const selectedItemListItems = guideItemListEntries(allListingBlocks);
   const renderedListingBlocks = hasPageBlocks ? contentListingBlocks : listingBlocks;
-  const carRentalBlock = (
-    <VehicleCategoryCardsBlock
-      title="Need a Rental Car for Your Trip?"
-      subtitle="Compare popular vehicle categories and choose a rental car that fits your route, luggage, and travel style."
-      label="CAR RENTAL"
-      variant="compact"
-    />
-  );
   const tocItems = buildGuideTocItems({
     city,
     hasPageBlocks,
@@ -241,7 +233,6 @@ export function GuideDetailArticle({
           />
         </div>
       </div>
-      {carRentalBlock}
       {faqPageBlocks.length > 0 ? (
         <div className="mt-6 grid gap-5">
           <GuidePageBlocks
@@ -275,7 +266,6 @@ export function GuideDetailArticle({
       {listingBlocks.map((block) => (
         <GuideListingBlockSection key={block.id} block={block} />
       ))}
-      {carRentalBlock}
       <ServerGuideFaqAccordion faqs={legacyFaqItems} />
     </div>
   );
@@ -359,6 +349,17 @@ export function GuideDetailArticle({
           ) : (
             guideArticleBody
           )}
+        </article>
+
+        <VehicleCategoryCardsBlock
+          title="Need a Rental Car for Your Trip?"
+          subtitle="Compare popular vehicle categories and choose a rental car that fits your route, luggage, and travel style."
+          label="CAR RENTAL"
+          variant="full"
+          className="pt-0"
+        />
+
+        <article className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
           <GuideAuthorBioCard guide={guide} author={author} />
         </article>
 

@@ -2,12 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Car, MapPin, Search, Sparkles } from "lucide-react";
+import { ArrowRight, Car, Search, Sparkles } from "lucide-react";
 import { SearchBox } from "@/components/search-box";
 import { cn } from "@/lib/utils";
-
-type HeroMode = "places" | "cars";
 
 type HomepageHeroModeSwitcherProps = {
   featuredCityCount: number;
@@ -18,90 +15,27 @@ const stats = [
   ["Curated", "travel ideas"],
 ] as const;
 
-const discoverCarsWidgetAttributes = {
-  "data-dev-env": "com",
-  "data-location": "",
-  "data-lang": "en",
-  "data-currency": "usd",
-  "data-utm-source": "top7spots",
-  "data-utm-medium": "widget",
-  "data-aff-code": "a_aid",
-  "data-aff-channel": "homepage",
-  "data-autocomplete": "on",
-  "data-style-submit-bg-color": "#e85d04",
-  "data-style-submit-font-color": "#ffffff",
-  "data-style-form-bg-color": "#0f2d5c",
-  "data-style-form-font-color": "#c1bebe",
-  "data-style-submit-text": "Search now",
-  "data-style-title-color": "#fffafa",
-  "data-title-text": "Search and compare car rentals and save up to 70%!",
-  "data-style_rounded_corners": "on",
-  "data-localization_currency_box": "on",
-  "data-layout_benefits": "on",
-  "data-layout_description": "on",
-  "data-layout_description_text": "We've selected the best deals from our car rental partners.",
-  "data-layout_logo_style": "on dark",
-  "data-layout_powered_by": "on",
-  "data-layout_style_form_bg_color": "#007ac2",
-  "data-layout_title": "on",
-} as const;
-
 export function HomepageHeroModeSwitcher({ featuredCityCount }: HomepageHeroModeSwitcherProps) {
-  const [mode, setMode] = useState<HeroMode>("places");
-  const [shouldLoadWidget, setShouldLoadWidget] = useState(false);
-  const widgetContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!shouldLoadWidget || !widgetContainerRef.current) {
-      return;
-    }
-
-    if (widgetContainerRef.current.querySelector("#dchwidget")) {
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = "dchwidget";
-    script.src = "https://www.discovercars.com/widget.js?v1";
-    script.async = true;
-
-    Object.entries(discoverCarsWidgetAttributes).forEach(([name, value]) => {
-      script.setAttribute(name, value);
-    });
-
-    widgetContainerRef.current.appendChild(script);
-  }, [shouldLoadWidget]);
-
-  function selectMode(nextMode: HeroMode) {
-    setMode(nextMode);
-
-    if (nextMode === "cars") {
-      setShouldLoadWidget(true);
-    }
-  }
-
   return (
     <div className="mt-8 max-w-3xl">
       <div
         className="inline-flex rounded-full border border-white/15 bg-white/10 p-1 text-sm font-semibold text-blue-50 backdrop-blur"
-        role="tablist"
-        aria-label="Choose hero search mode"
+        aria-label="Hero actions"
       >
-        <ModeButton
-          active={mode === "places"}
+        <ModeLink
+          active
+          href="#featured-cities"
           icon={<Search className="size-4" aria-hidden="true" />}
           label="Explore Places"
-          onClick={() => selectMode("places")}
         />
-        <ModeButton
-          active={mode === "cars"}
+        <ModeLink
+          href="/carrental"
           icon={<Car className="size-4" aria-hidden="true" />}
           label="Rent a Car"
-          onClick={() => selectMode("cars")}
         />
       </div>
 
-      <div className={mode === "places" ? "block" : "hidden"} role="tabpanel" aria-label="Explore Places">
+      <div className="block" aria-label="Explore Places">
         <div className="relative z-30 mt-4 flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/95 p-2 shadow-2xl shadow-blue-950/30 backdrop-blur sm:flex-row">
           <SearchBox
             containerClassName="relative z-40 min-w-0 flex-1"
@@ -145,42 +79,24 @@ export function HomepageHeroModeSwitcher({ featuredCityCount }: HomepageHeroMode
           ))}
         </div>
       </div>
-
-      <div className={mode === "cars" ? "block" : "hidden"} role="tabpanel" aria-label="Rent a Car">
-        {shouldLoadWidget ? (
-          <div className="relative z-20 mt-4 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur md:p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-50">
-              <MapPin className="size-4 text-orange-200" aria-hidden="true" />
-              Search worldwide rental car deals with DiscoverCars
-            </div>
-            <div
-              ref={widgetContainerRef}
-              className="min-h-[420px] w-full overflow-hidden rounded-xl bg-[#0f2d5c] p-2 sm:min-h-[360px]"
-            />
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
 
-function ModeButton({
-  active,
+function ModeLink({
+  active = false,
+  href,
   icon,
   label,
-  onClick,
 }: {
-  active: boolean;
+  active?: boolean;
+  href: string;
   icon: ReactNode;
   label: string;
-  onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
+    <Link
+      href={href}
       className={cn(
         "inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-200",
         active
@@ -190,6 +106,6 @@ function ModeButton({
     >
       {icon}
       {label}
-    </button>
+    </Link>
   );
 }

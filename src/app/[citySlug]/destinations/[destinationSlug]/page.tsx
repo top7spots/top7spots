@@ -195,15 +195,14 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           highlights={destination.highlights}
           howToGo={destination.howToGo}
           practicalInfo={destination.practicalInfo}
-          carRentalBlock={
-            <VehicleCategoryCardsBlock
-              title="Need a Car for This Trip?"
-              subtitle="Compare rental cars and choose a vehicle that fits your route, luggage, and travel style."
-              label="CAR RENTAL"
-              variant="compact"
-            />
-          }
           travelTips={destination.travelTips}
+        />
+
+        <VehicleCategoryCardsBlock
+          title="Need a Car for This Trip?"
+          subtitle="Compare rental cars and choose a vehicle that fits your route, luggage, and travel style."
+          label="CAR RENTAL"
+          variant="full"
         />
 
         <DestinationGuideSection

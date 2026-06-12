@@ -17,6 +17,7 @@ import {
   TentTree,
   Waves,
 } from "lucide-react";
+import { VehicleCategoryCardsBlock } from "@/components/car-rental/vehicle-category-cards-block";
 import { CityDirectory } from "@/components/city-directory";
 import { HomepageHeroModeSwitcher } from "@/components/homepage-hero-mode-switcher";
 import { SafeImage } from "@/components/safe-image";
@@ -254,15 +255,14 @@ export default async function Home() {
                   </h2>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
                     Compare prices from hundreds of trusted car rental providers worldwide and find
-                    the best deal for your trip with{" "}
-                    <a
-                      href="https://www.discovercars.com/?a_aid=top7spots&chan=homepage"
-                      target="_blank"
-                      rel="sponsored noopener noreferrer"
+                    the best deal for your trip from the Top7Spots car rental page.
+                    {" "}
+                    <Link
+                      href="/carrental"
                       className="font-semibold text-[#1D4ED8] underline decoration-blue-300 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
                     >
-                      DiscoverCars
-                    </a>
+                      Compare rental cars
+                    </Link>
                     .
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2.5">
@@ -282,15 +282,13 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-              <a
-                href="https://www.discovercars.com/?a_aid=top7spots&chan=homepage"
-                target="_blank"
-                rel="sponsored noopener noreferrer"
+              <Link
+                href="/carrental"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#C2410C] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#9A3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C2410C] md:w-auto"
               >
                 Compare Car Rental Prices
                 <ArrowRight className="size-4" aria-hidden="true" />
-              </a>
+              </Link>
             </div>
           </div>
         </section>
@@ -337,6 +335,14 @@ export default async function Home() {
             <EmptyState title="More city guides are coming" text="New Top7Spots city hubs will appear here as the collection grows." />
           )}
         </section>
+
+        <VehicleCategoryCardsBlock
+          title="Find the Right Rental Car for Your Trip"
+          subtitle="Compare popular vehicle categories and start your journey with a car that fits your route, luggage, and travel style."
+          label="CAR RENTAL"
+          variant="full"
+          className="pt-0"
+        />
 
         <section id="top-destinations" className="border-y border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

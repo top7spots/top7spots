@@ -31,6 +31,7 @@ import {
   DirectoryGroupsField,
   GuideCardsField,
   PopularLocationCardsField,
+  VehicleCategoryCardsField,
 } from "@/components/admin/car-rental-json-fields";
 import {
   saveAttractionAction,
@@ -2037,12 +2038,8 @@ function CarRentalPageForm({
             helperText='Array of objects: title, description, icon, sortOrder.'
             example={carRentalBenefitsExample}
           />
-          <CarRentalJsonTextarea
-            label="Vehicle category cards"
-            name="vehicleCategoryCards"
+          <VehicleCategoryCardsField
             defaultValue={prettyJson(page?.vehicleCategoryCards)}
-            rows={8}
-            helperText='Array of objects: title, image, startingPrice, buttonText, sortOrder, visible.'
             example={carRentalVehicleCategoryCardsExample}
           />
           <PopularLocationCardsField

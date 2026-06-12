@@ -32,6 +32,7 @@ import type {
   Author,
   Attraction,
   CarRentalPage,
+  CarRentalVehicleCategoryCard,
   ContentStatus,
   Destination,
   Guide,
@@ -74,6 +75,25 @@ function parseCarRentalJsonArray<T>(formData: FormData, key: string, label: stri
     const detail = error instanceof Error ? error.message : "Invalid JSON.";
     throw new Error(`${label} must be valid JSON array. ${detail}`);
   }
+}
+
+async function vehicleCategoryCardsFromForm(formData: FormData) {
+  const cards = parseCarRentalJsonArray<CarRentalVehicleCategoryCard>(
+    formData,
+    "vehicleCategoryCards",
+    "Vehicle category cards",
+  );
+
+  return Promise.all(
+    cards.map(async (card, index) => ({
+      ...card,
+      image: await getImagePathFromForm(formData, {
+        fieldName: `vehicleCategoryImage_${index}`,
+        folder: "car-rental",
+        fallbackName: `vehicle-category-${slugify(card.title || String(index + 1))}`,
+      }),
+    })),
+  );
 }
 
 function checkboxValue(formData: FormData, key: string) {
@@ -823,7 +843,7 @@ export async function saveCarRentalPageAction(formData: FormData) {
       discovercarsAffiliateId: value(formData, "discovercarsAffiliateId") || "top7spots",
       discovercarsChannel: value(formData, "discovercarsChannel") || "locations",
       benefits: parseCarRentalJsonArray(formData, "benefits", "Benefits"),
-      vehicleCategoryCards: parseCarRentalJsonArray(formData, "vehicleCategoryCards", "Vehicle category cards"),
+      vehicleCategoryCards: await vehicleCategoryCardsFromForm(formData),
       descriptionTitle: value(formData, "descriptionTitle"),
       descriptionPreviewText: value(formData, "descriptionPreviewText"),
       descriptionFullText: value(formData, "descriptionFullText"),

@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Search, Trash2 } from "lucide-react";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { CarRentalDirectoryGroup, CarRentalLinkCard, ContentStatus } from "@/lib/types";
+import type { CarRentalDirectoryGroup, CarRentalLinkCard, CarRentalVehicleCategoryCard, ContentStatus } from "@/lib/types";
 
 export type CardSuggestion = CarRentalLinkCard & {
   id?: string;
@@ -46,6 +47,10 @@ type CardSelectorProps = {
   autoFillLabel?: string;
   emptyAutoFillMessage?: string;
   includeDraftsControl?: boolean;
+};
+
+type VehicleCategoryEditorCard = CarRentalVehicleCategoryCard & {
+  editorId: string;
 };
 
 export function CarRentalJsonTextarea({
@@ -146,6 +151,111 @@ export function DestinationCardsField({
       example={example}
       searchPlaceholder="Search cities and destinations by name, country, city, or type"
     />
+  );
+}
+
+export function VehicleCategoryCardsField({
+  defaultValue,
+  example,
+}: {
+  defaultValue: string;
+  example: string;
+}) {
+  const initialCards = parseVehicleCategoryCards(defaultValue);
+  const [cards, setCards] = useState<VehicleCategoryEditorCard[]>(() => withVehicleEditorIds(initialCards.items));
+  const [advancedValue, setAdvancedValue] = useState(initialCards.valid ? pretty(initialCards.items) : defaultValue);
+  const [advancedError, setAdvancedError] = useState(initialCards.valid ? "" : initialCards.message);
+  const jsonValue = pretty(normalizeVehicleCategoryCards(cards));
+
+  function syncCards(nextCards: VehicleCategoryEditorCard[]) {
+    const normalized = normalizeVehicleCategoryEditorCards(nextCards);
+    setCards(normalized);
+    setAdvancedValue(pretty(normalizeVehicleCategoryCards(normalized)));
+    setAdvancedError("");
+  }
+
+  function addCard() {
+    syncCards([
+      ...cards,
+      {
+        title: "",
+        image: "",
+        startingPrice: "",
+        buttonText: "Find Available Cars",
+        sortOrder: cards.length,
+        visible: true,
+        editorId: newVehicleEditorId(),
+      },
+    ]);
+  }
+
+  function updateCard(index: number, patch: Partial<CarRentalVehicleCategoryCard>) {
+    syncCards(cards.map((card, cardIndex) => (cardIndex === index ? { ...card, ...patch } : card)));
+  }
+
+  function removeCard(index: number) {
+    syncCards(cards.filter((_, cardIndex) => cardIndex !== index));
+  }
+
+  function moveCard(index: number, direction: -1 | 1) {
+    syncCards(moveItem(cards, index, direction));
+  }
+
+  function handleAdvancedChange(value: string) {
+    setAdvancedValue(value);
+    const parsed = parseVehicleCategoryCards(value);
+    if (!parsed.valid) {
+      setAdvancedError(parsed.message);
+      return;
+    }
+
+    setAdvancedError("");
+    setCards(withVehicleEditorIds(parsed.items));
+  }
+
+  return (
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <input type="hidden" name="vehicleCategoryCards" value={jsonValue} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Label>Vehicle Category Cards</Label>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Manage the vehicle cards shown on the public car rental page. Card buttons scroll to the DiscoverCars widget.
+          </p>
+        </div>
+        <Button type="button" onClick={addCard} className="rounded-full bg-[#0A2A66] text-white hover:bg-[#1D4ED8]">
+          <Plus className="size-4" aria-hidden="true" />
+          Add Vehicle Category
+        </Button>
+      </div>
+
+      <div className="grid gap-4">
+        {cards.map((card, index) => (
+          <VehicleCategoryCardEditor
+            key={card.editorId}
+            card={card}
+            index={index}
+            count={cards.length}
+            onChange={updateCard}
+            onRemove={removeCard}
+            onMove={moveCard}
+          />
+        ))}
+        {cards.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            No vehicle categories yet. Add one to show this section on the public page.
+          </p>
+        ) : null}
+      </div>
+
+      <AdvancedJsonEditor
+        value={advancedValue}
+        rows={8}
+        example={example}
+        error={advancedError}
+        onChange={handleAdvancedChange}
+      />
+    </div>
   );
 }
 
@@ -575,6 +685,89 @@ function EditableCardRow({
   );
 }
 
+function VehicleCategoryCardEditor({
+  card,
+  index,
+  count,
+  onChange,
+  onRemove,
+  onMove,
+}: {
+  card: CarRentalVehicleCategoryCard;
+  index: number;
+  count: number;
+  onChange: (index: number, patch: Partial<CarRentalVehicleCategoryCard>) => void;
+  onRemove: (index: number) => void;
+  onMove: (index: number, direction: -1 | 1) => void;
+}) {
+  return (
+    <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Vehicle category {index + 1}
+        </p>
+        <RowControls index={index} count={count} onMove={onMove} onRemove={onRemove} />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(240px,340px)_1fr]">
+        <ImageUploadField
+          fieldName={`vehicleCategoryImage_${index}`}
+          label="Vehicle image"
+          currentImage={card.image}
+        />
+        <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor={`vehicle-title-${index}`}>Title</Label>
+              <Input
+                id={`vehicle-title-${index}`}
+                value={card.title}
+                onChange={(event) => onChange(index, { title: event.target.value })}
+                placeholder="SUVs"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`vehicle-price-${index}`}>Starting price</Label>
+              <Input
+                id={`vehicle-price-${index}`}
+                value={card.startingPrice}
+                onChange={(event) => onChange(index, { startingPrice: event.target.value })}
+                placeholder="$40/day"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`vehicle-button-${index}`}>Button text</Label>
+              <Input
+                id={`vehicle-button-${index}`}
+                value={card.buttonText}
+                onChange={(event) => onChange(index, { buttonText: event.target.value })}
+                placeholder="Find Cars"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`vehicle-order-${index}`}>Sort order</Label>
+              <Input
+                id={`vehicle-order-${index}`}
+                type="number"
+                value={card.sortOrder}
+                onChange={(event) => onChange(index, { sortOrder: Number(event.target.value) || 0 })}
+              />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={card.visible !== false}
+              onChange={(event) => onChange(index, { visible: event.target.checked })}
+              className="size-4 rounded border-slate-300 text-[#1D4ED8]"
+            />
+            Visible
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DirectoryGroupCreator({ onAdd }: { onAdd: (title: string) => void }) {
   const [customTitle, setCustomTitle] = useState("");
 
@@ -782,6 +975,25 @@ function parseCards(value: string): { valid: boolean; items: CarRentalLinkCard[]
   }
 }
 
+function parseVehicleCategoryCards(value: string): { valid: boolean; items: CarRentalVehicleCategoryCard[]; message: string } {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    if (!Array.isArray(parsed)) {
+      return { valid: false, items: [], message: "JSON must be an array of vehicle category card objects." };
+    }
+
+    return {
+      valid: true,
+      items: normalizeVehicleCategoryCards(
+        parsed.map((item) => ({ ...emptyVehicleCategoryCard(), ...(isRecord(item) ? item : {}) })),
+      ),
+      message: "",
+    };
+  } catch (error) {
+    return { valid: false, items: [], message: jsonErrorMessage(error) };
+  }
+}
+
 function parseGroups(value: string): { valid: boolean; items: CarRentalDirectoryGroup[]; message: string } {
   try {
     const parsed = JSON.parse(value || "[]");
@@ -845,6 +1057,35 @@ function normalizeCards(cards: CarRentalLinkCard[]) {
     .map((card, index) => ({ ...card, sortOrder: index }));
 }
 
+function normalizeVehicleCategoryCards(cards: CarRentalVehicleCategoryCard[]) {
+  return cards
+    .map((card, index) => ({
+      title: stringValue(card.title),
+      image: stringValue(card.image),
+      startingPrice: stringValue(card.startingPrice),
+      buttonText: stringValue(card.buttonText) || "Find Available Cars",
+      sortOrder: numberValue(card.sortOrder, index),
+      visible: card.visible !== false,
+    }))
+    .filter((card) => card.title || card.image || card.startingPrice)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function normalizeVehicleCategoryEditorCards(cards: VehicleCategoryEditorCard[]) {
+  return cards
+    .map((card, index) => ({
+      ...card,
+      title: stringValue(card.title),
+      image: stringValue(card.image),
+      startingPrice: stringValue(card.startingPrice),
+      buttonText: stringValue(card.buttonText) || "Find Available Cars",
+      sortOrder: numberValue(card.sortOrder, index),
+      visible: card.visible !== false,
+      editorId: card.editorId || newVehicleEditorId(),
+    }))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
 function normalizeGroups(groups: CarRentalDirectoryGroup[]) {
   return groups
     .map((group, index) => ({
@@ -887,6 +1128,33 @@ function emptyCard(): CarRentalLinkCard {
     sortOrder: 0,
     visible: true,
   };
+}
+
+function emptyVehicleCategoryCard(): CarRentalVehicleCategoryCard {
+  return {
+    title: "",
+    image: "",
+    startingPrice: "",
+    buttonText: "Find Available Cars",
+    sortOrder: 0,
+    visible: true,
+  };
+}
+
+function withVehicleEditorIds(
+  cards: CarRentalVehicleCategoryCard[],
+  previousCards: VehicleCategoryEditorCard[] = [],
+): VehicleCategoryEditorCard[] {
+  return cards.map((card, index) => ({
+    ...card,
+    editorId: previousCards[index]?.editorId || newVehicleEditorId(),
+  }));
+}
+
+function newVehicleEditorId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `vehicle-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function moveItem<T>(items: T[], index: number, direction: -1 | 1) {

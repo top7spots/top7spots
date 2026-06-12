@@ -14,6 +14,7 @@ type DestinationArticleContentProps = {
   highlights: string[];
   howToGo: string;
   practicalInfo: string[];
+  carRentalBlock?: ReactNode;
   travelTips: string[];
 };
 
@@ -33,6 +34,7 @@ export function DestinationArticleContent({
   highlights,
   howToGo,
   practicalInfo,
+  carRentalBlock,
   travelTips,
 }: DestinationArticleContentProps) {
   const descriptionParagraphs = splitParagraphs(
@@ -141,6 +143,8 @@ export function DestinationArticleContent({
                 </ul>
               </ArticleSection>
             ) : null}
+
+            {carRentalBlock}
 
             {validFaqs.length > 0 ? (
               <div id="faq" className="scroll-mt-28">

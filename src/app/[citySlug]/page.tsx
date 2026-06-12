@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
 import { DestinationCard } from "@/components/destination-card";
 import { CarRentalLandingPage } from "@/components/car-rental/car-rental-landing-page";
+import { VehicleCategoryCardsBlock } from "@/components/car-rental/vehicle-category-cards-block";
 import { SectionHeading } from "@/components/section-heading";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -190,6 +191,14 @@ export default async function CityPage({ params }: CityPageProps) {
 
           {longDescription ? <AboutCitySection city={city} longDescription={longDescription} /> : null}
         </section>
+
+        <VehicleCategoryCardsBlock
+          title="Rent a Car for Your Trip"
+          subtitle="Compare popular vehicle categories and choose a rental car that fits your route, luggage, and travel style."
+          label="CAR RENTAL"
+          variant="full"
+          className="pt-0"
+        />
 
         <section className="mx-auto max-w-[88rem] px-4 py-9 sm:px-6 lg:px-8">
           {cityGuides.length > 0 ? (

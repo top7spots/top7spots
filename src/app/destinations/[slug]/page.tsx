@@ -6,6 +6,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { VehicleCategoryCardsBlock } from "@/components/car-rental/vehicle-category-cards-block";
 import { DestinationArticleContent } from "@/components/destination-article-content";
 import { DestinationAuthorSection, selectDestinationAuthor } from "@/components/destination-author-section";
 import { DestinationDetailHero } from "@/components/destination-detail-hero";
@@ -202,6 +203,14 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
           highlights={destination.highlights}
           howToGo={destination.howToGo}
           practicalInfo={destination.practicalInfo}
+          carRentalBlock={
+            <VehicleCategoryCardsBlock
+              title="Need a Car for This Trip?"
+              subtitle="Compare rental cars and choose a vehicle that fits your route, luggage, and travel style."
+              label="CAR RENTAL"
+              variant="compact"
+            />
+          }
           travelTips={destination.travelTips}
         />
 

@@ -64,7 +64,7 @@ function carRentalLanguageValue(formData: FormData) {
 
 function carRentalPageTypeValue(formData: FormData) {
   const pageType = value(formData, "pageType");
-  return pageType === "country" || pageType === "city" || pageType === "airport" ? pageType : "";
+  return pageType === "global" || pageType === "country" || pageType === "city" || pageType === "airport" ? pageType : "";
 }
 
 function parseCarRentalJsonArray<T>(formData: FormData, key: string, label: string): T[] {
@@ -823,6 +823,7 @@ export async function saveCarRentalPageAction(formData: FormData) {
       discovercarsAffiliateId: value(formData, "discovercarsAffiliateId") || "top7spots",
       discovercarsChannel: value(formData, "discovercarsChannel") || "locations",
       benefits: parseCarRentalJsonArray(formData, "benefits", "Benefits"),
+      vehicleCategoryCards: parseCarRentalJsonArray(formData, "vehicleCategoryCards", "Vehicle category cards"),
       descriptionTitle: value(formData, "descriptionTitle"),
       descriptionPreviewText: value(formData, "descriptionPreviewText"),
       descriptionFullText: value(formData, "descriptionFullText"),

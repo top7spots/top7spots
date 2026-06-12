@@ -40,7 +40,7 @@ export function CarRentalBulkImport() {
           setHasValidated(false);
         }}
         rows={12}
-        placeholder='{"language":"en","slug":"rent-a-car-in-oman","translationGroup":"rent-a-car-in-oman","countryName":"Oman","countrySlug":"oman","pageType":"country","status":"draft","pageTitle":"Rent a Car in Oman","hero":{"title":"Rent a Car in Oman"}}'
+        placeholder='{"language":"en","slug":"carrental","translationGroup":"carrental","pageType":"global","status":"draft","pageTitle":"Car Rental","hero":{"title":"Compare Rental Cars Worldwide"},"vehicleCategoryCards":[{"title":"Small Cars","startingPrice":"From $20/day","buttonText":"Find Available Cars","sortOrder":0,"visible":true}]}'
         className="font-mono text-xs"
       />
       <div className="flex flex-wrap items-center gap-3">
@@ -79,6 +79,7 @@ export function CarRentalBulkImport() {
               <Summary label="Status" value={status} />
               <Summary label="Hero chips" value={preview.page.heroChips.length} />
               <Summary label="Benefits" value={preview.page.benefits.length} />
+              <Summary label="Vehicle categories" value={preview.page.vehicleCategoryCards.length} />
               <Summary label="Popular cards" value={preview.page.popularLocationCards.length} />
               <Summary label="Guide cards" value={preview.page.guideCards.length} />
               <Summary label="Destination cards" value={preview.page.destinationCards.length} />

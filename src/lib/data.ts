@@ -178,7 +178,7 @@ function status(value?: string | null): ContentStatus {
 
 function pageTypeField(row: Record<string, unknown>) {
   const value = stringField(row, "page_type", "pageType").toLowerCase();
-  return value === "country" || value === "city" || value === "airport" ? value : "";
+  return value === "global" || value === "country" || value === "city" || value === "airport" ? value : "";
 }
 
 function guideTargetType(row: GuideRow): GuideTargetType {
@@ -532,6 +532,7 @@ function mapCarRentalPage(row: CarRentalPageRow): CarRentalPage {
     discovercarsAffiliateId: stringField(row, "discovercars_affiliate_id", "discovercarsAffiliateId") || "top7spots",
     discovercarsChannel: stringField(row, "discovercars_channel", "discovercarsChannel") || "locations",
     benefits: jsonArrayField(row, "benefits"),
+    vehicleCategoryCards: jsonArrayField(row, "vehicle_category_cards", "vehicleCategoryCards"),
     descriptionTitle: stringField(row, "description_title", "descriptionTitle"),
     descriptionPreviewText: stringField(row, "description_preview_text", "descriptionPreviewText"),
     descriptionFullText: stringField(row, "description_full_text", "descriptionFullText"),
@@ -792,6 +793,7 @@ function toCarRentalPageRow(item: CarRentalPage): CarRentalPageRow {
     discovercars_affiliate_id: page.discovercarsAffiliateId,
     discovercars_channel: page.discovercarsChannel,
     benefits: page.benefits,
+    vehicle_category_cards: page.vehicleCategoryCards,
     description_title: page.descriptionTitle,
     description_preview_text: page.descriptionPreviewText,
     description_full_text: page.descriptionFullText,

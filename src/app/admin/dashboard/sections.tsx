@@ -1975,6 +1975,7 @@ function CarRentalPageForm({
           <Field label="City slug" name="citySlug" defaultValue={page?.citySlug} placeholder="muscat" />
           <SelectField label="Page type" name="pageType" defaultValue={page?.pageType || "country"}>
             <option value="">Not specified</option>
+            <option value="global">Global</option>
             <option value="country">Country</option>
             <option value="city">City</option>
             <option value="airport">Airport</option>
@@ -2036,6 +2037,14 @@ function CarRentalPageForm({
             helperText='Array of objects: title, description, icon, sortOrder.'
             example={carRentalBenefitsExample}
           />
+          <CarRentalJsonTextarea
+            label="Vehicle category cards"
+            name="vehicleCategoryCards"
+            defaultValue={prettyJson(page?.vehicleCategoryCards)}
+            rows={8}
+            helperText='Array of objects: title, image, startingPrice, buttonText, sortOrder, visible.'
+            example={carRentalVehicleCategoryCardsExample}
+          />
           <PopularLocationCardsField
             defaultValue={prettyJson(page?.popularLocationCards)}
             suggestions={popularLocationSuggestions}
@@ -2090,6 +2099,25 @@ const carRentalCardsExample = prettyJson([
     image: "",
     label: "Car rental",
     sortOrder: 0,
+    visible: true,
+  },
+]);
+
+const carRentalVehicleCategoryCardsExample = prettyJson([
+  {
+    title: "Small Cars",
+    image: "",
+    startingPrice: "From $20/day",
+    buttonText: "Find Available Cars",
+    sortOrder: 0,
+    visible: true,
+  },
+  {
+    title: "SUVs",
+    image: "",
+    startingPrice: "From $40/day",
+    buttonText: "Find Available Cars",
+    sortOrder: 1,
     visible: true,
   },
 ]);

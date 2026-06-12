@@ -6,6 +6,7 @@ import type {
   CarRentalLanguage,
   CarRentalLinkCard,
   CarRentalPage,
+  CarRentalVehicleCategoryCard,
   ContentStatus,
 } from "@/lib/types";
 import { cleanPath, siteBaseUrl } from "@/lib/seo";
@@ -15,6 +16,13 @@ export const defaultDiscoverCarsAffiliateLink =
 
 export const defaultDiscoverCarsWidgetCode =
   '<div><script id="dchwidget" src="https://www.discovercars.com/widget.js?v1" data-dev-env="com" data-location="" data-utm-source="top7spots" data-utm-medium="widget" data-aff-code="a_aid" data-aff-channel="locations" data-autocomplete="on" data-style-submit-bg-color="#005b96" data-style-submit-font-color="#ffffff" data-style-form-bg-color="#fff7e6" data-style-form-font-color="#1f2937" data-style-submit-text="Find my cars" data-style-title-color="#111827" async="async" data-style_rounded_corners="on" data-localization_currency_box="on" data-layout_logo_style="on dark" data-layout_style_form_bg_color="#007ac2"></script></div>';
+
+export const globalCarRentalSlug = "carrental";
+export const globalCarRentalPath = "/carrental";
+
+export function getDefaultCarRentalPath() {
+  return globalCarRentalPath;
+}
 
 export type CarRentalImportInput = {
   language?: unknown;
@@ -45,6 +53,7 @@ export type CarRentalImportInput = {
     discovercarsChannel?: unknown;
   };
   benefits?: unknown;
+  vehicleCategoryCards?: unknown;
   description?: {
     title?: unknown;
     previewText?: unknown;
@@ -135,6 +144,7 @@ export function normalizeCarRentalImport(input: CarRentalImportInput, existingId
     discovercarsAffiliateId: textValue(input.widget?.discovercarsAffiliateId) || "top7spots",
     discovercarsChannel: textValue(input.widget?.discovercarsChannel) || "locations",
     benefits: normalizeBenefits(input.benefits),
+    vehicleCategoryCards: normalizeVehicleCategoryCards(input.vehicleCategoryCards),
     descriptionTitle: textValue(input.description?.title),
     descriptionPreviewText: textValue(input.description?.previewText),
     descriptionFullText: textValue(input.description?.fullText),
@@ -185,6 +195,7 @@ export function normalizeCarRentalPageDraft(page: CarRentalPage): CarRentalPage 
     status: normalizeStatus(page.status) || "draft",
     heroChips: stringArray(page.heroChips),
     benefits: normalizeBenefits(page.benefits),
+    vehicleCategoryCards: normalizeVehicleCategoryCards(page.vehicleCategoryCards),
     popularLocationCards: normalizeCards(page.popularLocationCards),
     guideCards: normalizeCards(page.guideCards),
     destinationCards: normalizeCards(page.destinationCards),
@@ -206,7 +217,7 @@ function normalizeStatus(value: unknown): ContentStatus | null {
 }
 
 function normalizePageType(value: unknown) {
-  return value === "country" || value === "city" || value === "airport" ? value : "";
+  return value === "global" || value === "country" || value === "city" || value === "airport" ? value : "";
 }
 
 function textValue(value: unknown) {
@@ -275,6 +286,20 @@ function normalizeCards(value: unknown): CarRentalLinkCard[] {
       visible: visibleValue(item.visible),
     }))
     .filter((item) => item.title && item.url && item.visible)
+    .sort(sortByOrder);
+}
+
+function normalizeVehicleCategoryCards(value: unknown): CarRentalVehicleCategoryCard[] {
+  return records(value)
+    .map((item, index) => ({
+      title: textValue(item.title),
+      image: textValue(item.image),
+      startingPrice: textValue(item.startingPrice) || textValue(item.price),
+      buttonText: textValue(item.buttonText) || "Find Available Cars",
+      sortOrder: numberValue(item.sortOrder, index),
+      visible: visibleValue(item.visible),
+    }))
+    .filter((item) => item.title && item.visible)
     .sort(sortByOrder);
 }
 

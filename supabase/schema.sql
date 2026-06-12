@@ -213,7 +213,7 @@ create table if not exists public.car_rental_pages (
   country_slug text,
   city_name text,
   city_slug text,
-  page_type text check (page_type is null or page_type in ('country', 'city', 'airport')),
+  page_type text check (page_type is null or page_type in ('global', 'country', 'city', 'airport')),
   status text not null default 'draft' check (status in ('draft', 'published')),
   page_title text not null,
   seo_title text,
@@ -230,6 +230,7 @@ create table if not exists public.car_rental_pages (
   discovercars_affiliate_id text,
   discovercars_channel text,
   benefits jsonb not null default '[]'::jsonb,
+  vehicle_category_cards jsonb not null default '[]'::jsonb,
   description_title text,
   description_preview_text text,
   description_full_text text,
@@ -249,9 +250,10 @@ alter table public.car_rental_pages add column if not exists country_slug text;
 alter table public.car_rental_pages add column if not exists city_name text;
 alter table public.car_rental_pages add column if not exists city_slug text;
 alter table public.car_rental_pages add column if not exists page_type text;
+alter table public.car_rental_pages add column if not exists vehicle_category_cards jsonb not null default '[]'::jsonb;
 alter table public.car_rental_pages drop constraint if exists car_rental_pages_page_type_check;
 alter table public.car_rental_pages add constraint car_rental_pages_page_type_check
-  check (page_type is null or page_type in ('country', 'city', 'airport'));
+  check (page_type is null or page_type in ('global', 'country', 'city', 'airport'));
 
 create table if not exists public.contact_messages (
   id uuid primary key default gen_random_uuid(),

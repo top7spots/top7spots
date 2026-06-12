@@ -21,7 +21,7 @@ import { carRentalCanonicalUrl, carRentalPublicPath } from "@/lib/car-rental-pag
 import { resolveImagePath } from "@/lib/images";
 import { absoluteImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import type { CarRentalLinkCard, CarRentalPage } from "@/lib/types";
+import type { CarRentalBenefit, CarRentalLinkCard, CarRentalPage, CarRentalVehicleCategoryCard } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type CarRentalLandingPageProps = {
@@ -64,30 +64,33 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
       <main>
         <CarRentalHero page={page} isRtl={isRtl} coverImage={coverImage} />
         <CarRentalTrustBar />
+        <VehicleCategorySection cards={page.vehicleCategoryCards} />
+        <CarRentalBenefitsSection benefits={page.benefits} />
         <CompactCardSection
           eyebrow="Popular rental locations"
-          title="Pick up your rental car where it makes sense"
+          title="Popular Cities / Popular Locations"
           cards={locationCards}
           kind="location"
           gridClassName="grid-cols-2 lg:grid-cols-4"
         />
-        <SimpleTextLinkListings page={page} />
         <CompactCardSection
           eyebrow="Road trip ideas"
-          title="Places to visit by rental car"
+          title="Top Destinations"
           cards={page.destinationCards}
           kind="destination"
           gridClassName="grid-cols-2 lg:grid-cols-3"
         />
         <CompactCardSection
           eyebrow="Driving and rental guides"
-          title="Plan the practical details before you book"
+          title="Car Rental Guides"
           cards={page.guideCards}
           kind="guide"
           gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         />
         <CarRentalDescriptionReadMore page={page} isRtl={isRtl} />
+        <SimpleTextLinkListings page={page} />
         <CarRentalFAQSection page={page} isRtl={isRtl} />
+        <CarRentalWidgetCta />
       </main>
       <SiteFooter />
     </div>
@@ -142,7 +145,7 @@ export function CarRentalHero({
 
 export function CarRentalWidgetCard({ page }: { page: CarRentalPage; isRtl?: boolean }) {
   return (
-    <aside className="relative z-40 w-full overflow-visible rounded-[1.25rem] border border-white/20 bg-white p-3 shadow-[0_24px_70px_rgb(2_6_23_/_30%)] sm:p-4">
+    <aside id="discovercars-widget" className="relative z-40 w-full scroll-mt-24 overflow-visible rounded-[1.25rem] border border-white/20 bg-white p-3 shadow-[0_24px_70px_rgb(2_6_23_/_30%)] sm:p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF6B00]">Compare and book</p>
@@ -180,6 +183,76 @@ function HeroChips({ chips, className }: { chips: string[]; className?: string }
         </span>
       ))}
     </div>
+  );
+}
+
+function VehicleCategorySection({ cards }: { cards: CarRentalVehicleCategoryCard[] }) {
+  const visibleCards = cards.filter((card) => card.title && card.visible !== false).sort((a, b) => a.sortOrder - b.sortOrder);
+
+  if (visibleCards.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6 lg:px-8">
+      <SectionIntro eyebrow="Car types" title="Popular Vehicle Categories" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {visibleCards.map((card, index) => (
+          <VehicleCategoryCard key={`${card.title}-${index}`} card={card} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function VehicleCategoryCard({ card }: { card: CarRentalVehicleCategoryCard }) {
+  return (
+    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+      <div className="relative h-32 bg-slate-100">
+        {card.image ? (
+          <SafeImage src={resolveImagePath(card.image)} alt={card.title} fill sizes="(max-width: 640px) 100vw, 260px" className="object-cover" />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50 text-[#1D4ED8]">
+            <Car className="size-10" aria-hidden="true" />
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="text-lg font-semibold tracking-tight text-[#111827]">{card.title}</h3>
+        {card.startingPrice ? <p className="mt-1 text-sm font-semibold text-[#FF6B00]">{card.startingPrice}</p> : null}
+        <a
+          href="#discovercars-widget"
+          className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#0A2A66] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]"
+        >
+          {card.buttonText || "Find Available Cars"}
+        </a>
+      </div>
+    </article>
+  );
+}
+
+function CarRentalBenefitsSection({ benefits }: { benefits: CarRentalBenefit[] }) {
+  const visibleBenefits = benefits.filter((benefit) => benefit.title || benefit.description).sort((a, b) => a.sortOrder - b.sortOrder);
+
+  if (visibleBenefits.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6 lg:px-8">
+      <SectionIntro eyebrow="Why Top7Spots" title="Why Book Through Top7Spots" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {visibleBenefits.map((benefit, index) => (
+          <article key={`${benefit.title}-${index}`} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="inline-flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <CheckCircle2 className="size-5" aria-hidden="true" />
+            </div>
+            {benefit.title ? <h3 className="mt-4 text-lg font-semibold tracking-tight text-[#111827]">{benefit.title}</h3> : null}
+            {benefit.description ? <p className="mt-2 text-sm leading-6 text-slate-600">{benefit.description}</p> : null}
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -305,6 +378,25 @@ export function CarRentalFAQSection({ page, isRtl }: { page: CarRentalPage; isRt
     <section className="mx-auto max-w-[88rem] px-4 py-6 pb-10 sm:px-6 lg:px-8">
       <SectionIntro eyebrow="FAQs" title={`Questions about ${page.pageTitle}`} />
       <CarRentalFAQ faqs={page.faqs} isRtl={isRtl} />
+    </section>
+  );
+}
+
+function CarRentalWidgetCta() {
+  return (
+    <section className="mx-auto max-w-[88rem] px-4 pb-12 pt-2 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 rounded-2xl bg-[#0A2A66] p-5 text-white shadow-[0_24px_70px_rgb(10_42_102_/_18%)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">Ready to compare?</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Find your rental car</h2>
+        </div>
+        <a
+          href="#discovercars-widget"
+          className="inline-flex w-fit items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0A2A66] shadow-sm transition hover:bg-blue-50"
+        >
+          Search cars
+        </a>
+      </div>
     </section>
   );
 }

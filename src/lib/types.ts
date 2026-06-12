@@ -268,7 +268,7 @@ export type SitePage = {
 };
 
 export type CarRentalLanguage = "en" | "ar";
-export type CarRentalPageType = "country" | "city" | "airport" | "";
+export type CarRentalPageType = "global" | "country" | "city" | "airport" | "";
 
 export type CarRentalBenefit = {
   title: string;
@@ -283,6 +283,15 @@ export type CarRentalLinkCard = {
   description: string;
   image: string;
   label: string;
+  sortOrder: number;
+  visible: boolean;
+};
+
+export type CarRentalVehicleCategoryCard = {
+  title: string;
+  image: string;
+  startingPrice: string;
+  buttonText: string;
   sortOrder: number;
   visible: boolean;
 };
@@ -332,6 +341,7 @@ export type CarRentalPage = {
   discovercarsAffiliateId: string;
   discovercarsChannel: string;
   benefits: CarRentalBenefit[];
+  vehicleCategoryCards: CarRentalVehicleCategoryCard[];
   descriptionTitle: string;
   descriptionPreviewText: string;
   descriptionFullText: string;

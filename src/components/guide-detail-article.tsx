@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -12,6 +11,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import {
   GuideArticleToc,
   ReadingProgress,
@@ -302,7 +302,7 @@ export function GuideDetailArticle({
         <section className="pb-10">
           <div className="relative isolate min-h-[27rem] overflow-hidden bg-[#0A2A66] shadow-[0_24px_70px_rgba(15,23,42,0.18)] md:min-h-[37rem]">
             {heroImage ? (
-              <Image
+              <SafeImage
                 src={image}
                 alt={imageAlt}
                 fill
@@ -575,7 +575,7 @@ function AuthorAvatar({
   return (
     <span className={`relative inline-flex shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 ${className}`}>
       {image ? (
-        <Image
+        <SafeImage
           src={image}
           alt={author?.profileImageAlt || fallbackName}
           fill
@@ -734,7 +734,7 @@ function GuideListingRowCard({
     <article className="group grid overflow-hidden rounded-[1.35rem] bg-white/92 shadow-[0_10px_28px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(220px,36%)_minmax(0,1fr)]">
       <Link href={item.href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 md:aspect-auto md:min-h-56" aria-label={`Explore ${item.title}`}>
         {image ? (
-          <Image
+          <SafeImage
             src={image}
             alt={item.title}
             fill
@@ -965,7 +965,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
       ) : null}
       {block.image ? (
         <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
-          <Image
+          <SafeImage
             src={image}
             alt={block.imageAlt || block.title || "Guide image"}
             fill
@@ -1470,7 +1470,7 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
     <article className="group grid overflow-hidden rounded-[1.35rem] bg-white/95 shadow-[0_10px_28px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-0.5 sm:grid-cols-[10.5rem_minmax(0,1fr)]">
       <Link href={href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-auto" aria-label={`Explore ${guide.title}`}>
         {image ? (
-          <Image
+          <SafeImage
             src={image}
             alt={guide.coverImageAlt || `${guide.title} travel guide`}
             fill

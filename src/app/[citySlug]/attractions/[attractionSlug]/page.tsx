@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, MapPin, Sparkles } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { BreadcrumbJsonLd, PlaceJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -130,7 +130,7 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
                 </div>
               </div>
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
-                <Image
+                <SafeImage
                   src={image}
                   alt={`${attraction.name} in ${city.name}`}
                   fill

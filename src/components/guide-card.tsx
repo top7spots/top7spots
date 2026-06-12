@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, BookOpen, MapPin } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getGuideHref } from "@/lib/guide-routes";
@@ -30,7 +30,7 @@ export function GuideCard({
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={imageAlt}
           fill
@@ -90,7 +90,7 @@ export function CompactGuideCard({ guide, href: hrefOverride }: CompactGuideCard
       className="group flex h-full min-w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#2563EB] hover:shadow-lg sm:min-w-0"
     >
       <div className="relative w-24 shrink-0 bg-slate-100 sm:w-28">
-        <Image
+        <SafeImage
           src={image}
           alt={imageAlt}
           fill

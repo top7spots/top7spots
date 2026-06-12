@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { CityDirectory } from "@/components/city-directory";
 import { HomepageHeroModeSwitcher } from "@/components/homepage-hero-mode-switcher";
+import { SafeImage } from "@/components/safe-image";
 import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteHeader } from "@/components/site-header";
@@ -192,7 +192,7 @@ export default async function Home() {
 
       <main>
         <section className="relative isolate min-h-[680px] overflow-hidden bg-[#0A2A66] text-white">
-          <Image
+          <SafeImage
             src={homeHeroImage}
             alt={homeHeroAlt}
             fill
@@ -534,7 +534,7 @@ function CityCard({ city }: { city: City }) {
     <article className="group relative min-h-[420px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-[0_18px_50px_rgb(15_23_42_/_10%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_90px_rgb(15_23_42_/_22%)]">
       <div className="absolute inset-0 overflow-hidden bg-slate-100">
         {image ? (
-          <Image
+          <SafeImage
             src={image}
             alt={`${city.name}, ${city.country}`}
             fill
@@ -588,7 +588,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
   return (
     <article className="group relative min-h-[360px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-[0_18px_50px_rgb(15_23_42_/_10%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_90px_rgb(15_23_42_/_22%)]">
       <div className="absolute inset-0 overflow-hidden bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={`${destination.name}${context ? `, ${context}` : ""}`}
           fill

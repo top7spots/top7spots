@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Sparkles } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { DestinationCard } from "@/components/destination-card";
 import { CarRentalLandingPage } from "@/components/car-rental/car-rental-landing-page";
 import { SectionHeading } from "@/components/section-heading";
@@ -138,7 +138,7 @@ export default async function CityPage({ params }: CityPageProps) {
               </div>
               <div className="relative min-h-64 overflow-hidden bg-slate-200 lg:min-h-full">
                 {cityHeroImage ? (
-                  <Image
+                  <SafeImage
                     src={resolveImagePath(cityHeroImage)}
                     alt={`${city.name}, ${city.country}`}
                     fill
@@ -290,7 +290,7 @@ function SimilarCityCard({ city }: { city: City }) {
     >
       <div className="absolute inset-0 overflow-hidden bg-slate-100">
         {image ? (
-          <Image
+          <SafeImage
             src={resolveImagePath(image)}
             alt={`${city.name}, ${city.country}`}
             fill

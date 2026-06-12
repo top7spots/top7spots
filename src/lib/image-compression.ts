@@ -1,17 +1,21 @@
-const serverUploadLimitBytes = 5 * 1024 * 1024;
 const maxUploadBytes = 8 * 1024 * 1024;
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/svg+xml", "image/webp"]);
 
 type ImageCompressionKind = "hero" | "standard";
+type ImageOutputFormat = "image/jpeg" | "image/png" | "image/webp";
 
-type ImageCompressionOptions = {
+export type CompressImageOptions = {
+  maxWidth?: number;
+  quality?: number;
+  outputFormat?: ImageOutputFormat | "auto";
+  targetBytes?: number;
+};
+
+type ImageCompressionOptions = CompressImageOptions & {
   kind?: ImageCompressionKind;
 };
 
-type CompressionProfile = {
-  targetBytes: number;
-  attempts: Array<{ width: number; quality: number }>;
-};
+type CompressionProfile = Required<Pick<CompressImageOptions, "maxWidth" | "quality" | "targetBytes">>;
 
 export type ImageCompressionResult = {
   file: File;
@@ -20,7 +24,7 @@ export type ImageCompressionResult = {
 
 export function validateAdminImageFile(file: File) {
   if (!allowedImageTypes.has(file.type)) {
-    return "Choose a JPG, JPEG, PNG, or WEBP image.";
+    return "Choose a JPG, JPEG, PNG, WEBP, or SVG image.";
   }
 
   if (file.size > maxUploadBytes) {
@@ -30,9 +34,9 @@ export function validateAdminImageFile(file: File) {
   return null;
 }
 
-export async function compressAdminImage(
+export async function compressImageBeforeUpload(
   file: File,
-  options: ImageCompressionOptions = {},
+  options: CompressImageOptions = {},
 ): Promise<ImageCompressionResult> {
   const validationError = validateAdminImageFile(file);
 
@@ -40,26 +44,24 @@ export async function compressAdminImage(
     throw new Error(validationError);
   }
 
-  const profile = compressionProfile(options.kind || "standard");
-
-  if (file.size <= profile.targetBytes && file.type === "image/webp") {
+  if (file.type === "image/svg+xml") {
     return { file, compressed: false };
   }
 
+  const profile = {
+    maxWidth: options.maxWidth ?? 1200,
+    quality: clampQuality(options.quality ?? 0.8),
+    targetBytes: options.targetBytes ?? 420 * 1024,
+  };
   const bitmap = await loadBitmap(file);
 
   try {
-    const hasTransparency = await imageHasTransparency(bitmap, file.type);
-    if (hasTransparency && file.type === "image/png" && file.size <= profile.targetBytes) {
-      return { file, compressed: false };
-    }
-
-    const outputType = hasTransparency ? "image/png" : await preferredPhotoType();
-
+    const outputType = await outputTypeForFile(file, bitmap, options.outputFormat || "auto");
+    const attempts = compressionAttempts(profile);
     let bestFile: File | null = null;
 
-    for (const attempt of profile.attempts) {
-      const resized = resizeDimensions(bitmap.width, bitmap.height, attempt.width);
+    for (const attempt of attempts) {
+      const resized = resizeDimensions(bitmap.width, bitmap.height, attempt.maxWidth);
       const blob = await renderToBlob(bitmap, resized.width, resized.height, outputType, attempt.quality);
       const compressedFile = fileFromBlob(blob, file, outputType);
 
@@ -68,18 +70,36 @@ export async function compressAdminImage(
       }
 
       if (compressedFile.size <= profile.targetBytes) {
-        return { file: compressedFile, compressed: true };
+        return { file: compressedFile, compressed: compressedFile.size < file.size || resized.width < bitmap.width };
       }
     }
 
-    if (bestFile && bestFile.size < file.size && bestFile.size <= serverUploadLimitBytes) {
+    if (bestFile && bestFile.size < file.size) {
       return { file: bestFile, compressed: true };
+    }
+
+    if (file.size <= profile.targetBytes && bitmap.width <= profile.maxWidth) {
+      return { file, compressed: false };
     }
 
     throw new Error("Image compression did not reduce this file enough. Try a smaller image.");
   } finally {
     closeBitmap(bitmap);
   }
+}
+
+export async function compressAdminImage(
+  file: File,
+  options: ImageCompressionOptions = {},
+): Promise<ImageCompressionResult> {
+  const profile = compressionProfile(options.kind || "standard");
+
+  return compressImageBeforeUpload(file, {
+    maxWidth: options.maxWidth ?? profile.maxWidth,
+    quality: options.quality ?? profile.quality,
+    outputFormat: options.outputFormat ?? "auto",
+    targetBytes: options.targetBytes ?? profile.targetBytes,
+  });
 }
 
 export function createFileList(files: File[]) {
@@ -111,7 +131,7 @@ function loadImageElement(file: File) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Could not read this image. Try a different JPG, PNG, or WEBP file."));
+      reject(new Error("Could not read this image. Try a different JPG, PNG, WEBP, or SVG file."));
     };
     image.src = url;
   });
@@ -132,25 +152,25 @@ function resizeDimensions(width: number, height: number, maxWidth: number) {
 function compressionProfile(kind: ImageCompressionKind): CompressionProfile {
   if (kind === "hero") {
     return {
-      targetBytes: 150 * 1024,
-      attempts: [
-        { width: 1600, quality: 0.78 },
-        { width: 1600, quality: 0.72 },
-        { width: 1400, quality: 0.72 },
-        { width: 1200, quality: 0.7 },
-      ],
+      maxWidth: 1920,
+      quality: 0.82,
+      targetBytes: 760 * 1024,
     };
   }
 
   return {
-    targetBytes: 95 * 1024,
-    attempts: [
-      { width: 1200, quality: 0.76 },
-      { width: 1200, quality: 0.7 },
-      { width: 1000, quality: 0.7 },
-      { width: 900, quality: 0.66 },
-    ],
+    maxWidth: 1200,
+    quality: 0.8,
+    targetBytes: 420 * 1024,
   };
+}
+
+function compressionAttempts(profile: CompressionProfile) {
+  return [
+    { maxWidth: profile.maxWidth, quality: profile.quality },
+    { maxWidth: Math.round(profile.maxWidth * 0.9), quality: Math.max(0.75, profile.quality - 0.04) },
+    { maxWidth: Math.round(profile.maxWidth * 0.8), quality: Math.max(0.72, profile.quality - 0.08) },
+  ];
 }
 
 function renderToBlob(
@@ -187,11 +207,23 @@ function renderToBlob(
   });
 }
 
-let webpSupport: boolean | null = null;
+async function outputTypeForFile(
+  file: File,
+  source: ImageBitmap | HTMLImageElement,
+  outputFormat: CompressImageOptions["outputFormat"],
+) {
+  if (outputFormat && outputFormat !== "auto") {
+    return outputFormat;
+  }
 
-async function preferredPhotoType() {
-  return (await browserSupportsWebp()) ? "image/webp" : "image/jpeg";
+  if (await browserSupportsWebp()) {
+    return "image/webp";
+  }
+
+  return (await imageHasTransparency(source, file.type)) ? "image/png" : "image/jpeg";
 }
+
+let webpSupport: boolean | null = null;
 
 async function browserSupportsWebp() {
   if (webpSupport !== null) {
@@ -254,4 +286,8 @@ function closeBitmap(bitmap: ImageBitmap | HTMLImageElement) {
   if ("close" in bitmap && typeof bitmap.close === "function") {
     bitmap.close();
   }
+}
+
+function clampQuality(quality: number) {
+  return Math.min(0.95, Math.max(0.1, quality));
 }

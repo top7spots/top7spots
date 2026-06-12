@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BookOpen, Building2, MapPin, Sparkles } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { DestinationCard } from "@/components/destination-card";
@@ -113,7 +113,7 @@ export default async function CountryPage({ params }: CountryPageProps) {
                 </div>
               </div>
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
-                <Image
+                <SafeImage
                   src={heroImage}
                   alt={`${country.name} travel inspiration`}
                   fill

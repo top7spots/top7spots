@@ -140,7 +140,7 @@ export function ImageUploadField({
           id={inputId}
           name={`${fieldName}File`}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
           className="sr-only"
           onChange={(event) => {
             void handleFile(event.target.files?.[0]);
@@ -320,7 +320,7 @@ export function GalleryUploadField({
           name={`${fieldName}Files`}
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
           className="sr-only"
           onChange={(event) => {
             void handleFiles(event.target.files || []);

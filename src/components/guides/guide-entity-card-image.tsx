@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { MapPinned } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 
 type GuideEntityCardImageProps = {
   src: string;
@@ -14,7 +14,7 @@ export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCard
   }
 
   return (
-    <Image
+    <SafeImage
       src={src}
       alt={alt}
       fill

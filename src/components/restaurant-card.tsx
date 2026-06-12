@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { resolveImagePath } from "@/lib/images";
 import type { City, Restaurant } from "@/lib/types";
 
@@ -14,7 +14,7 @@ export function RestaurantCard({ restaurant, city }: { restaurant: Restaurant; c
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         {image ? (
-          <Image
+          <SafeImage
             src={image}
             alt={restaurant.name}
             fill

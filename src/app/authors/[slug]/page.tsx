@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExternalLink, Mail, MapPin, UserRound } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { JsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
@@ -69,7 +69,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
               <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[180px_minmax(0,1fr)] lg:p-10">
                 <div className="relative size-36 overflow-hidden rounded-full border border-slate-200 bg-slate-100 md:size-44">
                   {image ? (
-                    <Image
+                    <SafeImage
                       src={image}
                       alt={author.profileImageAlt || author.name}
                       fill
@@ -217,7 +217,7 @@ function AuthorGuideCard({ guide }: { guide: Guide }) {
     <article className="group grid overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[#FCFDFF] shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-blue-200 hover:shadow-md motion-safe:hover:-translate-y-0.5 sm:grid-cols-[11rem_minmax(0,1fr)]">
       <Link href={href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 sm:aspect-auto" aria-label={`Read ${guide.title}`}>
         {image ? (
-          <Image
+          <SafeImage
             src={image}
             alt={guide.coverImageAlt || `${guide.title} travel guide`}
             fill

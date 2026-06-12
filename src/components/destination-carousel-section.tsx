@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { resolveImagePath } from "@/lib/images";
 import type { Destination } from "@/lib/types";
@@ -62,7 +62,7 @@ function CompactDestinationCarouselCard({ destination }: { destination: Destinat
       className="group flex h-[274px] w-[76vw] min-w-[238px] max-w-[312px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_38px_rgb(15_23_42_/_7%)] outline-none transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgb(15_23_42_/_13%)] focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 sm:w-[292px] lg:w-[300px]"
     >
       <div className="relative h-36 overflow-hidden bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={imageAlt}
           fill

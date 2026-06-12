@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveImagePath } from "@/lib/images";
@@ -20,7 +20,7 @@ export function AttractionCard({ attraction }: AttractionCardProps) {
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
       <div className="relative aspect-[16/11] overflow-hidden bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={imageAlt}
           fill

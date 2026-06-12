@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, ArrowRight, BookOpen, Compass, MapPin, Sparkles } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo-json-ld";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +122,7 @@ export function CityTopicGuidePage({
                 </div>
               </div>
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
-                <Image
+                <SafeImage
                   src={heroImage}
                   alt={`${city.name} travel guide`}
                   fill
@@ -274,7 +274,7 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
       className="group flex min-h-36 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-lg"
     >
       <div className="relative w-28 shrink-0 bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={destination.name}
           fill
@@ -308,7 +308,7 @@ function CompactAttractionLink({ attraction }: { attraction: Attraction }) {
   const content = (
     <>
       <div className="relative w-28 shrink-0 bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={attraction.name}
           fill

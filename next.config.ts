@@ -54,6 +54,22 @@ const securityHeaders = [
     : []),
 ];
 
+function supabaseImageHost() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+const configuredSupabaseImageHost = supabaseImageHost();
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
@@ -67,6 +83,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.supabase.co",
       },
+      ...(configuredSupabaseImageHost
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: configuredSupabaseImageHost,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
     ],
   },
   async headers() {

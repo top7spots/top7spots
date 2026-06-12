@@ -5,11 +5,12 @@ import path from "path";
 import { slugify } from "@/lib/format";
 import { getSupabaseAdminClient, supabaseStorageBucket } from "@/lib/supabase";
 
-const maxImageSize = 5 * 1024 * 1024;
+const maxImageSize = 8 * 1024 * 1024;
 
 const allowedImageTypes = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
+  ["image/svg+xml", "svg"],
   ["image/webp", "webp"],
 ]);
 
@@ -57,11 +58,11 @@ async function saveUploadedImage(file: File, folder: UploadFolder, fallbackName?
   const extension = allowedImageTypes.get(file.type);
 
   if (!extension) {
-    throw new Error("Image upload must be a JPG, JPEG, PNG, or WEBP file.");
+    throw new Error("Image upload must be a JPG, JPEG, PNG, WEBP, or SVG file.");
   }
 
   if (file.size > maxImageSize) {
-    throw new Error("Image upload must be 5MB or smaller.");
+    throw new Error("Image upload must be 8MB or smaller.");
   }
 
   const supabase = getSupabaseAdminClient();

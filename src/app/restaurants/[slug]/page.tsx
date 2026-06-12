@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, MapPin, Utensils } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -127,7 +127,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
               </div>
               {image ? (
                 <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
-                  <Image
+                  <SafeImage
                     src={image}
                     alt={restaurant.name}
                     fill

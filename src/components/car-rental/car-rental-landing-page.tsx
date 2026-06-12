@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   ArrowRight,
   Car,
@@ -13,6 +12,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { SafeImage } from "@/components/safe-image";
 import { BreadcrumbJsonLd, FAQPageJsonLd, JsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -105,7 +105,7 @@ export function CarRentalHero({
   return (
     <section className="relative z-20 overflow-visible border-b border-blue-950/10 bg-[#071B42]">
       {coverImage ? (
-        <Image
+        <SafeImage
           src={resolveImagePath(coverImage)}
           alt={page.pageTitle}
           fill
@@ -251,7 +251,7 @@ function CompactCard({ card, kind }: { card: CarRentalLinkCard; kind: CompactCar
     >
       {showThumbnail ? (
         <span className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-          <Image src={resolveImagePath(card.image)} alt={card.title} fill sizes="56px" className="object-cover" />
+          <SafeImage src={resolveImagePath(card.image)} alt={card.title} fill sizes="56px" className="object-cover" />
         </span>
       ) : (
         <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D4ED8]">

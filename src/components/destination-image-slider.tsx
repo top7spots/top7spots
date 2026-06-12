@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type TouchEvent } from "react";
+import { SafeImage } from "@/components/safe-image";
 
 type DestinationImageSliderProps = {
   destinationName: string;
@@ -54,7 +54,7 @@ export function DestinationImageSlider({ destinationName, images }: DestinationI
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative aspect-[16/9] w-full">
-        <Image
+        <SafeImage
           key={activeImage}
           src={activeImage}
           alt={`${destinationName} travel view ${activeIndex + 1}`}

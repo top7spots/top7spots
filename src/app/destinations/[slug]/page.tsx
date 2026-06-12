@@ -4,22 +4,25 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  Calendar,
 } from "lucide-react";
 import { AttractionCard } from "@/components/attraction-card";
 import { BreadcrumbTrail } from "@/components/breadcrumb-trail";
+import { DestinationAuthorSection, selectDestinationAuthor } from "@/components/destination-author-section";
 import { DestinationDetailHero } from "@/components/destination-detail-hero";
 import { DestinationGuideSection } from "@/components/destination-guide-section";
 import { DestinationCarouselSection } from "@/components/destination-carousel-section";
+import { DestinationTravelInfoSections } from "@/components/destination-travel-info-sections";
 import { FaqSection } from "@/components/faq-section";
 import { SectionHeading } from "@/components/section-heading";
-import { BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
+import { ArticleJsonLd, BreadcrumbJsonLd, FAQPageJsonLd, TouristDestinationJsonLd } from "@/components/seo-json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { buttonVariants } from "@/components/ui/button";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
+import { formatDisplayDate } from "@/lib/date-format";
 import {
+  getActiveAuthors,
   getAttractions,
   getDestination,
   getDestinations,
@@ -60,13 +63,14 @@ export async function generateMetadata({
 
 export default async function DestinationDetailPage({ params }: DestinationDetailPageProps) {
   const { slug } = await params;
-  const [destination, destinations, attractions, guides, destinationGuides, cities] = await Promise.all([
+  const [destination, destinations, attractions, guides, destinationGuides, cities, authors] = await Promise.all([
     getDestination(slug),
     getDestinations(),
     getAttractions(),
     getPublishedGuides(),
     getGuidesForDestination(slug),
     getPublishedCities(),
+    getActiveAuthors(),
   ]);
 
   if (!destination) {
@@ -115,6 +119,9 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         attraction.city.toLowerCase() === destination.city.toLowerCase(),
     ) || [];
   const attractionIdeas = nearbyAttractions.length > 0 ? nearbyAttractions : attractions;
+  const author = selectDestinationAuthor(authors);
+  const publishedDate = formatDisplayDate(destination.createdAt);
+  const updatedDate = formatDisplayDate(destination.updatedAt || destination.createdAt);
   const overviewParagraphs = splitParagraphs(
     destination.description ||
       "Top7Spots curates every destination as a practical travel idea, with enough context to help you decide how it fits your route.",
@@ -125,12 +132,6 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     { label: "Location", value: location },
     { label: "Curated pick", value: "Top7Spots" },
   ].filter((fact) => Boolean(fact.value));
-  const tipItems =
-    destination.travelTips.length > 0
-      ? destination.travelTips
-      : destination.practicalInfo.length > 0
-        ? destination.practicalInfo
-        : ["Save the location before you go", "Check opening hours", "Pack for the season"];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 md:pb-0">
@@ -157,6 +158,21 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         city={destination.city}
         country={parentCity?.country}
         region={destination.region}
+      />
+      <ArticleJsonLd
+        title={`${destination.name} travel guide`}
+        description={
+          destination.seoDescription ||
+          destination.summary ||
+          destination.description ||
+          `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`
+        }
+        image={destination.image}
+        path={canonicalPath}
+        author={author?.name || "Safir Thorappa"}
+        datePublished={destination.createdAt || undefined}
+        dateModified={destination.updatedAt || destination.createdAt || undefined}
+        section={destination.category || "Destination"}
       />
       <FAQPageJsonLd faqs={destination.faqs} />
       <SiteHeader />
@@ -190,11 +206,13 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               duration={destination.duration || "Flexible"}
               images={galleryImages}
               location={location}
+              publishedDate={publishedDate}
               snapshotLabel="Curated for discovery"
               summary={
                 destination.summary ||
                 "A curated Top7Spots travel idea with practical planning notes and inspiration."
               }
+              updatedDate={updatedDate}
             />
           </div>
         </section>
@@ -244,31 +262,12 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-              <div className="grid gap-5 md:grid-cols-[0.85fr_1.15fr]">
-                <div>
-                  <div className="flex items-center gap-2 text-[#1D4ED8]">
-                    <Calendar className="size-5" aria-hidden="true" />
-                    <h2 className="text-base font-semibold text-[#111827]">Best time to visit</h2>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">
-                    {destination.bestSeason ||
-                      "Check local seasons, event dates, and road conditions before you go."}
-                  </p>
-                </div>
-                <div className="border-t border-slate-100 pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-                  <h2 className="text-base font-semibold text-[#111827]">Travel tips</h2>
-                  <ul className="mt-3 grid gap-2.5 text-sm leading-6 text-slate-600">
-                    {tipItems.map((item) => (
-                      <li key={item} className="flex gap-3">
-                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#FF6B00]" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </section>
+            <DestinationTravelInfoSections
+              bestSeason={destination.bestSeason}
+              howToGo={destination.howToGo}
+              practicalInfo={destination.practicalInfo}
+              travelTips={destination.travelTips}
+            />
           </article>
         </section>
 
@@ -278,6 +277,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
         />
         <DestinationGuideSection title={`More travel guides for ${cityGuideLabel}`} guides={cityGuideCards} />
         <FaqSection title={`FAQs about ${destination.name}`} faqs={destination.faqs} />
+        <DestinationAuthorSection author={author} />
 
         <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Nearby ideas" title="Attractions to add around this route">

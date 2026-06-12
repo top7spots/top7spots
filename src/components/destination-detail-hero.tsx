@@ -9,8 +9,10 @@ type DestinationDetailHeroProps = {
   duration: string;
   images: string[];
   location: string;
+  publishedDate: string;
   snapshotLabel: string;
   summary: string;
+  updatedDate: string;
 };
 
 export function DestinationDetailHero({
@@ -20,9 +22,16 @@ export function DestinationDetailHero({
   duration,
   images,
   location,
+  publishedDate,
   snapshotLabel,
   summary,
+  updatedDate,
 }: DestinationDetailHeroProps) {
+  const dateItems = [
+    publishedDate ? { label: "Published", value: publishedDate } : undefined,
+    updatedDate ? { label: "Updated", value: updatedDate } : undefined,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] lg:items-center">
       <DestinationImageSlider destinationName={destinationName} images={images} />
@@ -35,6 +44,16 @@ export function DestinationDetailHero({
           {destinationName}
         </h1>
         <p className="mt-4 text-base leading-7 text-slate-600">{summary}</p>
+
+        {dateItems.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+            {dateItems.map((item) => (
+              <span key={item.label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+                {item.label}: <span className="text-[#111827]">{item.value}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-2">

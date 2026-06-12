@@ -5,7 +5,6 @@ import {
   Binoculars,
   BookOpen,
   Car,
-  CheckCircle2,
   ChevronDown,
   Crown,
   Gem,
@@ -202,6 +201,7 @@ export default async function Home() {
             fetchPriority="high"
             sizes="100vw"
             quality={75}
+            unoptimized
             className="absolute inset-0 -z-20 object-cover"
           />
           <div className={`absolute inset-0 -z-10 ${overlayClassName}`} style={{ opacity: overlayOpacity }} />
@@ -239,59 +239,13 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="grid gap-6 border-y border-blue-100 bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFFFF_48%,#EFF6FF_100%)] py-7 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-6">
-              <div className="flex min-w-0 items-start gap-4">
-                <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#0A2A66] text-white ring-4 ring-blue-100">
-                  <Car className="size-5" aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                    TRAVEL PARTNER
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-3xl">
-                    Compare Car Rental Prices Worldwide
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-                    Compare prices from hundreds of trusted car rental providers worldwide and find
-                    the best deal for your trip from the Top7Spots car rental page.
-                    {" "}
-                    <Link
-                      href="/carrental"
-                      className="font-semibold text-[#1D4ED8] underline decoration-blue-300 underline-offset-4 transition hover:text-[#0A2A66] hover:decoration-[#0A2A66] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
-                    >
-                      Compare rental cars
-                    </Link>
-                    .
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-2.5">
-                    {[
-                      "Compare Hundreds of Providers",
-                      "Worldwide Locations",
-                      "Secure Online Booking",
-                    ].map((badge) => (
-                      <span
-                        key={badge}
-                        className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-                      >
-                        <CheckCircle2 className="size-4 shrink-0 text-[#1D4ED8]" aria-hidden="true" />
-                        {badge}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <Link
-                href="/carrental"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#C2410C] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#9A3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C2410C] md:w-auto"
-              >
-                Compare Car Rental Prices
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </section>
+        <VehicleCategoryCardsBlock
+          title="Find the Right Rental Car for Your Trip"
+          subtitle="Compare popular vehicle categories and continue to the Top7Spots car rental page to search live deals."
+          label="CAR RENTAL"
+          variant="full"
+          className="border-b border-slate-200 bg-white py-8 sm:py-10"
+        />
 
         <section className="border-b border-slate-200 bg-white py-14">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
@@ -335,14 +289,6 @@ export default async function Home() {
             <EmptyState title="More city guides are coming" text="New Top7Spots city hubs will appear here as the collection grows." />
           )}
         </section>
-
-        <VehicleCategoryCardsBlock
-          title="Find the Right Rental Car for Your Trip"
-          subtitle="Compare popular vehicle categories and start your journey with a car that fits your route, luggage, and travel style."
-          label="CAR RENTAL"
-          variant="full"
-          className="pt-0"
-        />
 
         <section id="top-destinations" className="border-y border-slate-200 bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

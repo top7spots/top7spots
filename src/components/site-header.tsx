@@ -40,10 +40,10 @@ export async function SiteHeader({ variant = "default" }: SiteHeaderProps = {}) 
   return (
     <header
       className={cn(
-        "top-0 z-40",
+        "sticky top-0 z-[60] shadow-sm",
         isHomepage
-          ? "absolute inset-x-0 border-b border-white/10 bg-white/[0.04] text-white backdrop-blur-md"
-          : "sticky border-b border-slate-200 bg-white/95 backdrop-blur-xl",
+          ? "border-b border-white/10 bg-[#0A2A66]/95 text-white shadow-blue-950/20 backdrop-blur-xl"
+          : "border-b border-slate-200 bg-white/95 shadow-slate-950/5 backdrop-blur-xl",
       )}
     >
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">

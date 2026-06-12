@@ -239,6 +239,33 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="border-b border-slate-200 bg-white py-14">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
+                Discover top travel spots worldwide
+              </p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
+                A cleaner way to find the best places to visit
+              </h2>
+            </div>
+            <div className="grid gap-5 text-sm leading-7 text-slate-600 md:grid-cols-2">
+              <p>
+                Top7Spots helps travelers move from broad inspiration to useful destination
+                research without losing time in noisy search results. Each page is organized around
+                cities, destination ideas, local attractions, and travel guides, so you can compare
+                places by mood, geography, season, and trip style.
+              </p>
+              <p>
+                Whether you are looking for beaches, mountains, road trips, historic neighborhoods,
+                luxury escapes, family-friendly ideas, or quieter hidden gems, the site is designed
+                to make discovery feel visual, calm, and practical. Start with a city, browse its
+                best places to visit, then follow related links into guides and nearby destinations.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section id="featured-cities" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Explore destinations by city" title="Featured city travel hubs">
             City pages bring together the best local places to visit, travel tips, destination
@@ -302,33 +329,6 @@ export default async function Home() {
           ) : (
             <EmptyState title="Travel guides are coming" text="Published city travel guides will appear here as the guide library grows." />
           )}
-        </section>
-
-        <section className="border-y border-slate-200 bg-white py-14">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                Discover top travel spots worldwide
-              </p>
-              <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
-                A cleaner way to find the best places to visit
-              </h2>
-            </div>
-            <div className="grid gap-5 text-sm leading-7 text-slate-600 md:grid-cols-2">
-              <p>
-                Top7Spots helps travelers move from broad inspiration to useful destination
-                research without losing time in noisy search results. Each page is organized around
-                cities, destination ideas, local attractions, and travel guides, so you can compare
-                places by mood, geography, season, and trip style.
-              </p>
-              <p>
-                Whether you are looking for beaches, mountains, road trips, historic neighborhoods,
-                luxury escapes, family-friendly ideas, or quieter hidden gems, the site is designed
-                to make discovery feel visual, calm, and practical. Start with a city, browse its
-                best places to visit, then follow related links into guides and nearby destinations.
-              </p>
-            </div>
-          </div>
         </section>
 
         <section id="traveler-reviews" className="border-y border-slate-200 bg-white py-16">

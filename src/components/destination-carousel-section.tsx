@@ -55,7 +55,7 @@ function CompactDestinationCarouselCard({ destination }: { destination: Destinat
     [destination.location, destination.city].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||
     "Top7Spots";
-  const imageAlt = destinationImageAlt(destination);
+  const imageAlt = destination.imageAlt || destinationImageAlt(destination);
 
   return (
     <Link

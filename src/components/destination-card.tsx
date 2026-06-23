@@ -20,7 +20,7 @@ const defaultDestinationCardImageSizes =
 export function DestinationCard({ destination, city, imageSizes = defaultDestinationCardImageSizes }: DestinationCardProps) {
   const image = resolveImagePath(destination.image);
   const category = destination.category || "Travel spot";
-  const imageAlt = destinationImageAlt({ ...destination, country: city?.country });
+  const imageAlt = destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country });
   const location =
     [destination.location, destination.city].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||

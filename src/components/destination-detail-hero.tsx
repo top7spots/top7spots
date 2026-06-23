@@ -1,6 +1,7 @@
 import { Calendar, Clock, MapPin, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { DestinationImageSlider } from "@/components/destination-image-slider";
 import { Badge } from "@/components/ui/badge";
+import type { GalleryImageItem } from "@/lib/types";
 
 type DestinationImageContext = {
   name: string;
@@ -17,7 +18,7 @@ type DestinationDetailHeroProps = {
   destinationName: string;
   destinationContext?: DestinationImageContext;
   duration: string;
-  images: string[];
+  images: GalleryImageItem[];
   location: string;
   publishedDate: string;
   snapshotLabel: string;

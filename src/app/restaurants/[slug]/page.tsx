@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: RestaurantPageProps): Promise
     description: restaurant.shortDescription || `A Top7Spots restaurant pick for ${restaurant.name}.`,
     path: `/restaurants/${restaurant.slug}`,
     image: restaurant.image,
-    imageAlt: restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+    imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
   });
 
   return {
@@ -133,7 +133,7 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                 <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                   <SafeImage
                     src={image}
-                    alt={restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
+                    alt={restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
                     fill
                     priority
                     sizes="(min-width: 1024px) 420px, 100vw"

@@ -34,7 +34,7 @@ export function cityImageAlt(city: CityLike, role?: ImageRole) {
   const roleText = normalizedRole(role);
 
   if (roleText === "hero") {
-    return `Travel view of ${place}`;
+    return `${city.name} city view${city.country ? ` in ${city.country}` : ""}`;
   }
 
   if (roleText === "card") {
@@ -67,14 +67,54 @@ export function galleryImageAlt(destination: DestinationLike, index: number) {
 }
 
 export function attractionImageAlt(attraction: AttractionLike) {
-  const descriptor = (attraction.category || attraction.type || "attraction").trim().toLowerCase();
   const suffix = locationSuffix(attraction.city, attraction.country || attraction.countryName);
-  return `${attraction.name} ${descriptor}${suffix}`;
+  return `${attraction.name} attraction${suffix}`;
 }
 
 export function restaurantImageAlt(restaurant: RestaurantLike) {
   const suffix = locationSuffix(restaurant.city, restaurant.country || restaurant.countryName || restaurant.countrySlug);
   return `Restaurant image for ${restaurant.name}${suffix}`;
+}
+
+export function cityImageCaption(city: CityLike, role?: ImageRole) {
+  const place = placeName(city.name, city.country);
+  const roleText = normalizedRole(role);
+
+  if (roleText === "card") {
+    return `Plan a trip to ${place || city.name} with curated places, restaurants, and travel ideas.`;
+  }
+
+  if (roleText === "featured") {
+    return `Discover why ${place || city.name} is one of the featured Top7Spots travel cities.`;
+  }
+
+  return `Explore the best places to visit, eat, and experience in ${place || city.name}.`;
+}
+
+export function destinationImageCaption(destination: DestinationLike) {
+  const suffix = locationSuffix(destination.city, destination.country || destination.countryName || destination.region);
+  const place = placeName(destination.city, destination.country || destination.countryName || destination.region);
+
+  if (place) {
+    return `A scenic view of ${destination.name}, one of the popular places to visit in ${place}.`;
+  }
+
+  return `A scenic view of ${destination.name}${suffix}.`;
+}
+
+export function galleryImageCaption(destination: DestinationLike, index: number) {
+  const photoNumber = Math.max(1, index + 1);
+  return `Gallery photo ${photoNumber} from ${destination.name}.`;
+}
+
+export function attractionImageCaption(attraction: AttractionLike) {
+  const suffix = locationSuffix(attraction.city, attraction.country || attraction.countryName);
+  return `A closer look at ${attraction.name}, a popular attraction${suffix}.`;
+}
+
+export function restaurantImageCaption(restaurant: RestaurantLike) {
+  const suffix = locationSuffix(restaurant.city, restaurant.country || restaurant.countryName || restaurant.countrySlug);
+  return `Dining at ${restaurant.name}${suffix}.`;
 }
 
 export function guideImageAlt(guide: Pick<Guide, "title" | "coverImageAlt" | "category">) {

@@ -3,6 +3,8 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { getCities, updateCityReferences, upsertItem } from "@/lib/data";
 import { listFromTextarea, slugify } from "@/lib/format";
+import { cityImageAlt, cityImageCaption } from "@/lib/image-seo";
+import { imageMetadataValue } from "@/lib/image-metadata";
 import { hasSupabaseConfig, getSupabaseEnvStatus } from "@/lib/supabase";
 import type { City, ContentStatus } from "@/lib/types";
 import { getImagePathFromForm } from "@/lib/uploads";
@@ -62,10 +64,11 @@ async function imageFromForm(
   fieldName: "heroImage" | "cardImage" | "featuredImage",
   slug: string,
 ) {
+  const countrySlug = slugify(value(formData, "country"));
   const fallbackByField = {
-    heroImage: `${slug}-hero`,
-    cardImage: `${slug}-card`,
-    featuredImage: `${slug}-featured`,
+    heroImage: [countrySlug, slug, "hero"].filter(Boolean).join("-"),
+    cardImage: [countrySlug, slug, "card"].filter(Boolean).join("-"),
+    featuredImage: [countrySlug, slug, "featured"].filter(Boolean).join("-"),
   };
 
   return getImagePathFromForm(formData, {
@@ -107,8 +110,11 @@ export async function saveCityFromForm(formData: FormData): Promise<SaveCityResu
     return { ok: false, id, message: "Supabase is not configured for this deployment." };
   }
 
+  let existingCity: City | undefined;
+
   try {
     const cities = await getCities();
+    existingCity = cities.find((city) => city.id === id);
     const duplicate = cities.find((city) => slugify(city.slug) === slug && city.id !== id);
 
     if (duplicate) {
@@ -150,6 +156,43 @@ export async function saveCityFromForm(formData: FormData): Promise<SaveCityResu
     };
   }
 
+  const cityMetadataContext = {
+    name,
+    country: value(formData, "country"),
+    region: value(formData, "region"),
+  };
+  const previousCityMetadataContext = existingCity || cityMetadataContext;
+  const heroImageAlt = imageMetadataValue(
+    value(formData, "heroImageAlt"),
+    value(formData, "heroImageAltAuto") || cityImageAlt(previousCityMetadataContext, "hero"),
+    cityImageAlt(cityMetadataContext, "hero"),
+  );
+  const heroImageCaption = imageMetadataValue(
+    value(formData, "heroImageCaption"),
+    value(formData, "heroImageCaptionAuto") || cityImageCaption(previousCityMetadataContext, "hero"),
+    cityImageCaption(cityMetadataContext, "hero"),
+  );
+  const cardImageAlt = imageMetadataValue(
+    value(formData, "cardImageAlt"),
+    value(formData, "cardImageAltAuto") || cityImageAlt(previousCityMetadataContext, "card"),
+    cityImageAlt(cityMetadataContext, "card"),
+  );
+  const cardImageCaption = imageMetadataValue(
+    value(formData, "cardImageCaption"),
+    value(formData, "cardImageCaptionAuto") || cityImageCaption(previousCityMetadataContext, "card"),
+    cityImageCaption(cityMetadataContext, "card"),
+  );
+  const featuredImageAlt = imageMetadataValue(
+    value(formData, "featuredImageAlt"),
+    value(formData, "featuredImageAltAuto") || cityImageAlt(previousCityMetadataContext, "featured"),
+    cityImageAlt(cityMetadataContext, "featured"),
+  );
+  const featuredImageCaption = imageMetadataValue(
+    value(formData, "featuredImageCaption"),
+    value(formData, "featuredImageCaptionAuto") || cityImageCaption(previousCityMetadataContext, "featured"),
+    cityImageCaption(cityMetadataContext, "featured"),
+  );
+
   const item: City = {
     id,
     name,
@@ -160,8 +203,14 @@ export async function saveCityFromForm(formData: FormData): Promise<SaveCityResu
     shortDescription: value(formData, "shortDescription"),
     longDescription: value(formData, "longDescription"),
     heroImage,
+    heroImageAlt,
+    heroImageCaption,
     cardImage: cardImage || heroImage,
+    cardImageAlt,
+    cardImageCaption,
     featuredImage: featuredImage || heroImage,
+    featuredImageAlt,
+    featuredImageCaption,
     status: statusValue(formData),
     isFeatured: checkboxValue(formData, "isFeatured"),
     displayOrder: numberValue(formData, "displayOrder"),

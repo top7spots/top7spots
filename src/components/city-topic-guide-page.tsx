@@ -125,7 +125,7 @@ export function CityTopicGuidePage({
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                 <SafeImage
                   src={heroImage}
-                  alt={cityImageAlt(city, "hero")}
+                  alt={city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero")}
                   fill
                   priority
                   sizes="(min-width: 1024px) 430px, 100vw"
@@ -277,7 +277,7 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
       <div className="relative w-28 shrink-0 bg-slate-100">
         <SafeImage
           src={image}
-          alt={destinationImageAlt({ ...destination, country: city.country })}
+          alt={destination.imageAlt || destinationImageAlt({ ...destination, country: city.country })}
           fill
           sizes="112px"
           unoptimized
@@ -311,7 +311,7 @@ function CompactAttractionLink({ attraction, city }: { attraction: Attraction; c
       <div className="relative w-28 shrink-0 bg-slate-100">
         <SafeImage
           src={image}
-          alt={attractionImageAlt({ ...attraction, country: city.country })}
+          alt={attraction.imageAlt || attractionImageAlt({ ...attraction, country: city.country })}
           fill
           sizes="112px"
           unoptimized

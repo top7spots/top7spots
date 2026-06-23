@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
       description,
       path: `/${city.slug}`,
       image: city.heroImage || city.featuredImage || city.cardImage,
-      imageAlt: cityImageAlt(city, "hero"),
+      imageAlt: city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero"),
     }),
     keywords: city.seoKeywords,
   };
@@ -143,7 +143,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 {cityHeroImage ? (
                   <SafeImage
                     src={resolveImagePath(cityHeroImage)}
-                    alt={cityImageAlt(city, "hero")}
+                    alt={city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero")}
                     fill
                     priority
                     sizes="(min-width: 1024px) 460px, 100vw"
@@ -304,7 +304,7 @@ function SimilarCityCard({ city }: { city: City }) {
         {image ? (
           <SafeImage
             src={resolveImagePath(image)}
-            alt={cityImageAlt(city, "card")}
+            alt={city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card")}
             fill
             sizes="340px"
             unoptimized

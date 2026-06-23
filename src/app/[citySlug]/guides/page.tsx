@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: CityGuidesPageProps): Promise
     description: `Practical guides for planning your trip to ${city.name}, including transport, airport tips, attractions, and local advice.`,
     path: `/${city.slug}/guides`,
     image: city.featuredImage || city.heroImage || city.cardImage,
-    imageAlt: cityImageAlt(city, "featured"),
+    imageAlt: city.featuredImageAlt || city.heroImageAlt || city.cardImageAlt || cityImageAlt(city, "featured"),
     type: "article",
   });
 }

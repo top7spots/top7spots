@@ -130,7 +130,7 @@ export function resolveGuideListingBlockItems({
             title: destination.name,
             description: destination.summary || destination.location || destination.city,
             image: destination.image,
-            imageAlt: destinationImageAlt({ ...destination, country: city?.country }),
+            imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country }),
             badge: destination.category || "Destination",
           };
         }),
@@ -148,7 +148,7 @@ export function resolveGuideListingBlockItems({
           title: city.name,
           description: city.shortDescription || city.region || city.country,
           image: city.cardImage || city.featuredImage || city.heroImage,
-          imageAlt: cityImageAlt(city, "card"),
+          imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card"),
           badge: city.country || "City",
         })),
     );
@@ -211,7 +211,7 @@ export function resolveGuideListingBlockItems({
             title: restaurant.name,
             description: restaurant.shortDescription || restaurant.address,
             image: restaurant.image,
-            imageAlt: restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+            imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
             badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
           };
         }),
@@ -232,7 +232,7 @@ export function resolveGuideListingBlockItems({
             title: attraction.name,
             description: attraction.summary || attraction.description,
             image: attraction.image,
-            imageAlt: attractionImageAlt({ ...attraction, country: city?.country }),
+            imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: city?.country }),
             badge: attraction.category || attraction.type || "Activity",
           };
         }),

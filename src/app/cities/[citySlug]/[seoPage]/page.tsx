@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
       description: page.description(city),
       path: citySeoPath(city.slug, page.slug),
       image: city.heroImage || city.featuredImage || city.cardImage,
-      imageAlt: cityImageAlt(city, "hero"),
+      imageAlt: city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero"),
     }),
     ...(!hasContent ? { robots: { index: false, follow: true } } : {}),
   };

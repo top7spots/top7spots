@@ -28,7 +28,7 @@ import {
   getPublishedGuides,
 } from "@/lib/data";
 import { destinationImageAlt } from "@/lib/image-seo";
-import { getDestinationGalleryImages } from "@/lib/images";
+import { getDestinationGalleryImageItems } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +56,7 @@ export async function generateMetadata({
       `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`,
     path: getCanonicalDestinationPath(destination),
     image: destination.image,
-    imageAlt: destinationImageAlt(destination),
+    imageAlt: destination.imageAlt || destinationImageAlt(destination),
   });
 }
 
@@ -75,12 +75,18 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     notFound();
   }
 
-  const galleryImages = getDestinationGalleryImages(destination.image, destination.galleryImages);
   const category = destination.category || "Travel spot";
   const location = [destination.city, destination.region].filter(Boolean).join(", ") || "Global";
   const parentCity = destination.citySlug
     ? cities.find((city) => city.slug === destination.citySlug)
     : undefined;
+  const galleryImages = getDestinationGalleryImageItems({
+    mainImage: destination.image,
+    mainImageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: parentCity?.country }),
+    mainImageCaption: destination.imageCaption,
+    galleryImages: destination.galleryImages,
+    galleryImagesMetadata: destination.galleryImagesMetadata,
+  });
   const canonicalPath = getCanonicalDestinationPath(destination, parentCity);
   const countryHref = parentCity?.country ? countryPath(parentCity.country) : "";
   const relatedDestinations = Array.from(

@@ -23,6 +23,7 @@ import {
 import { slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
+import { normalizeGalleryImageMetadata, parseGalleryImageMetadata } from "@/lib/image-metadata";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
 
@@ -291,8 +292,14 @@ function mapCity(row: CityRow): City {
     shortDescription: stringField(row, "short_description", "shortDescription"),
     longDescription: stringField(row, "long_description", "longDescription"),
     heroImage: stringField(row, "hero_image", "heroImage"),
+    heroImageAlt: stringField(row, "hero_image_alt", "heroImageAlt"),
+    heroImageCaption: stringField(row, "hero_image_caption", "heroImageCaption"),
     cardImage: stringField(row, "card_image", "cardImage"),
+    cardImageAlt: stringField(row, "card_image_alt", "cardImageAlt"),
+    cardImageCaption: stringField(row, "card_image_caption", "cardImageCaption"),
     featuredImage: stringField(row, "featured_image", "featuredImage"),
+    featuredImageAlt: stringField(row, "featured_image_alt", "featuredImageAlt"),
+    featuredImageCaption: stringField(row, "featured_image_caption", "featuredImageCaption"),
     status: status(stringField(row, "status")),
     isFeatured: booleanField(row, "is_featured", "isFeatured"),
     displayOrder: numberField(row, "display_order", "displayOrder"),
@@ -306,6 +313,7 @@ function mapCity(row: CityRow): City {
 
 function mapDestination(row: DestinationRow): Destination {
   const name = stringField(row, "name");
+  const galleryImages = arrayValue(getField(row, "gallery_images", "galleryImages"));
 
   return {
     id: stringField(row, "id"),
@@ -320,7 +328,13 @@ function mapDestination(row: DestinationRow): Destination {
     duration: stringField(row, "duration"),
     bestSeason: stringField(row, "best_season", "bestSeason"),
     image: stringField(row, "image"),
-    galleryImages: arrayValue(getField(row, "gallery_images", "galleryImages")),
+    imageAlt: stringField(row, "image_alt", "imageAlt"),
+    imageCaption: stringField(row, "image_caption", "imageCaption"),
+    galleryImages,
+    galleryImagesMetadata: normalizeGalleryImageMetadata(
+      galleryImages,
+      parseGalleryImageMetadata(getField(row, "gallery_images_metadata", "galleryImagesMetadata")),
+    ),
     summary: stringField(row, "summary"),
     description: stringField(row, "description"),
     highlights: arrayValue(getField(row, "highlights")),
@@ -423,6 +437,8 @@ function mapAttraction(row: AttractionRow): Attraction {
     slug: slugify(stringField(row, "slug") || name),
     city: stringField(row, "city"),
     image: stringField(row, "image"),
+    imageAlt: stringField(row, "image_alt", "imageAlt"),
+    imageCaption: stringField(row, "image_caption", "imageCaption"),
     category,
     type: category,
     description: stringField(row, "description"),
@@ -445,6 +461,8 @@ function mapRestaurant(row: RestaurantRow): Restaurant {
     shortDescription: stringField(row, "short_description", "shortDescription"),
     longDescription: stringField(row, "long_description", "longDescription"),
     image: stringField(row, "image"),
+    imageAlt: stringField(row, "image_alt", "imageAlt"),
+    imageCaption: stringField(row, "image_caption", "imageCaption"),
     cityId: stringField(row, "city_id", "cityId"),
     destinationId: stringField(row, "destination_id", "destinationId"),
     countrySlug: slugify(stringField(row, "country_slug", "countrySlug")),
@@ -560,8 +578,14 @@ function toCityRow(item: City): CityRow {
     short_description: item.shortDescription,
     long_description: item.longDescription,
     hero_image: item.heroImage,
+    hero_image_alt: item.heroImageAlt,
+    hero_image_caption: item.heroImageCaption,
     card_image: item.cardImage,
+    card_image_alt: item.cardImageAlt,
+    card_image_caption: item.cardImageCaption,
     featured_image: item.featuredImage,
+    featured_image_alt: item.featuredImageAlt,
+    featured_image_caption: item.featuredImageCaption,
     status: item.status,
     is_featured: item.isFeatured,
     display_order: item.displayOrder,
@@ -587,7 +611,10 @@ function toDestinationRow(item: Destination): DestinationRow {
     duration: item.duration,
     best_season: item.bestSeason,
     image: item.image,
+    image_alt: item.imageAlt,
+    image_caption: item.imageCaption,
     gallery_images: item.galleryImages,
+    gallery_images_metadata: normalizeGalleryImageMetadata(item.galleryImages, item.galleryImagesMetadata),
     summary: item.summary,
     description: item.description,
     highlights: item.highlights,
@@ -691,6 +718,8 @@ function toAttractionRow(item: Attraction): AttractionRow {
     slug: slugify(item.slug || item.name),
     city: item.city,
     image: item.image,
+    image_alt: item.imageAlt,
+    image_caption: item.imageCaption,
     category: item.category,
     type: item.type || item.category,
     description: item.description,
@@ -711,6 +740,8 @@ function toRestaurantRow(item: Restaurant): RestaurantRow {
     short_description: item.shortDescription,
     long_description: item.longDescription,
     image: item.image,
+    image_alt: item.imageAlt,
+    image_caption: item.imageCaption,
     city_id: item.cityId,
     destination_id: item.destinationId || null,
     country_slug: slugify(item.countrySlug),

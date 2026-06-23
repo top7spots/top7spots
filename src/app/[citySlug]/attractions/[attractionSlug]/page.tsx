@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: AttractionPageProps): Promise
       `Explore ${attraction.name} in ${city.name} with Top7Spots.`,
     path: `/${city.slug}/attractions/${attraction.slug}`,
     image: attraction.image,
-    imageAlt: attractionImageAlt({ ...attraction, country: city.country }),
+    imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: city.country }),
   });
 }
 
@@ -134,7 +134,7 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                 <SafeImage
                   src={image}
-                  alt={attractionImageAlt({ ...attraction, country: city.country })}
+                  alt={attraction.imageAlt || attractionImageAlt({ ...attraction, country: city.country })}
                   fill
                   priority
                   sizes="(min-width: 1024px) 420px, 100vw"

@@ -14,7 +14,7 @@ type AttractionCardProps = {
 
 export function AttractionCard({ attraction, city }: AttractionCardProps) {
   const image = resolveImagePath(attraction.image);
-  const imageAlt = attractionImageAlt({ ...attraction, country: city?.country });
+  const imageAlt = attraction.imageAlt || attractionImageAlt({ ...attraction, country: city?.country });
   const href = attraction.citySlug ? `/${attraction.citySlug}/attractions/${attraction.slug}` : undefined;
 
   return (

@@ -4,11 +4,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type TouchEvent } from "react";
 import { SafeImage } from "@/components/safe-image";
 import { galleryImageAlt } from "@/lib/image-seo";
+import type { GalleryImageItem } from "@/lib/types";
 
 type DestinationImageSliderProps = {
   destinationName: string;
   destinationContext?: Parameters<typeof galleryImageAlt>[0];
-  images: string[];
+  images: Array<string | GalleryImageItem>;
 };
 
 const minimumSwipeDistance = 45;
@@ -16,15 +17,16 @@ const minimumSwipeDistance = 45;
 export function DestinationImageSlider({ destinationName, destinationContext, images }: DestinationImageSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const activeImage = images[activeIndex];
+  const normalizedImages = images.map((image) => (typeof image === "string" ? { src: image } : image));
+  const activeImage = normalizedImages[activeIndex];
   const hasMultipleImages = images.length > 1;
 
   function showPreviousImage() {
-    setActiveIndex((index) => (index === 0 ? images.length - 1 : index - 1));
+    setActiveIndex((index) => (index === 0 ? normalizedImages.length - 1 : index - 1));
   }
 
   function showNextImage() {
-    setActiveIndex((index) => (index === images.length - 1 ? 0 : index + 1));
+    setActiveIndex((index) => (index === normalizedImages.length - 1 ? 0 : index + 1));
   }
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
@@ -57,9 +59,9 @@ export function DestinationImageSlider({ destinationName, destinationContext, im
     >
       <div className="relative aspect-[16/9] w-full">
         <SafeImage
-          key={activeImage}
-          src={activeImage}
-          alt={galleryImageAlt(destinationContext || { name: destinationName, city: "", category: "", location: "", region: "" }, activeIndex)}
+          key={activeImage?.src || destinationName}
+          src={activeImage?.src || ""}
+          alt={activeImage?.alt || galleryImageAlt(destinationContext || { name: destinationName, city: "", category: "", location: "", region: "" }, activeIndex)}
           fill
           priority={activeIndex === 0}
           loading={activeIndex === 0 ? "eager" : "lazy"}
@@ -67,6 +69,12 @@ export function DestinationImageSlider({ destinationName, destinationContext, im
           sizes="(min-width: 1280px) 760px, (min-width: 1024px) 62vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
           className="object-cover"
         />
+
+        {activeImage?.caption ? (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent px-5 pb-4 pt-12">
+            <p className="text-sm font-medium leading-6 text-white">{activeImage.caption}</p>
+          </div>
+        ) : null}
 
         {hasMultipleImages ? (
           <>
@@ -99,9 +107,9 @@ export function DestinationImageSlider({ destinationName, destinationContext, im
 
       {hasMultipleImages ? (
         <div className="flex items-center justify-center gap-2 bg-white px-4 py-3" aria-label="Choose gallery image">
-          {images.map((image, index) => (
+          {normalizedImages.map((image, index) => (
             <button
-              key={image}
+              key={image.src || index}
               type="button"
               aria-label={`Show image ${index + 1} of ${images.length}`}
               aria-current={index === activeIndex}

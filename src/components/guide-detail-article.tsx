@@ -1554,7 +1554,7 @@ function buildContextualEntityIndex({
       title: destination.name,
       description: destination.summary || destination.location || destination.city,
       image: destination.image,
-      imageAlt: destinationImageAlt({ ...destination, country: destinationCity?.country }),
+      imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: destinationCity?.country }),
       type: destination.category || "Destination",
       entityType: "destination",
       citySlug: destination.citySlug,
@@ -1573,7 +1573,7 @@ function buildContextualEntityIndex({
       title: attraction.name,
       description: attraction.summary || attraction.description,
       image: attraction.image,
-      imageAlt: attractionImageAlt({ ...attraction, country: attractionCity?.country }),
+      imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: attractionCity?.country }),
       type: attraction.category || attraction.type || "Attraction",
       entityType: "attraction",
       citySlug: attraction.citySlug,
@@ -1593,7 +1593,7 @@ function buildContextualEntityIndex({
       title: restaurant.name,
       description: restaurant.shortDescription || restaurant.address,
       image: restaurant.image,
-      imageAlt: restaurantImageAlt({ ...restaurant, city: restaurantCity?.name, country: restaurantCity?.country }),
+      imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: restaurantCity?.name, country: restaurantCity?.country }),
       type: restaurant.cuisineType || restaurant.priceRange || "Restaurant",
       entityType: "restaurant",
       citySlug: restaurantCity?.slug || restaurant.cityId,
@@ -1610,7 +1610,7 @@ function buildContextualEntityIndex({
       title: item.name,
       description: item.shortDescription || item.region || item.country,
       image: item.cardImage || item.featuredImage || item.heroImage,
-      imageAlt: cityImageAlt(item, "card"),
+      imageAlt: item.cardImageAlt || item.featuredImageAlt || item.heroImageAlt || cityImageAlt(item, "card"),
       type: item.country || "City",
       entityType: "city",
       citySlug: item.slug,
@@ -2250,7 +2250,7 @@ function selectedBlockItems(
           title: destination.name,
           description: destination.summary || destination.location || destination.city,
           image: destination.image,
-          imageAlt: destinationImageAlt({ ...destination, country: city?.country }),
+          imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country }),
           badge: destination.category || "Destination",
         };
       });
@@ -2266,7 +2266,7 @@ function selectedBlockItems(
         title: city.name,
         description: city.shortDescription || city.region || city.country,
         image: city.cardImage || city.featuredImage || city.heroImage,
-        imageAlt: cityImageAlt(city, "card"),
+        imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card"),
         badge: city.country || "City",
       }));
   }
@@ -2299,7 +2299,7 @@ function selectedBlockItems(
           title: restaurant.name,
           description: restaurant.shortDescription || restaurant.address,
           image: restaurant.image,
-          imageAlt: restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+          imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
           badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
         };
       });
@@ -2318,7 +2318,7 @@ function selectedBlockItems(
           title: attraction.name,
           description: attraction.summary || attraction.description,
           image: attraction.image,
-          imageAlt: attractionImageAlt({ ...attraction, country: city?.country }),
+          imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: city?.country }),
           badge: attraction.category || attraction.type || "Activity",
         };
       });

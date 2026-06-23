@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { carRentalCanonicalUrl, carRentalPublicPath } from "@/lib/car-rental-pages";
 import { getPublishedCarRentalTranslations } from "@/lib/data";
+import { carRentalImageAlt } from "@/lib/image-seo";
 import { absoluteUrl, cleanPath, seoMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import type { CarRentalPage } from "@/lib/types";
@@ -33,6 +34,12 @@ export async function carRentalPageMetadata(page: CarRentalPage): Promise<Metada
         `Compare rental cars and plan ${page.pageTitle} with Top7Spots.`,
       path: carRentalPublicPath(page),
       image: page.ogImage || settings.carRentalCoverImage,
+      imageAlt: carRentalImageAlt({
+        pageTitle: page.pageTitle,
+        cityName: page.cityName,
+        countryName: page.countryName,
+        type: "cover",
+      }),
     }),
     alternates: {
       canonical: carRentalCanonicalUrl(page),

@@ -66,6 +66,18 @@ import { carRentalPublicPath, defaultDiscoverCarsAffiliateLink, defaultDiscoverC
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { getGuideHref } from "@/lib/guide-routes";
 import {
+  attractionImageAlt,
+  attractionImageCaption,
+  cityImageAlt,
+  cityImageCaption,
+  destinationImageAlt,
+  destinationImageCaption,
+  galleryImageAlt,
+  galleryImageCaption,
+  restaurantImageAlt,
+  restaurantImageCaption,
+} from "@/lib/image-seo";
+import {
   homeHeroOverlayStyleOptions,
   normalizeHomeHeroOverlayOpacity,
   normalizeHomeHeroOverlayStyle,
@@ -1198,6 +1210,18 @@ function SettingsSection({ data }: { data: AdminCrudProps["data"] }) {
 }
 
 function CityForm({ title, city, backHref }: { title: string; city?: City; backHref: string }) {
+  const cityContext = city || {
+    name: "",
+    country: "",
+    region: "",
+  };
+  const heroImageAltAuto = cityImageAlt(cityContext, "hero");
+  const heroImageCaptionAuto = cityImageCaption(cityContext, "hero");
+  const cardImageAltAuto = cityImageAlt(cityContext, "card");
+  const cardImageCaptionAuto = cityImageCaption(cityContext, "card");
+  const featuredImageAltAuto = cityImageAlt(cityContext, "featured");
+  const featuredImageCaptionAuto = cityImageCaption(cityContext, "featured");
+
   return (
     <EditShell title={title} backHref={backHref}>
       <form action="/api/admin/cities" method="post" encType="multipart/form-data" className="grid gap-6">
@@ -1217,13 +1241,43 @@ function CityForm({ title, city, backHref }: { title: string; city?: City; backH
         </FormSection>
         <FormSection title="Images">
           <div className="md:col-span-3">
-            <ImageUploadField fieldName="heroImage" label="Hero image" currentImage={city?.heroImage} />
+            <ImageUploadField
+              fieldName="heroImage"
+              label="Hero image"
+              currentImage={city?.heroImage}
+              metadata={{
+                altDefault: city?.heroImageAlt,
+                captionDefault: city?.heroImageCaption,
+                altAuto: heroImageAltAuto,
+                captionAuto: heroImageCaptionAuto,
+              }}
+            />
           </div>
           <div className="md:col-span-3">
-            <ImageUploadField fieldName="cardImage" label="Card image" currentImage={city?.cardImage} />
+            <ImageUploadField
+              fieldName="cardImage"
+              label="Card image"
+              currentImage={city?.cardImage}
+              metadata={{
+                altDefault: city?.cardImageAlt,
+                captionDefault: city?.cardImageCaption,
+                altAuto: cardImageAltAuto,
+                captionAuto: cardImageCaptionAuto,
+              }}
+            />
           </div>
           <div className="md:col-span-3">
-            <ImageUploadField fieldName="featuredImage" label="Featured image" currentImage={city?.featuredImage} />
+            <ImageUploadField
+              fieldName="featuredImage"
+              label="Featured image"
+              currentImage={city?.featuredImage}
+              metadata={{
+                altDefault: city?.featuredImageAlt,
+                captionDefault: city?.featuredImageCaption,
+                altAuto: featuredImageAltAuto,
+                captionAuto: featuredImageCaptionAuto,
+              }}
+            />
           </div>
         </FormSection>
         <FormSection title="Content" columns={1}>
@@ -1252,6 +1306,18 @@ function DestinationForm({
   destination?: Destination;
   backHref: string;
 }) {
+  const destinationCity = cities.find((city) => city.slug === destination?.citySlug);
+  const destinationContext = {
+    name: destination?.name || "",
+    city: destination?.city || destinationCity?.name || "",
+    country: destinationCity?.country || "",
+    category: destination?.category || "",
+    location: destination?.location || "",
+    region: destination?.region || destinationCity?.region || "",
+  };
+  const destinationImageAltAuto = destinationImageAlt(destinationContext);
+  const destinationImageCaptionAuto = destinationImageCaption(destinationContext);
+
   return (
     <EditShell title={title} backHref={backHref}>
       <form action={saveDestinationAction} className="grid gap-6">
@@ -1272,8 +1338,23 @@ function DestinationForm({
           <Field label="Region" name="region" defaultValue={destination?.region} placeholder="Muscat Governorate" />
         </FormSection>
         <FormSection title="Images / gallery" columns={1}>
-          <ImageUploadField fieldName="image" label="Main image" currentImage={destination?.image} />
-          <GalleryUploadField currentImages={destination?.galleryImages} />
+          <ImageUploadField
+            fieldName="image"
+            label="Main image"
+            currentImage={destination?.image}
+            metadata={{
+              altDefault: destination?.imageAlt,
+              captionDefault: destination?.imageCaption,
+              altAuto: destinationImageAltAuto,
+              captionAuto: destinationImageCaptionAuto,
+            }}
+          />
+          <GalleryUploadField
+            currentImages={destination?.galleryImages}
+            currentItems={destination?.galleryImagesMetadata}
+            altPlaceholder={galleryImageAlt(destinationContext, 0)}
+            captionPlaceholder={galleryImageCaption(destinationContext, 0)}
+          />
         </FormSection>
         <FormSection title="Description / content" columns={1}>
           <Area label="Summary" name="summary" defaultValue={destination?.summary} />
@@ -1705,6 +1786,17 @@ function AttractionForm({
   attraction?: Attraction;
   backHref: string;
 }) {
+  const attractionCity = cities.find((city) => city.slug === attraction?.citySlug);
+  const attractionContext = {
+    name: attraction?.name || "",
+    city: attraction?.city || attractionCity?.name || "",
+    country: attractionCity?.country || "",
+    category: attraction?.category || attraction?.type || "",
+    type: attraction?.type || attraction?.category || "",
+  };
+  const attractionImageAltAuto = attractionImageAlt(attractionContext);
+  const attractionImageCaptionAuto = attractionImageCaption(attractionContext);
+
   return (
     <EditShell title={title} backHref={backHref}>
       <form action={saveAttractionAction} className="grid gap-6">
@@ -1721,7 +1813,17 @@ function AttractionForm({
           <CitySelect cities={cities} defaultValue={attraction?.citySlug} />
         </FormSection>
         <FormSection title="Images" columns={1}>
-          <ImageUploadField fieldName="image" label="Attraction image" currentImage={attraction?.image} />
+          <ImageUploadField
+            fieldName="image"
+            label="Attraction image"
+            currentImage={attraction?.image}
+            metadata={{
+              altDefault: attraction?.imageAlt,
+              captionDefault: attraction?.imageCaption,
+              altAuto: attractionImageAltAuto,
+              captionAuto: attractionImageCaptionAuto,
+            }}
+          />
         </FormSection>
         <FormSection title="Content" columns={1}>
           <Area label="Summary" name="summary" defaultValue={attraction?.summary} />
@@ -1750,6 +1852,17 @@ function RestaurantForm({
   restaurant?: Restaurant;
   backHref: string;
 }) {
+  const restaurantCity = cities.find((city) => city.id === restaurant?.cityId || city.slug === restaurantCitySlug(cities, restaurant));
+  const restaurantContext = {
+    name: restaurant?.name || "",
+    city: restaurantCity?.name || "",
+    country: restaurantCity?.country || restaurant?.countrySlug || "",
+    countrySlug: restaurant?.countrySlug || "",
+    cuisineType: restaurant?.cuisineType || "",
+  };
+  const restaurantImageAltAuto = restaurantImageAlt(restaurantContext);
+  const restaurantImageCaptionAuto = restaurantImageCaption(restaurantContext);
+
   return (
     <EditShell title={title} backHref={backHref}>
       <form action={saveRestaurantAction} className="grid gap-6">
@@ -1778,7 +1891,17 @@ function RestaurantForm({
           <Field label="Price range" name="priceRange" defaultValue={restaurant?.priceRange} placeholder="$$" />
         </FormSection>
         <FormSection title="Image" columns={1}>
-          <ImageUploadField fieldName="image" label="Restaurant image" currentImage={restaurant?.image} />
+          <ImageUploadField
+            fieldName="image"
+            label="Restaurant image"
+            currentImage={restaurant?.image}
+            metadata={{
+              altDefault: restaurant?.imageAlt,
+              captionDefault: restaurant?.imageCaption,
+              altAuto: restaurantImageAltAuto,
+              captionAuto: restaurantImageCaptionAuto,
+            }}
+          />
         </FormSection>
         <FormSection title="Description" columns={1}>
           <Area

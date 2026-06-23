@@ -23,6 +23,17 @@ import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import {
+  attractionImageAlt,
+  attractionImageCaption,
+  destinationImageAlt,
+  destinationImageCaption,
+  galleryImageAlt,
+  galleryImageCaption,
+  restaurantImageAlt,
+  restaurantImageCaption,
+} from "@/lib/image-seo";
+import { imageMetadataValue, normalizeGalleryImageMetadata, parseGalleryImageMetadata } from "@/lib/image-metadata";
+import {
   normalizeHomeHeroOverlayOpacity,
   normalizeHomeHeroOverlayStyle,
 } from "@/lib/home-hero-settings";
@@ -175,6 +186,7 @@ async function cityContext(formData: FormData) {
     cityId: city?.id || citySlug,
     cityName: city?.name || citySlug,
     citySlug,
+    countryName: city?.country || "",
     countrySlug: slugify(city?.country || ""),
   };
 }
@@ -360,10 +372,12 @@ export async function deleteCityAction(formData: FormData) {
 
 export async function saveDestinationAction(formData: FormData) {
   const name = value(formData, "name");
-  const { cityId, cityName, citySlug, countrySlug } = await cityContext(formData);
+  const id = value(formData, "id");
+  const { cityId, cityName, citySlug, countryName, countrySlug } = await cityContext(formData);
   let image: string;
   let galleryImages: string[];
   const slug = value(formData, "slug") || slugify(name);
+  const existingDestination = id ? (await getDestinations()).find((destination) => destination.id === id) : undefined;
 
   try {
     image = await getImagePathFromForm(formData, {
@@ -385,8 +399,44 @@ export async function saveDestinationAction(formData: FormData) {
     redirectWithUploadError(error);
   }
 
+  const destinationContext = {
+    ...existingDestination,
+    name,
+    city: cityName,
+    country: countryName,
+    category: value(formData, "category"),
+    location: value(formData, "location"),
+    region: value(formData, "region"),
+  };
+  const previousDestinationContext = existingDestination
+    ? { ...existingDestination, country: countryName }
+    : destinationContext;
+  const imageAlt = imageMetadataValue(
+    value(formData, "imageAlt"),
+    value(formData, "imageAltAuto") || destinationImageAlt(previousDestinationContext),
+    destinationImageAlt(destinationContext),
+  );
+  const imageCaption = imageMetadataValue(
+    value(formData, "imageCaption"),
+    value(formData, "imageCaptionAuto") || destinationImageCaption(previousDestinationContext),
+    destinationImageCaption(destinationContext),
+  );
+  const submittedGalleryMetadata = parseGalleryImageMetadata(formData.get("galleryImagesMetadata"));
+  const galleryImagesMetadata = normalizeGalleryImageMetadata(galleryImages, submittedGalleryMetadata).map((item, index) => {
+    const previousContext = previousDestinationContext;
+    const nextContext = destinationContext;
+    const previousAlt = galleryImageAlt(previousContext, index);
+    const previousCaption = galleryImageCaption(previousContext, index);
+
+    return {
+      ...item,
+      alt: imageMetadataValue(item.alt || "", previousAlt, galleryImageAlt(nextContext, index)),
+      caption: imageMetadataValue(item.caption || "", previousCaption, galleryImageCaption(nextContext, index)),
+    };
+  });
+
   const item: Destination = {
-    id: value(formData, "id") || idFrom("dst", name),
+    id: id || idFrom("dst", name),
     cityId,
     citySlug,
     slug,
@@ -398,7 +448,10 @@ export async function saveDestinationAction(formData: FormData) {
     duration: value(formData, "duration"),
     bestSeason: value(formData, "bestSeason"),
     image,
+    imageAlt,
+    imageCaption,
     galleryImages,
+    galleryImagesMetadata,
     summary: value(formData, "summary"),
     description: value(formData, "description"),
     highlights: listFromTextarea(formData.get("highlights")),
@@ -604,7 +657,8 @@ export async function saveAuthorAction(formData: FormData) {
 
 export async function saveAttractionAction(formData: FormData) {
   const name = value(formData, "name");
-  const { cityId, cityName, citySlug, countrySlug } = await cityContext(formData);
+  const id = value(formData, "id");
+  const { cityId, cityName, citySlug, countryName, countrySlug } = await cityContext(formData);
   let image: string;
   const slug = value(formData, "slug") || slugify(name);
 
@@ -619,14 +673,27 @@ export async function saveAttractionAction(formData: FormData) {
   }
 
   const category = value(formData, "category") || value(formData, "type");
+  const attractionContext = { name, city: cityName, country: countryName, category, type: category };
+  const imageAlt = imageMetadataValue(
+    value(formData, "imageAlt"),
+    value(formData, "imageAltAuto"),
+    attractionImageAlt(attractionContext),
+  );
+  const imageCaption = imageMetadataValue(
+    value(formData, "imageCaption"),
+    value(formData, "imageCaptionAuto"),
+    attractionImageCaption(attractionContext),
+  );
   const item: Attraction = {
-    id: value(formData, "id") || idFrom("att", name),
+    id: id || idFrom("att", name),
     cityId,
     citySlug,
     name,
     slug,
     city: cityName,
     image,
+    imageAlt,
+    imageCaption,
     category,
     type: category,
     description: value(formData, "description"),
@@ -661,7 +728,8 @@ export async function deleteAttractionAction(formData: FormData) {
 
 export async function saveRestaurantAction(formData: FormData) {
   const name = value(formData, "name");
-  const { cityId, citySlug, countrySlug } = await cityContext(formData);
+  const id = value(formData, "id");
+  const { cityId, cityName, citySlug, countryName, countrySlug } = await cityContext(formData);
   const destinationId = value(formData, "destinationId");
   let image: string;
   const slug = value(formData, "slug") || slugify(name);
@@ -684,13 +752,32 @@ export async function saveRestaurantAction(formData: FormData) {
     }
   }
 
+  const restaurantContext = {
+    name,
+    city: cityName,
+    country: countryName,
+    countrySlug,
+    cuisineType: value(formData, "cuisineType"),
+  };
+  const imageAlt = imageMetadataValue(
+    value(formData, "imageAlt"),
+    value(formData, "imageAltAuto"),
+    restaurantImageAlt(restaurantContext),
+  );
+  const imageCaption = imageMetadataValue(
+    value(formData, "imageCaption"),
+    value(formData, "imageCaptionAuto"),
+    restaurantImageCaption(restaurantContext),
+  );
   const item: Restaurant = {
-    id: value(formData, "id") || crypto.randomUUID(),
+    id: id || crypto.randomUUID(),
     slug,
     name,
     shortDescription: value(formData, "shortDescription"),
     longDescription: value(formData, "longDescription"),
     image,
+    imageAlt,
+    imageCaption,
     cityId,
     destinationId,
     countrySlug,

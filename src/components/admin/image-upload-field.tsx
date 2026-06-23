@@ -5,28 +5,47 @@ import { ImageIcon, Trash2, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   compressAdminImage,
   createFileList,
   validateAdminImageFile,
 } from "@/lib/image-compression";
+import type { GalleryImageItem } from "@/lib/types";
+
+type ImageMetadataFields = {
+  altName?: string;
+  captionName?: string;
+  altDefault?: string;
+  captionDefault?: string;
+  altAuto?: string;
+  captionAuto?: string;
+  altPlaceholder?: string;
+  captionPlaceholder?: string;
+};
 
 type ImageUploadFieldProps = {
   currentImage?: string;
   fieldName?: string;
   label?: string;
+  metadata?: ImageMetadataFields;
 };
 
 type GalleryUploadFieldProps = {
   currentImages?: string[];
+  currentItems?: GalleryImageItem[];
   fieldName?: string;
+  metadataFieldName?: string;
   label?: string;
+  altPlaceholder?: string;
+  captionPlaceholder?: string;
 };
 
 export function ImageUploadField({
   currentImage,
   fieldName = "image",
   label = "Image",
+  metadata,
 }: ImageUploadFieldProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +57,10 @@ export function ImageUploadField({
   const [isProcessing, setIsProcessing] = useState(false);
   const displayImage = removed ? "" : previewUrl || savedImage;
   const compressionKind = imageCompressionKind(fieldName, label);
+  const altName = metadata?.altName || `${fieldName}Alt`;
+  const captionName = metadata?.captionName || `${fieldName}Caption`;
+  const altValue = metadata?.altDefault || metadata?.altAuto || "";
+  const captionValue = metadata?.captionDefault || metadata?.captionAuto || "";
 
   useEffect(() => {
     setSavedImage(currentImage || "");
@@ -207,46 +230,79 @@ export function ImageUploadField({
           </Button>
         </div>
       ) : null}
+      {metadata ? (
+        <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2">
+          <input type="hidden" name={`${altName}Auto`} value={metadata.altAuto || ""} />
+          <input type="hidden" name={`${captionName}Auto`} value={metadata.captionAuto || ""} />
+          <div className="grid gap-2">
+            <Label htmlFor={altName}>{label} alt text</Label>
+            <Input
+              id={altName}
+              name={altName}
+              defaultValue={altValue}
+              placeholder={metadata.altPlaceholder || metadata.altAuto}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor={captionName}>{label} caption</Label>
+            <Textarea
+              id={captionName}
+              name={captionName}
+              defaultValue={captionValue}
+              placeholder={metadata.captionPlaceholder || metadata.captionAuto}
+              rows={3}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export function GalleryUploadField({
   currentImages = [],
+  currentItems,
   fieldName = "galleryImages",
+  metadataFieldName = `${fieldName}Metadata`,
   label = "Gallery images",
+  altPlaceholder,
+  captionPlaceholder,
 }: GalleryUploadFieldProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [savedImages, setSavedImages] = useState(currentImages);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const initialItems = useMemo(
+    () => currentGalleryItems(currentImages, currentItems),
+    [currentImages, currentItems],
+  );
+  const [savedItems, setSavedItems] = useState<GalleryImageItem[]>(initialItems);
+  const [previews, setPreviews] = useState<GalleryImageItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const helperText = useMemo(() => "Upload multiple JPG, PNG, or WEBP images. Max 8MB each.", []);
 
   useEffect(() => {
-    setSavedImages(currentImages);
+    setSavedItems(currentGalleryItems(currentImages, currentItems));
     setError(null);
     setNotice(null);
     setIsProcessing(false);
     setPreviews((currentPreviews) => {
-      currentPreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      currentPreviews.forEach((preview) => URL.revokeObjectURL(preview.src));
       return [];
     });
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-  }, [currentImages]);
+  }, [currentImages, currentItems]);
 
   useEffect(() => {
     return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview));
+      previews.forEach((preview) => URL.revokeObjectURL(preview.src));
     };
   }, [previews]);
 
   async function handleFiles(files: FileList | File[]) {
-    previews.forEach((preview) => URL.revokeObjectURL(preview));
+    previews.forEach((preview) => URL.revokeObjectURL(preview.src));
 
     const selected = Array.from(files);
     const validationError = selected.map(validateAdminImageFile).find(Boolean);
@@ -274,13 +330,13 @@ export function GalleryUploadField({
     try {
       const results = await Promise.all(selected.map((file) => compressAdminImage(file, { kind: "standard" })));
       const processedFiles = results.map((result) => result.file);
-      const previewUrls = processedFiles.map((file) => URL.createObjectURL(file));
+      const previewItems = processedFiles.map((file) => ({ src: URL.createObjectURL(file) }));
 
       if (inputRef.current) {
         inputRef.current.files = createFileList(processedFiles);
       }
 
-      setPreviews(previewUrls);
+      setPreviews(previewItems);
       setNotice(
         results.some((result) => result.compressed)
           ? "One or more gallery images were compressed before upload. Please review before saving."
@@ -300,7 +356,8 @@ export function GalleryUploadField({
 
   return (
     <div className="grid gap-3">
-      <input type="hidden" name={fieldName} value={savedImages.join("\n")} />
+      <input type="hidden" name={fieldName} value={savedItems.map((item) => item.src).join("\n")} />
+      <input type="hidden" name={metadataFieldName} value={JSON.stringify([...savedItems, ...previews])} />
       <Label htmlFor={inputId}>{label}</Label>
       <label
         htmlFor={inputId}
@@ -327,18 +384,18 @@ export function GalleryUploadField({
           }}
         />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[...savedImages, ...previews].length > 0 ? (
-            [...savedImages, ...previews].map((image, index) => (
-              <div key={`${image}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
+          {[...savedItems, ...previews].length > 0 ? (
+            [...savedItems, ...previews].map((item, index) => (
+              <div key={`${item.src}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element -- Blob previews cannot use next/image. */}
-                <img src={image} alt={`${label} preview ${index + 1}`} className="h-36 w-full object-cover" />
-                {index < savedImages.length ? (
+                <img src={item.src} alt={`${label} preview ${index + 1}`} className="h-36 w-full object-cover" />
+                {index < savedItems.length ? (
                   <button
                     type="button"
                     className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-red-600 shadow-sm"
                     onClick={(event) => {
                       event.preventDefault();
-                      setSavedImages((images) => images.filter((item) => item !== image));
+                      setSavedItems((items) => items.filter((savedItem) => savedItem.src !== item.src));
                     }}
                   >
                     Remove
@@ -365,11 +422,74 @@ export function GalleryUploadField({
       ) : null}
       {notice ? <p className="text-xs font-medium text-emerald-700">{notice}</p> : null}
       {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+      {[...savedItems, ...previews].length > 0 ? (
+        <div className="grid gap-4">
+          {[...savedItems, ...previews].map((item, index) => {
+            const isSaved = index < savedItems.length;
+            const updateItem = (updates: Partial<GalleryImageItem>) => {
+              if (isSaved) {
+                setSavedItems((items) =>
+                  items.map((savedItem, itemIndex) => (itemIndex === index ? { ...savedItem, ...updates } : savedItem)),
+                );
+                return;
+              }
+
+              const previewIndex = index - savedItems.length;
+              setPreviews((items) =>
+                items.map((previewItem, itemIndex) =>
+                  itemIndex === previewIndex ? { ...previewItem, ...updates } : previewItem,
+                ),
+              );
+            };
+
+            return (
+              <div key={`${item.src}-metadata-${index}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  Gallery image {index + 1}
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor={`${metadataFieldName}-${index}-alt`}>Alt text</Label>
+                    <Input
+                      id={`${metadataFieldName}-${index}-alt`}
+                      value={item.alt || ""}
+                      placeholder={altPlaceholder}
+                      onChange={(event) => updateItem({ alt: event.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`${metadataFieldName}-${index}-caption`}>Caption</Label>
+                    <Textarea
+                      id={`${metadataFieldName}-${index}-caption`}
+                      value={item.caption || ""}
+                      placeholder={captionPlaceholder}
+                      rows={3}
+                      onChange={(event) => updateItem({ caption: event.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
       <p className="text-xs text-slate-500">
         Re-upload older gallery JPGs to apply the latest WebP compression and long-lived cache settings.
       </p>
     </div>
   );
+}
+
+function currentGalleryItems(currentImages: string[], currentItems?: GalleryImageItem[]) {
+  return currentImages.map((src, index) => {
+    const item = currentItems?.find((metadata) => metadata.src === src) || currentItems?.[index];
+    return {
+      src,
+      alt: item?.alt || "",
+      caption: item?.caption || "",
+      title: item?.title || "",
+    };
+  });
 }
 
 function errorMessage(error: unknown) {

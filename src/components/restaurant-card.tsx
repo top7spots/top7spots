@@ -17,7 +17,7 @@ export function RestaurantCard({ restaurant, city }: { restaurant: Restaurant; c
         {image ? (
           <SafeImage
             src={image}
-            alt={restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
+            alt={restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
             fill
             sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
             quality={68}

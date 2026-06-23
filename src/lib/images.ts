@@ -2,6 +2,7 @@ import "server-only";
 
 import { fallbackImage } from "@/lib/image-constants";
 import { getSupabasePublicUrl, supabaseStorageBucket } from "@/lib/supabase";
+import type { GalleryImageItem } from "@/lib/types";
 
 const missingImageValues = new Set(["", "null", "undefined", "none", "n/a", "-"]);
 const localImagePathPattern = /^\/(?:uploads|images)\//i;
@@ -21,6 +22,45 @@ export function getDestinationGalleryImages(mainImage?: string, galleryImages: s
     .filter((image) => image !== fallbackImage);
 
   return images.length > 0 ? Array.from(new Set(images)) : [fallbackImage];
+}
+
+export function getDestinationGalleryImageItems({
+  mainImage,
+  mainImageAlt,
+  mainImageCaption,
+  galleryImages = [],
+  galleryImagesMetadata = [],
+}: {
+  mainImage?: string;
+  mainImageAlt?: string;
+  mainImageCaption?: string;
+  galleryImages?: string[];
+  galleryImagesMetadata?: GalleryImageItem[];
+}) {
+  const images = getDestinationGalleryImages(mainImage, galleryImages);
+  const normalizedMetadata = galleryImagesMetadata.map((item) => ({
+    ...item,
+    src: resolveImagePath(item.src),
+  }));
+  const mainSrc = resolveImagePath(mainImage);
+
+  return images.map((src, index) => {
+    if (src === mainSrc) {
+      return {
+        src,
+        alt: mainImageAlt,
+        caption: mainImageCaption,
+      };
+    }
+
+    const item = normalizedMetadata.find((metadata) => metadata.src === src) || normalizedMetadata[index - 1];
+    return {
+      src,
+      alt: item?.alt,
+      caption: item?.caption,
+      title: item?.title,
+    };
+  });
 }
 
 export function isRemoteImage(image?: string) {

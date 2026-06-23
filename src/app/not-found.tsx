@@ -147,7 +147,7 @@ function CityRecoveryCard({ city }: { city: City }) {
       <div className="relative aspect-[16/9] bg-slate-100">
         <SafeImage
           src={image}
-          alt={cityImageAlt(city, "card")}
+          alt={city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card")}
           fill
           sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition duration-500 group-hover:scale-105"

@@ -10,8 +10,14 @@ create table if not exists public.cities (
   short_description text,
   long_description text,
   hero_image text,
+  hero_image_alt text,
+  hero_image_caption text,
   card_image text,
+  card_image_alt text,
+  card_image_caption text,
   featured_image text,
+  featured_image_alt text,
+  featured_image_caption text,
   status text not null default 'draft' check (status in ('draft', 'published')),
   is_featured boolean not null default false,
   display_order integer not null default 0,
@@ -35,7 +41,10 @@ create table if not exists public.destinations (
   duration text,
   best_season text,
   image text,
+  image_alt text,
+  image_caption text,
   gallery_images text[] not null default '{}',
+  gallery_images_metadata jsonb,
   summary text,
   description text,
   highlights text[] not null default '{}',
@@ -130,6 +139,19 @@ alter table public.guides add column if not exists table_of_contents jsonb not n
 alter table public.guides add column if not exists listing_blocks jsonb not null default '[]'::jsonb;
 alter table public.guides add column if not exists content_blocks jsonb not null default '[]'::jsonb;
 alter table public.destinations add column if not exists faqs jsonb not null default '[]'::jsonb;
+alter table public.cities add column if not exists hero_image_alt text;
+alter table public.cities add column if not exists hero_image_caption text;
+alter table public.cities add column if not exists card_image_alt text;
+alter table public.cities add column if not exists card_image_caption text;
+alter table public.cities add column if not exists featured_image_alt text;
+alter table public.cities add column if not exists featured_image_caption text;
+alter table public.destinations add column if not exists image_alt text;
+alter table public.destinations add column if not exists image_caption text;
+alter table public.destinations add column if not exists gallery_images_metadata jsonb;
+alter table public.attractions add column if not exists image_alt text;
+alter table public.attractions add column if not exists image_caption text;
+alter table public.restaurants add column if not exists image_alt text;
+alter table public.restaurants add column if not exists image_caption text;
 
 create table if not exists public.attractions (
   id text primary key,
@@ -139,6 +161,8 @@ create table if not exists public.attractions (
   slug text not null,
   city text,
   image text,
+  image_alt text,
+  image_caption text,
   category text,
   type text,
   description text,
@@ -158,6 +182,8 @@ create table if not exists public.restaurants (
   short_description text not null default '',
   long_description text,
   image text,
+  image_alt text,
+  image_caption text,
   city_id text references public.cities(id) on delete set null,
   destination_id text references public.destinations(id) on delete set null,
   country_slug text not null default '',

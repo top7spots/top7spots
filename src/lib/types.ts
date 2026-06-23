@@ -92,8 +92,14 @@ export type City = {
   shortDescription: string;
   longDescription: string;
   heroImage: string;
+  heroImageAlt: string;
+  heroImageCaption: string;
   cardImage: string;
+  cardImageAlt: string;
+  cardImageCaption: string;
   featuredImage: string;
+  featuredImageAlt: string;
+  featuredImageCaption: string;
   status: ContentStatus;
   isFeatured: boolean;
   displayOrder: number;
@@ -102,6 +108,13 @@ export type City = {
   seoKeywords: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type GalleryImageItem = {
+  src: string;
+  alt?: string;
+  caption?: string;
+  title?: string;
 };
 
 export type Destination = {
@@ -117,7 +130,10 @@ export type Destination = {
   duration: string;
   bestSeason: string;
   image: string;
+  imageAlt: string;
+  imageCaption: string;
   galleryImages: string[];
+  galleryImagesMetadata: GalleryImageItem[];
   summary: string;
   description: string;
   highlights: string[];
@@ -203,6 +219,8 @@ export type Attraction = {
   slug: string;
   city: string;
   image: string;
+  imageAlt: string;
+  imageCaption: string;
   category: string;
   type: string;
   description: string;
@@ -221,6 +239,8 @@ export type Restaurant = {
   shortDescription: string;
   longDescription: string;
   image: string;
+  imageAlt: string;
+  imageCaption: string;
   cityId: string;
   destinationId: string;
   countrySlug: string;

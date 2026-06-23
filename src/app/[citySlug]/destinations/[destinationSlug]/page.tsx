@@ -28,7 +28,7 @@ import {
   getGuidesForDestination,
 } from "@/lib/data";
 import { destinationImageAlt } from "@/lib/image-seo";
-import { getDestinationGalleryImages } from "@/lib/images";
+import { getDestinationGalleryImageItems } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export async function generateMetadata({
       `Explore ${destination.name} in ${city.name} with Top7Spots.`,
     path: canonicalPath,
     image: destination.image,
-    imageAlt: destinationImageAlt({ ...destination, country: city.country }),
+    imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city.country }),
   });
 }
 
@@ -80,7 +80,13 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
     notFound();
   }
 
-  const galleryImages = getDestinationGalleryImages(destination.image, destination.galleryImages);
+  const galleryImages = getDestinationGalleryImageItems({
+    mainImage: destination.image,
+    mainImageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city.country }),
+    mainImageCaption: destination.imageCaption,
+    galleryImages: destination.galleryImages,
+    galleryImagesMetadata: destination.galleryImagesMetadata,
+  });
   const category = destination.category || "Travel spot";
   const location =
     [destination.location, destination.region].filter(Boolean).join(", ") ||

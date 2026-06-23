@@ -493,7 +493,7 @@ function CityCard({ city }: { city: City }) {
         {image ? (
           <SafeImage
             src={image}
-            alt={cityImageAlt(city, "card")}
+            alt={city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card")}
             fill
             sizes={featuredCityImageSizes}
             unoptimized
@@ -547,7 +547,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
       <div className="absolute inset-0 overflow-hidden bg-slate-100">
         <SafeImage
           src={image}
-          alt={destinationImageAlt({ ...destination, country: city?.country })}
+          alt={destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country })}
           fill
           sizes={weeklyDestinationImageSizes}
           unoptimized

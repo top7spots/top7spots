@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fallbackImage } from "@/lib/image-constants";
 
 export const siteName = "Top7Spots";
 export const siteBaseUrl = "https://www.top7spots.com";
@@ -12,6 +13,7 @@ type SeoMetadataInput = {
   description: string;
   path: string;
   image?: string;
+  imageAlt?: string;
   keywords?: string[];
   type?: "website" | "article";
 };
@@ -33,16 +35,56 @@ export function absoluteImageUrl(image?: string) {
   return absoluteUrl(image || defaultSeoImage);
 }
 
+export function isPlaceholderSeoImage(image?: string) {
+  const normalized = String(image ?? "").trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (normalized === fallbackImage) {
+    return true;
+  }
+
+  try {
+    return new URL(normalized, siteBaseUrl).pathname === fallbackImage;
+  } catch {
+    return false;
+  }
+}
+
+export function absoluteSeoImageUrl(image?: string) {
+  const normalized = String(image ?? "").trim();
+
+  if (!normalized || isPlaceholderSeoImage(normalized)) {
+    return undefined;
+  }
+
+  return absoluteImageUrl(normalized);
+}
+
 export function seoMetadata({
   title,
   description,
   path,
   image,
+  imageAlt,
   keywords,
   type = "website",
 }: SeoMetadataInput): Metadata {
   const url = absoluteUrl(cleanPath(path));
-  const imageUrl = absoluteImageUrl(image);
+  const hasExplicitImage = image !== undefined;
+  const imageUrl = hasExplicitImage ? absoluteSeoImageUrl(image) : absoluteSeoImageUrl(defaultSeoImage);
+  const openGraphImages = imageUrl
+    ? [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: imageAlt?.trim() || title,
+        },
+      ]
+    : undefined;
 
   return {
     title,
@@ -57,20 +99,13 @@ export function seoMetadata({
       url,
       siteName,
       type,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      images: openGraphImages,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imageUrl],
+      images: imageUrl ? [imageUrl] : undefined,
     },
   };
 }

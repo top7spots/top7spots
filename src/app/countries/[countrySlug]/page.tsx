@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: CountryPageProps): Promise<Me
     description: `Explore cities, destinations, attractions, and travel guides for ${country.name} with Top7Spots.`,
     path: countryPath(country.slug),
     image: country.image,
+    imageAlt: `${country.name} travel inspiration`,
   });
 }
 
@@ -180,7 +181,11 @@ export default async function CountryPage({ params }: CountryPageProps) {
               </SectionHeading>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                 {featuredDestinations.map((destination) => (
-                  <DestinationCard key={destination.id} destination={destination} />
+                  <DestinationCard
+                    key={destination.id}
+                    destination={destination}
+                    city={country.cities.find((city) => city.slug === destination.citySlug)}
+                  />
                 ))}
               </div>
             </div>
@@ -208,7 +213,11 @@ export default async function CountryPage({ params }: CountryPageProps) {
                 </SectionHeading>
                 <div className="grid gap-5 sm:grid-cols-2">
                   {attractions.map((attraction) => (
-                    <AttractionCard key={attraction.id} attraction={attraction} />
+                    <AttractionCard
+                      key={attraction.id}
+                      attraction={attraction}
+                      city={country.cities.find((city) => city.slug === attraction.citySlug)}
+                    />
                   ))}
                 </div>
               </div>

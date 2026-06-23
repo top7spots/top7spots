@@ -2,6 +2,13 @@ import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import { slugify } from "@/lib/format";
 import { getGuideHref } from "@/lib/guide-routes";
+import {
+  attractionImageAlt,
+  cityImageAlt,
+  destinationImageAlt,
+  guideImageAlt,
+  restaurantImageAlt,
+} from "@/lib/image-seo";
 import type {
   City,
   Destination,
@@ -29,6 +36,7 @@ export type ResolvedGuideListingBlockItem = {
   title: string;
   description?: string;
   image?: string;
+  imageAlt?: string;
   badge?: string;
 };
 
@@ -113,14 +121,19 @@ export function resolveGuideListingBlockItems({
       itemIds
         .map((id) => destinations.find((destination) => matchesEntityId(destination, id)))
         .filter((destination): destination is Destination => Boolean(destination))
-        .map((destination) => ({
-          key: `destination-${destination.id}`,
-          href: getListingBlockHref("destinations", destination),
-          title: destination.name,
-          description: destination.summary || destination.location || destination.city,
-          image: destination.image,
-          badge: destination.category || "Destination",
-        })),
+        .map((destination) => {
+          const city = cities.find((item) => item.slug === destination.citySlug);
+
+          return {
+            key: `destination-${destination.id}`,
+            href: getListingBlockHref("destinations", destination),
+            title: destination.name,
+            description: destination.summary || destination.location || destination.city,
+            image: destination.image,
+            imageAlt: destinationImageAlt({ ...destination, country: city?.country }),
+            badge: destination.category || "Destination",
+          };
+        }),
     );
   }
 
@@ -135,6 +148,7 @@ export function resolveGuideListingBlockItems({
           title: city.name,
           description: city.shortDescription || city.region || city.country,
           image: city.cardImage || city.featuredImage || city.heroImage,
+          imageAlt: cityImageAlt(city, "card"),
           badge: city.country || "City",
         })),
     );
@@ -157,6 +171,7 @@ export function resolveGuideListingBlockItems({
         title: countryCity.country,
         description: `Explore cities, destinations, and travel guides across ${countryCity.country}.`,
         image: countryCity.featuredImage || countryCity.heroImage || countryCity.cardImage,
+        imageAlt: `${countryCity.country} travel inspiration`,
         badge: "Country",
       });
     }
@@ -176,6 +191,7 @@ export function resolveGuideListingBlockItems({
           title: guide.title,
           description: guide.excerpt || guide.seoDescription,
           image: guide.coverImage || guide.image,
+          imageAlt: guideImageAlt(guide),
           badge: guide.category || "Guide",
         })),
     );
@@ -186,14 +202,19 @@ export function resolveGuideListingBlockItems({
       itemIds
         .map((id) => restaurants.find((restaurant) => matchesEntityId(restaurant, id)))
         .filter((restaurant): restaurant is Restaurant => Boolean(restaurant))
-        .map((restaurant) => ({
-          key: `restaurant-${restaurant.id}`,
-          href: getListingBlockHref("restaurants", restaurant),
-          title: restaurant.name,
-          description: restaurant.shortDescription || restaurant.address,
-          image: restaurant.image,
-          badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
-        })),
+        .map((restaurant) => {
+          const city = cities.find((item) => item.id === restaurant.cityId);
+
+          return {
+            key: `restaurant-${restaurant.id}`,
+            href: getListingBlockHref("restaurants", restaurant),
+            title: restaurant.name,
+            description: restaurant.shortDescription || restaurant.address,
+            image: restaurant.image,
+            imageAlt: restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+            badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+          };
+        }),
     );
   }
 
@@ -202,14 +223,19 @@ export function resolveGuideListingBlockItems({
       itemIds
         .map((id) => attractions.find((attraction) => matchesEntityId(attraction, id)))
         .filter((attraction): attraction is Attraction => Boolean(attraction))
-        .map((attraction) => ({
-          key: `activity-${attraction.id}`,
-          href: getListingBlockHref("activities", attraction),
-          title: attraction.name,
-          description: attraction.summary || attraction.description,
-          image: attraction.image,
-          badge: attraction.category || attraction.type || "Activity",
-        })),
+        .map((attraction) => {
+          const city = cities.find((item) => item.slug === attraction.citySlug);
+
+          return {
+            key: `activity-${attraction.id}`,
+            href: getListingBlockHref("activities", attraction),
+            title: attraction.name,
+            description: attraction.summary || attraction.description,
+            image: attraction.image,
+            imageAlt: attractionImageAlt({ ...attraction, country: city?.country }),
+            badge: attraction.category || attraction.type || "Activity",
+          };
+        }),
     );
   }
 
@@ -317,6 +343,7 @@ function resolveCustomItem(
     title: item.title,
     description: item.description,
     image: item.image,
+    imageAlt: item.title,
     badge: item.badge || "Link",
   };
 }

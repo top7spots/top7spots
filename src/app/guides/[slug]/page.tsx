@@ -11,6 +11,7 @@ import {
   getPublishedRestaurants,
 } from "@/lib/data";
 import { getGuideCanonicalPath, getGuideHref, isCityGuide } from "@/lib/guide-routes";
+import { guideImageAlt } from "@/lib/image-seo";
 import { seoMetadata } from "@/lib/seo";
 import type { Guide } from "@/lib/types";
 
@@ -35,6 +36,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
     description: guide.seoDescription || guide.excerpt || "A practical travel guide from Top7Spots.",
     path: getGuideCanonicalPath(guide),
     image: guide.coverImage || guide.image,
+    imageAlt: guideImageAlt(guide),
     keywords: guide.seoKeywords,
     type: "article",
   });

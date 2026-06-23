@@ -40,6 +40,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
     }))
     .filter((section) => section.destinations.length > 0)
     .slice(0, 6);
+  const cityBySlug = new Map(cities.map((item) => [item.slug, item]));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -118,7 +119,7 @@ export default async function DestinationsPage({ searchParams }: DestinationsPag
           </SectionHeading>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             {filtered.map((destination) => (
-              <DestinationCard key={destination.id} destination={destination} />
+              <DestinationCard key={destination.id} destination={destination} city={cityBySlug.get(destination.citySlug)} />
             ))}
           </div>
         </section>

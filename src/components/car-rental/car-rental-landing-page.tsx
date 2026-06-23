@@ -18,8 +18,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CarRentalFAQ, DiscoverCarsWidget, ReadMoreText } from "@/components/car-rental/car-rental-client";
 import { carRentalCanonicalUrl, carRentalPublicPath } from "@/lib/car-rental-pages";
+import { carRentalImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
-import { absoluteImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
+import { absoluteSeoImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import type { CarRentalBenefit, CarRentalLinkCard, CarRentalPage, CarRentalVehicleCategoryCard } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -53,7 +54,7 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
           description,
           url: carRentalCanonicalUrl(page),
           inLanguage: page.language,
-          image: absoluteImageUrl(socialImage),
+          image: absoluteSeoImageUrl(socialImage),
           publisher: {
             "@type": "Organization",
             name: siteName,
@@ -64,7 +65,7 @@ export async function CarRentalLandingPage({ page }: CarRentalLandingPageProps) 
       <main>
         <CarRentalHero page={page} isRtl={isRtl} coverImage={coverImage} />
         <CarRentalTrustBar />
-        <VehicleCategorySection cards={page.vehicleCategoryCards} />
+        <VehicleCategorySection cards={page.vehicleCategoryCards} page={page} />
         <CarRentalBenefitsSection benefits={page.benefits} />
         <CompactCardSection
           eyebrow="Popular rental locations"
@@ -110,7 +111,12 @@ export function CarRentalHero({
       {coverImage ? (
         <SafeImage
           src={resolveImagePath(coverImage)}
-          alt={page.pageTitle}
+          alt={carRentalImageAlt({
+            pageTitle: page.pageTitle,
+            cityName: page.cityName,
+            countryName: page.countryName,
+            type: "cover",
+          })}
           fill
           priority
           sizes="100vw"
@@ -186,7 +192,7 @@ function HeroChips({ chips, className }: { chips: string[]; className?: string }
   );
 }
 
-function VehicleCategorySection({ cards }: { cards: CarRentalVehicleCategoryCard[] }) {
+function VehicleCategorySection({ cards, page }: { cards: CarRentalVehicleCategoryCard[]; page: CarRentalPage }) {
   const visibleCards = cards.filter((card) => card.title && card.visible !== false).sort((a, b) => a.sortOrder - b.sortOrder);
 
   if (visibleCards.length === 0) {
@@ -198,19 +204,30 @@ function VehicleCategorySection({ cards }: { cards: CarRentalVehicleCategoryCard
       <SectionIntro eyebrow="Car types" title="Popular Vehicle Categories" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {visibleCards.map((card, index) => (
-          <VehicleCategoryCard key={`${card.title}-${index}`} card={card} />
+          <VehicleCategoryCard key={`${card.title}-${index}`} card={card} page={page} />
         ))}
       </div>
     </section>
   );
 }
 
-function VehicleCategoryCard({ card }: { card: CarRentalVehicleCategoryCard }) {
+function VehicleCategoryCard({ card, page }: { card: CarRentalVehicleCategoryCard; page: CarRentalPage }) {
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
       <div className="relative h-32 bg-slate-100">
         {card.image ? (
-          <SafeImage src={resolveImagePath(card.image)} alt={card.title} fill sizes="(max-width: 640px) 100vw, 260px" className="object-cover" />
+          <SafeImage
+            src={resolveImagePath(card.image)}
+            alt={carRentalImageAlt({
+              title: card.title,
+              cityName: page.cityName,
+              countryName: page.countryName,
+              type: "vehicle-category",
+            })}
+            fill
+            sizes="(max-width: 640px) 100vw, 260px"
+            className="object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50 text-[#1D4ED8]">
             <Car className="size-10" aria-hidden="true" />
@@ -324,7 +341,13 @@ function CompactCard({ card, kind }: { card: CarRentalLinkCard; kind: CompactCar
     >
       {showThumbnail ? (
         <span className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-          <SafeImage src={resolveImagePath(card.image)} alt={card.title} fill sizes="56px" className="object-cover" />
+          <SafeImage
+            src={resolveImagePath(card.image)}
+            alt={carRentalImageAlt({ title: card.title, type: `${kind}-card` as "guide-card" | "destination-card" | "location-card" })}
+            fill
+            sizes="56px"
+            className="object-cover"
+          />
         </span>
       ) : (
         <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1D4ED8]">

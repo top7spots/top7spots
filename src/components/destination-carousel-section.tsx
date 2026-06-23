@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
+import { destinationImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import type { Destination } from "@/lib/types";
 
@@ -54,7 +55,7 @@ function CompactDestinationCarouselCard({ destination }: { destination: Destinat
     [destination.location, destination.city].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||
     "Top7Spots";
-  const imageAlt = `${destination.name}${destination.city ? ` in ${destination.city}` : ""}`;
+  const imageAlt = destinationImageAlt(destination);
 
   return (
     <Link

@@ -1,9 +1,9 @@
 import {
   absoluteImageUrl,
+  absoluteSeoImageUrl,
   absoluteUrl,
   cleanPath,
   defaultSeoDescription,
-  defaultSeoImage,
   siteBaseUrl,
   siteName,
 } from "@/lib/seo";
@@ -270,14 +270,14 @@ export function buildGuideArticleJsonLd({
     headline: guide.title,
     name: guide.title,
     description: guide.seoDescription || guide.excerpt || undefined,
-    image: image ? absoluteImageUrl(image) : undefined,
+    image: absoluteSeoImageUrl(image),
     url,
     author: author
       ? compactObject({
           "@type": "Person",
           name: author.name,
           url: absoluteUrl(cleanPath(`/authors/${author.slug}`)),
-          image: author.profileImage ? absoluteImageUrl(author.profileImage) : undefined,
+          image: absoluteSeoImageUrl(author.profileImage),
           jobTitle: author.role || undefined,
           description: author.shortBio || undefined,
         })
@@ -383,7 +383,7 @@ export function buildGuideItemListJsonLd({
           "@type": item.badge?.toLowerCase().includes("restaurant") ? "Restaurant" : "Place",
           name: item.title,
           description: item.description,
-          image: item.image ? absoluteImageUrl(item.image) : undefined,
+          image: absoluteSeoImageUrl(item.image),
           url: absoluteUrl(cleanPath(item.href)),
         }),
       }),
@@ -392,8 +392,14 @@ export function buildGuideItemListJsonLd({
 }
 
 export function imageObject(image?: string) {
+  const url = absoluteSeoImageUrl(image);
+
+  if (!url) {
+    return undefined;
+  }
+
   return {
     "@type": "ImageObject",
-    url: absoluteImageUrl(image || defaultSeoImage),
+    url,
   };
 }

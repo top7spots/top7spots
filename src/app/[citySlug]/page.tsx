@@ -14,6 +14,7 @@ import { countryPath } from "@/lib/country-hubs";
 import { getCityBySlug, getDestinationsByCity, getGuidesByCity, getPublishedCarRentalPage, getPublishedCities } from "@/lib/data";
 import { carRentalPageMetadata } from "@/lib/car-rental-seo";
 import { getGuideHref } from "@/lib/guide-routes";
+import { cityImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 import type { City, Destination, Guide } from "@/lib/types";
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: CityPageProps): Promise<Metad
       description,
       path: `/${city.slug}`,
       image: city.heroImage || city.featuredImage || city.cardImage,
+      imageAlt: cityImageAlt(city, "hero"),
     }),
     keywords: city.seoKeywords,
   };
@@ -141,7 +143,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 {cityHeroImage ? (
                   <SafeImage
                     src={resolveImagePath(cityHeroImage)}
-                    alt={`${city.name}, ${city.country}`}
+                    alt={cityImageAlt(city, "hero")}
                     fill
                     priority
                     sizes="(min-width: 1024px) 460px, 100vw"
@@ -181,6 +183,7 @@ export default async function CityPage({ params }: CityPageProps) {
                 <DestinationCard
                   key={destination.id}
                   destination={destination}
+                  city={city}
                   imageSizes="(max-width: 768px) 100vw, 360px"
                 />
               ))}
@@ -301,7 +304,7 @@ function SimilarCityCard({ city }: { city: City }) {
         {image ? (
           <SafeImage
             src={resolveImagePath(image)}
-            alt={`${city.name}, ${city.country}`}
+            alt={cityImageAlt(city, "card")}
             fill
             sizes="340px"
             unoptimized

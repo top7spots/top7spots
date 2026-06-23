@@ -3,15 +3,17 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type TouchEvent } from "react";
 import { SafeImage } from "@/components/safe-image";
+import { galleryImageAlt } from "@/lib/image-seo";
 
 type DestinationImageSliderProps = {
   destinationName: string;
+  destinationContext?: Parameters<typeof galleryImageAlt>[0];
   images: string[];
 };
 
 const minimumSwipeDistance = 45;
 
-export function DestinationImageSlider({ destinationName, images }: DestinationImageSliderProps) {
+export function DestinationImageSlider({ destinationName, destinationContext, images }: DestinationImageSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const activeImage = images[activeIndex];
@@ -57,7 +59,7 @@ export function DestinationImageSlider({ destinationName, images }: DestinationI
         <SafeImage
           key={activeImage}
           src={activeImage}
-          alt={`${destinationName} travel view ${activeIndex + 1}`}
+          alt={galleryImageAlt(destinationContext || { name: destinationName, city: "", category: "", location: "", region: "" }, activeIndex)}
           fill
           priority={activeIndex === 0}
           loading={activeIndex === 0 ? "eager" : "lazy"}

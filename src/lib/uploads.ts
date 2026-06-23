@@ -44,7 +44,16 @@ function hasUploadedFile(file: FormDataEntryValue | null): file is File {
 
 function safeBaseName(filename: string) {
   const parsed = path.parse(filename);
-  return slugify(parsed.name).slice(0, 56) || "image";
+  return slugify(parsed.name)
+    .split("-")
+    .filter(Boolean)
+    .slice(0, 10)
+    .join("-")
+    .slice(0, 72) || "image";
+}
+
+function shortUploadId() {
+  return randomUUID().replace(/-/g, "").slice(0, 10);
 }
 
 function lines(value: FormDataEntryValue | null) {
@@ -67,7 +76,7 @@ async function saveUploadedImage(file: File, folder: UploadFolder, fallbackName?
 
   const supabase = getSupabaseAdminClient();
   const baseName = safeBaseName(fallbackName || file.name);
-  const filename = `${baseName}-${randomUUID()}.${extension}`;
+  const filename = `${baseName}-${shortUploadId()}.${extension}`;
   const storagePath = `${folder}/${filename}`;
   const bytes = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(supabaseStorageBucket).upload(storagePath, bytes, {

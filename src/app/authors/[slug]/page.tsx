@@ -10,8 +10,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getAuthorBySlug, getPublishedGuidesByAuthor } from "@/lib/data";
 import { getGuideHref } from "@/lib/guide-routes";
+import { guideImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
-import { absoluteImageUrl, absoluteUrl, cleanPath, seoMetadata, siteName } from "@/lib/seo";
+import { absoluteSeoImageUrl, absoluteUrl, cleanPath, seoMetadata, siteName } from "@/lib/seo";
 import type { Author, Guide } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export async function generateMetadata({ params }: AuthorPageProps): Promise<Met
       `Read travel guides and destination articles by ${author.name} on Top7Spots.`,
     path: `/authors/${author.slug}`,
     image: author.profileImage,
+    imageAlt: author.profileImageAlt || `Portrait of ${author.name}`,
   });
 }
 
@@ -219,7 +221,7 @@ function AuthorGuideCard({ guide }: { guide: Guide }) {
         {image ? (
           <SafeImage
             src={image}
-            alt={guide.coverImageAlt || `${guide.title} travel guide`}
+            alt={guideImageAlt(guide)}
             fill
             sizes="(min-width: 640px) 180px, calc(100vw - 3rem)"
             quality={65}
@@ -261,7 +263,7 @@ function buildAuthorJsonLd(author: Author) {
       "@type": "Person",
       name: author.name,
       url,
-      image: author.profileImage ? absoluteImageUrl(author.profileImage) : undefined,
+      image: absoluteSeoImageUrl(author.profileImage),
       jobTitle: author.role || undefined,
       description: author.shortBio || undefined,
       worksFor: {

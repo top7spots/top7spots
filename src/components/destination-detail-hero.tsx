@@ -2,10 +2,20 @@ import { Calendar, Clock, MapPin, ShieldCheck, Sparkles, Star } from "lucide-rea
 import { DestinationImageSlider } from "@/components/destination-image-slider";
 import { Badge } from "@/components/ui/badge";
 
+type DestinationImageContext = {
+  name: string;
+  category: string;
+  city: string;
+  country?: string;
+  location: string;
+  region: string;
+};
+
 type DestinationDetailHeroProps = {
   bestSeason: string;
   category: string;
   destinationName: string;
+  destinationContext?: DestinationImageContext;
   duration: string;
   images: string[];
   location: string;
@@ -19,6 +29,7 @@ export function DestinationDetailHero({
   bestSeason,
   category,
   destinationName,
+  destinationContext,
   duration,
   images,
   location,
@@ -34,7 +45,7 @@ export function DestinationDetailHero({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] lg:items-center">
-      <DestinationImageSlider destinationName={destinationName} images={images} />
+      <DestinationImageSlider destinationName={destinationName} destinationContext={destinationContext} images={images} />
 
       <div className="lg:py-2">
         <Badge className="rounded-full bg-orange-50 px-3 py-1 text-[#FF6B00] hover:bg-orange-50">

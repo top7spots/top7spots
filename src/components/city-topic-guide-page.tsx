@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import { getGuideHref } from "@/lib/guide-routes";
+import { attractionImageAlt, cityImageAlt, destinationImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, type CityProgrammaticContent, type CitySeoPageConfig } from "@/lib/programmatic-seo";
 import type { Attraction, City, Destination } from "@/lib/types";
@@ -124,7 +125,7 @@ export function CityTopicGuidePage({
               <div className="relative min-h-72 overflow-hidden rounded-3xl bg-slate-200 shadow-2xl shadow-slate-200/80">
                 <SafeImage
                   src={heroImage}
-                  alt={`${city.name} travel guide`}
+                  alt={cityImageAlt(city, "hero")}
                   fill
                   priority
                   sizes="(min-width: 1024px) 430px, 100vw"
@@ -252,7 +253,7 @@ function TopicListingBlock({ city, block }: { city: City; block: ListingBlock })
           block.kind === "destinations" ? (
             <CompactDestinationLink key={item.id} destination={item as Destination} city={city} />
           ) : (
-            <CompactAttractionLink key={item.id} attraction={item as Attraction} />
+            <CompactAttractionLink key={item.id} attraction={item as Attraction} city={city} />
           ),
         )}
       </div>
@@ -276,7 +277,7 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
       <div className="relative w-28 shrink-0 bg-slate-100">
         <SafeImage
           src={image}
-          alt={destination.name}
+          alt={destinationImageAlt({ ...destination, country: city.country })}
           fill
           sizes="112px"
           unoptimized
@@ -302,7 +303,7 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
   );
 }
 
-function CompactAttractionLink({ attraction }: { attraction: Attraction }) {
+function CompactAttractionLink({ attraction, city }: { attraction: Attraction; city: City }) {
   const image = resolveImagePath(attraction.image);
   const href = attraction.citySlug ? `/${attraction.citySlug}/attractions/${attraction.slug}` : "";
   const content = (
@@ -310,7 +311,7 @@ function CompactAttractionLink({ attraction }: { attraction: Attraction }) {
       <div className="relative w-28 shrink-0 bg-slate-100">
         <SafeImage
           src={image}
-          alt={attraction.name}
+          alt={attractionImageAlt({ ...attraction, country: city.country })}
           fill
           sizes="112px"
           unoptimized

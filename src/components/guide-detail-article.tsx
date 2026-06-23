@@ -37,6 +37,13 @@ import {
   type ResolvedGuideListingBlockItem,
 } from "@/lib/guide-listing-blocks";
 import { getGuideHref } from "@/lib/guide-routes";
+import {
+  attractionImageAlt,
+  cityImageAlt,
+  destinationImageAlt,
+  guideImageAlt,
+  restaurantImageAlt,
+} from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type {
@@ -152,7 +159,7 @@ export function GuideDetailArticle({
   const heroDescription = heroBlock?.body || guide.excerpt || descriptionFallback;
   const heroImage = heroBlock?.image || guide.coverImage || guide.image;
   const image = resolveImagePath(heroImage);
-  const imageAlt = heroBlock?.imageAlt || guide.coverImageAlt || guide.title;
+  const imageAlt = heroBlock?.imageAlt || guideImageAlt(guide);
   const updatedDate = formatDate(guide.updatedAt || guide.createdAt);
   const similarGuides = resolveSimilarGuides(guide, guides, city).slice(0, 10);
   const listingBlocks = resolveGuideListingBlocks({
@@ -748,7 +755,7 @@ function GuideListingRowCard({
         {image ? (
           <SafeImage
             src={image}
-            alt={item.title}
+            alt={item.imageAlt || item.title}
             fill
             sizes={imageSizes}
             quality={68}
@@ -960,10 +967,10 @@ function GuidePageBlock({
     return <GuideCtaBlock block={block} />;
   }
 
-  return <EditorialBlock block={block} />;
+  return <EditorialBlock block={block} guideTitle={guide.title} />;
 }
 
-function EditorialBlock({ block }: { block: GuideCmsBlock }) {
+function EditorialBlock({ block, guideTitle }: { block: GuideCmsBlock; guideTitle?: string }) {
   const image = resolveImagePath(block.image || "");
 
   return (
@@ -979,7 +986,7 @@ function EditorialBlock({ block }: { block: GuideCmsBlock }) {
         <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
           <SafeImage
             src={image}
-            alt={block.imageAlt || block.title || "Guide image"}
+            alt={block.imageAlt || block.title || `${guideTitle || "Top7Spots guide"} supporting image`}
             fill
             sizes="(min-width: 768px) 760px, calc(100vw - 4rem)"
             quality={68}
@@ -1484,7 +1491,7 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
         {image ? (
           <SafeImage
             src={image}
-            alt={guide.coverImageAlt || `${guide.title} travel guide`}
+            alt={guideImageAlt(guide)}
             fill
             sizes="(min-width: 640px) 180px, calc(100vw - 3rem)"
             quality={65}
@@ -1547,6 +1554,7 @@ function buildContextualEntityIndex({
       title: destination.name,
       description: destination.summary || destination.location || destination.city,
       image: destination.image,
+      imageAlt: destinationImageAlt({ ...destination, country: destinationCity?.country }),
       type: destination.category || "Destination",
       entityType: "destination",
       citySlug: destination.citySlug,
@@ -1565,6 +1573,7 @@ function buildContextualEntityIndex({
       title: attraction.name,
       description: attraction.summary || attraction.description,
       image: attraction.image,
+      imageAlt: attractionImageAlt({ ...attraction, country: attractionCity?.country }),
       type: attraction.category || attraction.type || "Attraction",
       entityType: "attraction",
       citySlug: attraction.citySlug,
@@ -1584,6 +1593,7 @@ function buildContextualEntityIndex({
       title: restaurant.name,
       description: restaurant.shortDescription || restaurant.address,
       image: restaurant.image,
+      imageAlt: restaurantImageAlt({ ...restaurant, city: restaurantCity?.name, country: restaurantCity?.country }),
       type: restaurant.cuisineType || restaurant.priceRange || "Restaurant",
       entityType: "restaurant",
       citySlug: restaurantCity?.slug || restaurant.cityId,
@@ -1600,6 +1610,7 @@ function buildContextualEntityIndex({
       title: item.name,
       description: item.shortDescription || item.region || item.country,
       image: item.cardImage || item.featuredImage || item.heroImage,
+      imageAlt: cityImageAlt(item, "card"),
       type: item.country || "City",
       entityType: "city",
       citySlug: item.slug,
@@ -1645,6 +1656,7 @@ function buildCountryEntities(cities: City[]): ContextualEntity[] {
       title: city.country,
       description: `Explore cities, destinations, and travel guides across ${city.country}.`,
       image: city.featuredImage || city.heroImage || city.cardImage,
+      imageAlt: `${city.country} travel inspiration`,
       type: "Country",
       entityType: "country",
       countrySlug: city.country,
@@ -2143,9 +2155,9 @@ function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
     title: guide.title,
     description: guide.excerpt || guide.seoDescription,
     image: guide.coverImage || guide.image,
+    imageAlt: guideImageAlt(guide),
     type: guide.category || "Guide",
     badge: guide.readTime || undefined,
-    imageAlt: guide.coverImageAlt || `${guide.title} travel guide`,
   };
 }
 
@@ -2229,14 +2241,19 @@ function selectedBlockItems(
     return itemIds
       .map((id) => context.destinations.find((item) => matchesEntityId(item, id)))
       .filter((item): item is Destination => Boolean(item))
-      .map((destination) => ({
-        key: `destination-${destination.id}`,
-        href: getCanonicalDestinationPath(destination),
-        title: destination.name,
-        description: destination.summary || destination.location || destination.city,
-        image: destination.image,
-        badge: destination.category || "Destination",
-      }));
+      .map((destination) => {
+        const city = context.cities.find((item) => item.slug === destination.citySlug);
+
+        return {
+          key: `destination-${destination.id}`,
+          href: getCanonicalDestinationPath(destination),
+          title: destination.name,
+          description: destination.summary || destination.location || destination.city,
+          image: destination.image,
+          imageAlt: destinationImageAlt({ ...destination, country: city?.country }),
+          badge: destination.category || "Destination",
+        };
+      });
   }
 
   if (block.type === "selected-cities") {
@@ -2249,6 +2266,7 @@ function selectedBlockItems(
         title: city.name,
         description: city.shortDescription || city.region || city.country,
         image: city.cardImage || city.featuredImage || city.heroImage,
+        imageAlt: cityImageAlt(city, "card"),
         badge: city.country || "City",
       }));
   }
@@ -2263,6 +2281,7 @@ function selectedBlockItems(
         title: city.country,
         description: `Explore cities, destinations, and travel guides across ${city.country}.`,
         image: city.featuredImage || city.heroImage || city.cardImage,
+        imageAlt: `${city.country} travel inspiration`,
         badge: "Country",
       }));
   }
@@ -2271,28 +2290,38 @@ function selectedBlockItems(
     return itemIds
       .map((id) => context.restaurants.find((item) => matchesEntityId(item, id)))
       .filter((item): item is Restaurant => Boolean(item))
-      .map((restaurant) => ({
-        key: `restaurant-${restaurant.id}`,
-        href: `/restaurants/${restaurant.slug}`,
-        title: restaurant.name,
-        description: restaurant.shortDescription || restaurant.address,
-        image: restaurant.image,
-        badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
-      }));
+      .map((restaurant) => {
+        const city = context.cities.find((item) => item.id === restaurant.cityId);
+
+        return {
+          key: `restaurant-${restaurant.id}`,
+          href: `/restaurants/${restaurant.slug}`,
+          title: restaurant.name,
+          description: restaurant.shortDescription || restaurant.address,
+          image: restaurant.image,
+          imageAlt: restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+          badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+        };
+      });
   }
 
   if (block.type === "selected-activities") {
     return itemIds
       .map((id) => context.attractions.find((item) => matchesEntityId(item, id)))
       .filter((item): item is Attraction => Boolean(item))
-      .map((attraction) => ({
-        key: `activity-${attraction.id}`,
-        href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
-        title: attraction.name,
-        description: attraction.summary || attraction.description,
-        image: attraction.image,
-        badge: attraction.category || attraction.type || "Activity",
-      }));
+      .map((attraction) => {
+        const city = context.cities.find((item) => item.slug === attraction.citySlug);
+
+        return {
+          key: `activity-${attraction.id}`,
+          href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+          title: attraction.name,
+          description: attraction.summary || attraction.description,
+          image: attraction.image,
+          imageAlt: attractionImageAlt({ ...attraction, country: city?.country }),
+          badge: attraction.category || attraction.type || "Activity",
+        };
+      });
   }
 
   if (block.type === "related-guides") {
@@ -2306,6 +2335,7 @@ function selectedBlockItems(
         title: guide.title,
         description: guide.excerpt || guide.seoDescription,
         image: guide.coverImage || guide.image,
+        imageAlt: guideImageAlt(guide),
         badge: guide.category || "Guide",
       }));
   }

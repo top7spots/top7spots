@@ -15,6 +15,7 @@ import {
   getCityProgrammaticPage,
   hasMeaningfulCityProgrammaticContent,
 } from "@/lib/programmatic-seo";
+import { cityImageAlt } from "@/lib/image-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export async function generateMetadata({ params }: CitySeoPageProps): Promise<Me
       description: page.description(city),
       path: citySeoPath(city.slug, page.slug),
       image: city.heroImage || city.featuredImage || city.cardImage,
+      imageAlt: cityImageAlt(city, "hero"),
     }),
     ...(!hasContent ? { robots: { index: false, follow: true } } : {}),
   };

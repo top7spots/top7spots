@@ -6,6 +6,7 @@ import { SearchBox } from "@/components/search-box";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getPublishedCities, getPublishedDestinations, getPublishedGuides } from "@/lib/data";
+import { cityImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import type { City, Guide } from "@/lib/types";
 import { SafeImage } from "@/components/safe-image";
@@ -86,7 +87,7 @@ export default async function NotFoundPage() {
             <SectionIntro eyebrow="Popular destinations" title="Pick up from a top travel spot" />
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {popularDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
+                <DestinationCard key={destination.id} destination={destination} city={cityBySlug.get(destination.citySlug)} />
               ))}
             </div>
           </section>
@@ -146,7 +147,7 @@ function CityRecoveryCard({ city }: { city: City }) {
       <div className="relative aspect-[16/9] bg-slate-100">
         <SafeImage
           src={image}
-          alt={`${city.name}, ${city.country}`}
+          alt={cityImageAlt(city, "card")}
           fill
           sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition duration-500 group-hover:scale-105"

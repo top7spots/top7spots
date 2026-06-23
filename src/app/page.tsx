@@ -40,6 +40,7 @@ import {
   homeHeroOverlayClassName,
   normalizeHomeHeroOverlayOpacity,
 } from "@/lib/home-hero-settings";
+import { cityImageAlt, destinationImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -68,6 +69,7 @@ export const metadata: Metadata = seoMetadata({
   description: defaultSeoDescription,
   path: "/",
   image: heroImage,
+  imageAlt: homeHeroFallbackAlt,
 });
 
 const categoryPills = [
@@ -491,7 +493,7 @@ function CityCard({ city }: { city: City }) {
         {image ? (
           <SafeImage
             src={image}
-            alt={`${city.name}, ${city.country}`}
+            alt={cityImageAlt(city, "card")}
             fill
             sizes={featuredCityImageSizes}
             unoptimized
@@ -545,7 +547,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
       <div className="absolute inset-0 overflow-hidden bg-slate-100">
         <SafeImage
           src={image}
-          alt={`${destination.name}${context ? `, ${context}` : ""}`}
+          alt={destinationImageAlt({ ...destination, country: city?.country })}
           fill
           sizes={weeklyDestinationImageSizes}
           unoptimized

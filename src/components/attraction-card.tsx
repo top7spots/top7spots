@@ -3,18 +3,18 @@ import { Clock, MapPin } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { attractionImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
-import type { Attraction } from "@/lib/types";
+import type { Attraction, City } from "@/lib/types";
 
 type AttractionCardProps = {
   attraction: Attraction;
+  city?: Pick<City, "country">;
 };
 
-export function AttractionCard({ attraction }: AttractionCardProps) {
+export function AttractionCard({ attraction, city }: AttractionCardProps) {
   const image = resolveImagePath(attraction.image);
-  const imageAlt = `${attraction.name}${attraction.city ? ` in ${attraction.city}` : ""}${
-    attraction.type ? ` ${attraction.type.toLowerCase()}` : " attraction"
-  }`;
+  const imageAlt = attractionImageAlt({ ...attraction, country: city?.country });
   const href = attraction.citySlug ? `/${attraction.citySlug}/attractions/${attraction.slug}` : undefined;
 
   return (

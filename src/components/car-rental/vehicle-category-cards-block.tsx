@@ -3,6 +3,7 @@ import { Car } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
 import { getPublishedCarRentalPage } from "@/lib/data";
 import { getDefaultCarRentalPath, globalCarRentalSlug } from "@/lib/car-rental-pages";
+import { carRentalImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import type { CarRentalVehicleCategoryCard } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -92,7 +93,7 @@ export async function VehicleCategoryCardsBlock({
 
         <div className={cn("mt-5 grid gap-3", isCompact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-5")}>
           {cards.map((card, index) => (
-            <VehicleCategoryCard key={`${card.title}-${index}`} card={card} compact={isCompact} />
+            <VehicleCategoryCard key={`${card.title}-${index}`} card={card} compact={isCompact} page={page} />
           ))}
         </div>
         {footerCtaLabel ? (
@@ -110,14 +111,27 @@ export async function VehicleCategoryCardsBlock({
   );
 }
 
-function VehicleCategoryCard({ card, compact }: { card: CarRentalVehicleCategoryCard; compact: boolean }) {
+function VehicleCategoryCard({
+  card,
+  compact,
+  page,
+}: {
+  card: CarRentalVehicleCategoryCard;
+  compact: boolean;
+  page: { cityName?: string; countryName?: string };
+}) {
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-md">
       <div className={cn("relative bg-slate-100", compact ? "h-28" : "h-32")}>
         {card.image ? (
-          <SafeImage
-            src={resolveImagePath(card.image)}
-            alt={card.title}
+            <SafeImage
+              src={resolveImagePath(card.image)}
+              alt={carRentalImageAlt({
+                title: card.title,
+                cityName: page.cityName,
+                countryName: page.countryName,
+                type: "vehicle-category",
+              })}
             fill
             sizes={compact ? "(max-width: 640px) 100vw, 320px" : "(max-width: 640px) 100vw, 260px"}
             className="object-cover"

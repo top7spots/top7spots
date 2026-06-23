@@ -27,6 +27,7 @@ import {
   getPublishedCities,
   getPublishedGuides,
 } from "@/lib/data";
+import { destinationImageAlt } from "@/lib/image-seo";
 import { getDestinationGalleryImages } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -55,6 +56,7 @@ export async function generateMetadata({
       `Explore ${destination.name} with Top7Spots destination tips, highlights, and nearby ideas.`,
     path: getCanonicalDestinationPath(destination),
     image: destination.image,
+    imageAlt: destinationImageAlt(destination),
   });
 }
 
@@ -181,6 +183,7 @@ export default async function DestinationDetailPage({ params }: DestinationDetai
               bestSeason={destination.bestSeason || "Year-round"}
               category={category}
               destinationName={destination.name}
+              destinationContext={{ ...destination, country: parentCity?.country }}
               duration={destination.duration || "Flexible"}
               images={galleryImages}
               location={location}

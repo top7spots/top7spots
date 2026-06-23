@@ -84,13 +84,19 @@ async function vehicleCategoryCardsFromForm(formData: FormData) {
     "Vehicle category cards",
   );
 
+  const locationSlug = [slugify(value(formData, "countryName")), slugify(value(formData, "cityName"))]
+    .filter(Boolean)
+    .join("-");
+
   return Promise.all(
     cards.map(async (card, index) => ({
       ...card,
       image: await getImagePathFromForm(formData, {
         fieldName: `vehicleCategoryImage_${index}`,
         folder: "car-rental",
-        fallbackName: `vehicle-category-${slugify(card.title || String(index + 1))}`,
+        fallbackName: [locationSlug, "vehicle-category", slugify(card.title || String(index + 1))]
+          .filter(Boolean)
+          .join("-"),
       }),
     })),
   );
@@ -280,7 +286,12 @@ async function revalidateGuideRoutes(guide: Guide) {
   }
 }
 
-async function guideContentBlocksFromForm(formData: FormData, title: string, existingGuide?: Guide) {
+async function guideContentBlocksFromForm(
+  formData: FormData,
+  title: string,
+  existingGuide?: Guide,
+  fallbackPrefix?: string,
+) {
   if (!formData.has("contentBlocks")) {
     return existingGuide?.contentBlocks ?? [];
   }
@@ -295,7 +306,9 @@ async function guideContentBlocksFromForm(formData: FormData, title: string, exi
           fieldName,
           folder: "guides",
           currentImage: block.image || "",
-          fallbackName: `${slugify(title) || "guide"}-${block.id || index + 1}`,
+          fallbackName: [fallbackPrefix || slugify(title) || "guide", "block", block.id || index + 1]
+            .filter(Boolean)
+            .join("-"),
         });
 
         return { ...block, image };
@@ -347,27 +360,26 @@ export async function deleteCityAction(formData: FormData) {
 
 export async function saveDestinationAction(formData: FormData) {
   const name = value(formData, "name");
-  const { cityId, cityName, citySlug } = await cityContext(formData);
+  const { cityId, cityName, citySlug, countrySlug } = await cityContext(formData);
   let image: string;
   let galleryImages: string[];
+  const slug = value(formData, "slug") || slugify(name);
 
   try {
     image = await getImagePathFromForm(formData, {
       fieldName: "image",
       folder: "destinations",
-      fallbackName: slugify(name),
+      fallbackName: [countrySlug, citySlug, slug, "hero"].filter(Boolean).join("-"),
     });
   } catch (error) {
     redirectWithUploadError(error);
   }
 
-  const slug = value(formData, "slug") || slugify(name);
-
   try {
     galleryImages = await getImagePathsFromForm(formData, {
       fieldName: "galleryImages",
       folder: "destinations",
-      fallbackName: `${slug}-gallery`,
+      fallbackName: [countrySlug, citySlug, slug, "gallery"].filter(Boolean).join("-"),
     });
   } catch (error) {
     redirectWithUploadError(error);
@@ -430,6 +442,7 @@ export async function deleteDestinationAction(formData: FormData) {
 export async function saveGuideAction(formData: FormData) {
   const title = value(formData, "title");
   const id = value(formData, "id");
+  const slug = value(formData, "slug") || slugify(title);
   let ownership: Awaited<ReturnType<typeof guideOwnershipContext>>;
   let image: string;
 
@@ -443,13 +456,12 @@ export async function saveGuideAction(formData: FormData) {
     image = await getImagePathFromForm(formData, {
       fieldName: "image",
       folder: "guides",
-      fallbackName: slugify(title),
+      fallbackName: [ownership.countryId, ownership.citySlug, slug, "guide-cover"].filter(Boolean).join("-"),
     });
   } catch (error) {
     redirectWithUploadError(error);
   }
 
-  const slug = value(formData, "slug") || slugify(title);
   const existingGuide = id
     ? (await getGuides()).find((guide) => guide.id === id)
     : undefined;
@@ -500,7 +512,12 @@ export async function saveGuideAction(formData: FormData) {
     listingBlocks: formData.has("listingBlocks")
       ? normalizeGuideListingBlocks(formData.get("listingBlocks"))
       : existingGuide?.listingBlocks ?? [],
-    contentBlocks: await guideContentBlocksFromForm(formData, title, existingGuide),
+    contentBlocks: await guideContentBlocksFromForm(
+      formData,
+      title,
+      existingGuide,
+      [ownership.countryId, ownership.citySlug, slug, "guide"].filter(Boolean).join("-"),
+    ),
     createdAt: timestamp(formData),
     updatedAt: new Date().toISOString(),
   };
@@ -587,14 +604,15 @@ export async function saveAuthorAction(formData: FormData) {
 
 export async function saveAttractionAction(formData: FormData) {
   const name = value(formData, "name");
-  const { cityId, cityName, citySlug } = await cityContext(formData);
+  const { cityId, cityName, citySlug, countrySlug } = await cityContext(formData);
   let image: string;
+  const slug = value(formData, "slug") || slugify(name);
 
   try {
     image = await getImagePathFromForm(formData, {
       fieldName: "image",
       folder: "attractions",
-      fallbackName: slugify(name),
+      fallbackName: [countrySlug, citySlug, slug, "attraction"].filter(Boolean).join("-"),
     });
   } catch (error) {
     redirectWithUploadError(error);
@@ -606,7 +624,7 @@ export async function saveAttractionAction(formData: FormData) {
     cityId,
     citySlug,
     name,
-    slug: value(formData, "slug") || slugify(name),
+    slug,
     city: cityName,
     image,
     category,
@@ -646,12 +664,13 @@ export async function saveRestaurantAction(formData: FormData) {
   const { cityId, citySlug, countrySlug } = await cityContext(formData);
   const destinationId = value(formData, "destinationId");
   let image: string;
+  const slug = value(formData, "slug") || slugify(name);
 
   try {
     image = await getImagePathFromForm(formData, {
       fieldName: "image",
       folder: "restaurants",
-      fallbackName: slugify(name),
+      fallbackName: [countrySlug, citySlug, slug, "restaurant"].filter(Boolean).join("-"),
     });
   } catch (error) {
     redirectWithUploadError(error);
@@ -667,7 +686,7 @@ export async function saveRestaurantAction(formData: FormData) {
 
   const item: Restaurant = {
     id: value(formData, "id") || crypto.randomUUID(),
-    slug: value(formData, "slug") || slugify(name),
+    slug,
     name,
     shortDescription: value(formData, "shortDescription"),
     longDescription: value(formData, "longDescription"),

@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getCityBySlug, getGuidesByCity } from "@/lib/data";
 import { getGuideHref } from "@/lib/guide-routes";
+import { cityImageAlt } from "@/lib/image-seo";
 import { seoMetadata } from "@/lib/seo";
 import type { Guide } from "@/lib/types";
 
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: CityGuidesPageProps): Promise
     description: `Practical guides for planning your trip to ${city.name}, including transport, airport tips, attractions, and local advice.`,
     path: `/${city.slug}/guides`,
     image: city.featuredImage || city.heroImage || city.cardImage,
+    imageAlt: cityImageAlt(city, "featured"),
     type: "article",
   });
 }

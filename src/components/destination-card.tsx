@@ -4,23 +4,23 @@ import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
+import { destinationImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
-import type { Destination } from "@/lib/types";
+import type { City, Destination } from "@/lib/types";
 
 type DestinationCardProps = {
   destination: Destination;
+  city?: Pick<City, "country">;
   imageSizes?: string;
 };
 
 const defaultDestinationCardImageSizes =
   "(min-width: 1280px) 360px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)";
 
-export function DestinationCard({ destination, imageSizes = defaultDestinationCardImageSizes }: DestinationCardProps) {
+export function DestinationCard({ destination, city, imageSizes = defaultDestinationCardImageSizes }: DestinationCardProps) {
   const image = resolveImagePath(destination.image);
   const category = destination.category || "Travel spot";
-  const imageAlt = `${destination.name}${destination.city ? ` in ${destination.city}` : ""}${
-    destination.category ? ` ${destination.category.toLowerCase()}` : " travel destination"
-  }`;
+  const imageAlt = destinationImageAlt({ ...destination, country: city?.country });
   const location =
     [destination.location, destination.city].filter(Boolean).join(", ") ||
     [destination.city, destination.region].filter(Boolean).join(", ") ||

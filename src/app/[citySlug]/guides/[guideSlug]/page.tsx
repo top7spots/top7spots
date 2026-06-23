@@ -13,6 +13,7 @@ import {
   getPublishedRestaurants,
 } from "@/lib/data";
 import { getGuideCanonicalPath } from "@/lib/guide-routes";
+import { guideImageAlt } from "@/lib/image-seo";
 import { seoMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
       `A practical ${city.name} travel guide from Top7Spots.`,
     path: getGuideCanonicalPath(guide),
     image: guide.coverImage || guide.image,
+    imageAlt: guideImageAlt(guide),
     keywords: guide.seoKeywords,
     type: "article",
   });

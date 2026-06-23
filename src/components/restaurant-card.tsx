@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
+import { restaurantImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import type { City, Restaurant } from "@/lib/types";
 
@@ -16,7 +17,7 @@ export function RestaurantCard({ restaurant, city }: { restaurant: Restaurant; c
         {image ? (
           <SafeImage
             src={image}
-            alt={restaurant.name}
+            alt={restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
             fill
             sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
             quality={68}

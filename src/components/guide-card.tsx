@@ -4,6 +4,7 @@ import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getGuideHref } from "@/lib/guide-routes";
+import { guideImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import type { Guide } from "@/lib/types";
 
@@ -25,7 +26,7 @@ export function GuideCard({
 }: GuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
   const href = hrefOverride || getGuideHref(guide);
-  const imageAlt = guide.coverImageAlt || `${guide.title} travel guide${cityName ? ` for ${cityName}` : ""}`;
+  const imageAlt = cityName && !guide.coverImageAlt ? `${guideImageAlt(guide)} for ${cityName}` : guideImageAlt(guide);
 
   return (
     <Card className="group overflow-hidden rounded-xl border-slate-200 bg-white p-0 shadow-[0_18px_50px_rgb(15_23_42_/_8%)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_rgb(15_23_42_/_16%)]">
@@ -82,7 +83,7 @@ type CompactGuideCardProps = {
 export function CompactGuideCard({ guide, href: hrefOverride }: CompactGuideCardProps) {
   const image = resolveImagePath(guide.coverImage || guide.image);
   const href = hrefOverride || getGuideHref(guide);
-  const imageAlt = guide.coverImageAlt || `${guide.title} travel guide`;
+  const imageAlt = guideImageAlt(guide);
 
   return (
     <Link

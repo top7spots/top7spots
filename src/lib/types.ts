@@ -259,7 +259,11 @@ export type HomepageReview = {
   id: string;
   name: string;
   reviewText: string;
+  rating: number;
+  source: string;
+  reviewUrl: string;
   isPublished: boolean;
+  showOnHomepage: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

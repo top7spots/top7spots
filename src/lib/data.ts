@@ -140,6 +140,17 @@ function bySortOrder<T extends { sortOrder?: number; name?: string; question?: s
   return String(a.name ?? a.question ?? "").localeCompare(String(b.name ?? b.question ?? ""));
 }
 
+function byReviewDisplayOrder(a: HomepageReview, b: HomepageReview) {
+  const orderA = a.sortOrder ?? 999;
+  const orderB = b.sortOrder ?? 999;
+
+  if (orderA !== orderB) {
+    return orderA - orderB;
+  }
+
+  return b.createdAt.localeCompare(a.createdAt);
+}
+
 function getField(row: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = row[key];
@@ -480,12 +491,22 @@ function mapRestaurant(row: RestaurantRow): Restaurant {
 
 function mapHomepageReview(row: HomepageReviewRow): HomepageReview {
   const name = stringField(row, "name");
+  const parsedRating = numberField(row, "rating");
+  const isPublished = booleanField(row, "is_published", "isPublished");
+  const showOnHomepageValue = getField(row, "show_on_homepage", "showOnHomepage");
 
   return {
     id: stringField(row, "id"),
     name,
     reviewText: stringField(row, "review_text", "reviewText"),
-    isPublished: booleanField(row, "is_published", "isPublished"),
+    rating: parsedRating >= 1 && parsedRating <= 5 ? parsedRating : 5,
+    source: stringField(row, "source") || "Trustpilot",
+    reviewUrl: stringField(row, "review_url", "reviewUrl"),
+    isPublished,
+    showOnHomepage:
+      showOnHomepageValue === undefined || showOnHomepageValue === null
+        ? isPublished
+        : booleanField(row, "show_on_homepage", "showOnHomepage"),
     sortOrder: numberField(row, "sort_order", "sortOrder"),
     createdAt: stringField(row, "created_at", "createdAt"),
     updatedAt: stringField(row, "updated_at", "updatedAt"),
@@ -762,7 +783,11 @@ function toHomepageReviewRow(item: HomepageReview): HomepageReviewRow {
     id: item.id,
     name: item.name,
     review_text: item.reviewText,
+    rating: item.rating,
+    source: item.source,
+    review_url: item.reviewUrl || null,
     is_published: item.isPublished,
+    show_on_homepage: item.showOnHomepage,
     sort_order: item.sortOrder,
     created_at: item.createdAt,
     updated_at: item.updatedAt,
@@ -924,7 +949,7 @@ async function readCollection<T extends AdminCollection>(
   }
 
   if (collection === "homepage_reviews") {
-    return (rows as HomepageReviewRow[]).map(mapHomepageReview).sort(bySortOrder) as CollectionMap[T][];
+    return (rows as HomepageReviewRow[]).map(mapHomepageReview).sort(byReviewDisplayOrder) as CollectionMap[T][];
   }
 
   if (collection === "homepage_faqs") {
@@ -1199,7 +1224,7 @@ export async function getHomepageReviews() {
 
 export async function getPublishedHomepageReviews() {
   const reviews = await getHomepageReviews();
-  return reviews.filter((review) => review.isPublished);
+  return reviews.filter((review) => review.isPublished && review.showOnHomepage);
 }
 
 export async function getHomepageFaqs() {

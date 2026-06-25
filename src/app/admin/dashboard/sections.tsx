@@ -787,7 +787,7 @@ function HomepageReviewsSection({ data, searchParams }: AdminCrudProps) {
   const q = getParam(searchParams.q).toLowerCase();
   const status = getParam(searchParams.status);
   const filtered = data.homepageReviews.filter((item) => {
-    const matchesQuery = searchBlob(item.name, item.reviewText).includes(q);
+    const matchesQuery = searchBlob(item.name, item.reviewText, item.source, item.reviewUrl).includes(q);
     return matchesQuery && matchesPublication(item.isPublished, status);
   });
 
@@ -819,12 +819,15 @@ function HomepageReviewsSection({ data, searchParams }: AdminCrudProps) {
     >
       {filtered.length > 0 ? (
         <EntityTable
-          headers={["Review", "Status", "Order", "Updated", "Actions"]}
+          headers={["Review", "Rating", "Source", "Status", "Homepage", "Order", "Updated", "Actions"]}
           rows={filtered.map((item) => ({
             key: item.id,
             cells: [
               <TextEntityCell key="entity" title={item.name} text={item.reviewText} />,
-              <PublishBadge key="status" published={item.isPublished} />,
+              `${item.rating}/5`,
+              item.source || "Trustpilot",
+              <BooleanBadge key="status" value={item.isPublished} trueLabel="Active" falseLabel="Inactive" />,
+              <BooleanBadge key="homepage" value={item.showOnHomepage} trueLabel="Shown" falseLabel="Hidden" />,
               item.sortOrder,
               formatDate(item.updatedAt),
               <RowActions
@@ -1949,6 +1952,13 @@ function HomepageReviewForm({
         <HiddenTimestamps createdAt={review?.createdAt} />
         <FormSection title="Review" columns={1}>
           <Field label="Person name" name="name" defaultValue={review?.name} placeholder="Maya R." />
+          <SelectField label="Rating" name="rating" defaultValue={String(review?.rating ?? 5)}>
+            <option value="5">5 stars</option>
+            <option value="4">4 stars</option>
+            <option value="3">3 stars</option>
+            <option value="2">2 stars</option>
+            <option value="1">1 star</option>
+          </SelectField>
           <Area
             label="Review text"
             name="reviewText"
@@ -1956,9 +1966,18 @@ function HomepageReviewForm({
             placeholder="Top7Spots makes trip research feel calm..."
             rows={5}
           />
+          <Field label="Source" name="source" defaultValue={review?.source || "Trustpilot"} placeholder="Trustpilot" />
+          <Field
+            label="Trustpilot review URL"
+            name="reviewUrl"
+            type="url"
+            defaultValue={review?.reviewUrl}
+            placeholder="https://www.trustpilot.com/reviews/..."
+          />
         </FormSection>
         <FormSection title="Publishing">
-          <Toggle label="Published" name="isPublished" defaultChecked={review?.isPublished ?? true} />
+          <Toggle label="Active" name="isPublished" defaultChecked={review?.isPublished ?? true} />
+          <Toggle label="Show on homepage" name="showOnHomepage" defaultChecked={review?.showOnHomepage ?? true} />
           <Field label="Sort order" name="sortOrder" type="number" defaultValue={review?.sortOrder ?? 0} />
         </FormSection>
         <FormActions backHref={backHref} label="Save review" />
@@ -3041,6 +3060,27 @@ function PublishBadge({ published }: { published: boolean }) {
       )}
     >
       {published ? "Published" : "Unpublished"}
+    </span>
+  );
+}
+
+function BooleanBadge({
+  value,
+  trueLabel,
+  falseLabel,
+}: {
+  value: boolean;
+  trueLabel: string;
+  falseLabel: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-semibold",
+        value ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600",
+      )}
+    >
+      {value ? trueLabel : falseLabel}
     </span>
   );
 }

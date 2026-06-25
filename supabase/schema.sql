@@ -202,10 +202,15 @@ create table if not exists public.homepage_reviews (
   id text primary key,
   name text not null,
   review_text text not null,
+  rating integer default 5,
+  source text default 'Trustpilot',
+  review_url text,
   is_published boolean not null default true,
+  show_on_homepage boolean default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint homepage_reviews_rating_range_check check (rating is null or rating between 1 and 5)
 );
 
 create table if not exists public.homepage_faqs (
@@ -321,6 +326,7 @@ create index if not exists restaurants_destination_idx on public.restaurants (de
 create index if not exists restaurants_country_idx on public.restaurants (country_slug);
 create index if not exists restaurants_published_idx on public.restaurants (published);
 create index if not exists homepage_reviews_published_sort_order_idx on public.homepage_reviews (is_published, sort_order);
+create index if not exists homepage_reviews_homepage_sort_created_idx on public.homepage_reviews (is_published, show_on_homepage, sort_order, created_at desc);
 create index if not exists homepage_faqs_published_sort_order_idx on public.homepage_faqs (is_published, sort_order);
 create index if not exists site_pages_status_slug_idx on public.site_pages (status, slug);
 create index if not exists car_rental_pages_language_status_slug_idx on public.car_rental_pages (language, status, slug);
@@ -393,7 +399,7 @@ create policy "Published restaurants are readable"
 create policy "Published homepage reviews are readable"
   on public.homepage_reviews for select
   to anon
-  using (is_published = true);
+  using (is_published = true and coalesce(show_on_homepage, true) = true);
 
 create policy "Published homepage FAQs are readable"
   on public.homepage_faqs for select

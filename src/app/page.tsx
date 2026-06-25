@@ -10,9 +10,9 @@ import {
   Gem,
   MapPin,
   Mountain,
-  Quote,
   ShieldCheck,
   Sparkles,
+  Star,
   TentTree,
   Waves,
 } from "lucide-react";
@@ -45,7 +45,7 @@ import { cityImageAlt, destinationImageAlt } from "@/lib/image-seo";
 import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import type { City, Destination, Guide } from "@/lib/types";
+import type { City, Destination, Guide, HomepageReview } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -99,25 +99,6 @@ const featuredCityPriority = [
   "jebel-akhdar",
 ];
 
-const fallbackTravelerReviews = [
-  {
-    name: "Maya R.",
-    text: "Top7Spots makes trip research feel calm. I can start with a city, compare the highlights, and save the deeper reading for later.",
-  },
-  {
-    name: "Daniel K.",
-    text: "The destination pages are concise without feeling thin. They give me enough context to decide what belongs in a route.",
-  },
-  {
-    name: "Aisha M.",
-    text: "I like that the guides connect back to cities and nearby places. It feels more organized than jumping between random lists.",
-  },
-  {
-    name: "Jonas L.",
-    text: "The site has a polished travel-magazine feel, but the pages are practical when I am actually planning.",
-  },
-];
-
 const fallbackHomepageFaqs = [
   {
     question: "What is Top7Spots?",
@@ -151,6 +132,65 @@ const fallbackHomepageFaqs = [
   },
 ];
 
+function TrustpilotRating({ rating }: { rating: number }) {
+  const ratingCount = Math.min(5, Math.max(1, Math.round(rating || 5)));
+
+  return (
+    <div className="flex items-center gap-1.5" aria-label={`${ratingCount} out of 5 star Trustpilot rating`}>
+      {Array.from({ length: 5 }).map((_, index) => {
+        const filled = index < ratingCount;
+
+        return (
+          <span
+            key={index}
+            className={`flex size-7 items-center justify-center rounded-[3px] ${
+              filled ? "bg-[#00B67A]" : "bg-slate-200"
+            }`}
+          >
+            <Star
+              className={`size-4 ${filled ? "fill-white text-white" : "fill-slate-400 text-slate-400"}`}
+              aria-hidden="true"
+            />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function TravelerReviewCard({ review }: { review: HomepageReview }) {
+  const source = review.source || "Trustpilot";
+  const className =
+    "group flex min-w-full snap-start flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/70 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-900/10 sm:min-w-[calc(50%-0.625rem)] lg:min-w-[calc(33.333%-0.875rem)]";
+  const content = (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <TrustpilotRating rating={review.rating} />
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          {source}
+        </span>
+      </div>
+      <p className="mt-5 grow text-sm leading-7 text-slate-700">{review.reviewText}</p>
+      <div className="mt-6 border-t border-slate-100 pt-4">
+        <p className="text-sm font-semibold text-[#111827]">{review.name}</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+          Review from {source}
+        </p>
+      </div>
+    </>
+  );
+
+  if (review.reviewUrl) {
+    return (
+      <a href={review.reviewUrl} target="_blank" rel="noopener noreferrer" className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return <article className={className}>{content}</article>;
+}
+
 export default async function Home() {
   const [cities, destinations, guides, publishedReviews, publishedFaqs, siteSettings] = await Promise.all([
     getPublishedCities(),
@@ -175,10 +215,7 @@ export default async function Home() {
   }));
   const weeklyDestinations = selectWeeklyDestinations(destinations).slice(0, 7);
   const homepageGuides = selectHomepageGuides(guides, cityBySlug, visibleCities).slice(0, 6);
-  const travelerReviews =
-    publishedReviews.length > 0
-      ? publishedReviews.map((review) => ({ name: review.name, text: review.reviewText }))
-      : fallbackTravelerReviews;
+  const travelerReviews = publishedReviews;
   const homepageFaqs =
     publishedFaqs.length > 0
       ? publishedFaqs.map((faq) => ({ question: faq.question, answer: faq.answer }))
@@ -352,26 +389,21 @@ export default async function Home() {
           )}
         </section>
 
-        <section id="traveler-reviews" className="border-y border-slate-200 bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow="Traveler perspective" title="What Travelers Say">
-              Notes from travelers who use Top7Spots as a calmer starting point for comparing city
-              hubs, destinations, and guide ideas.
-            </SectionHeading>
-            <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-              {travelerReviews.map((review) => (
-                <article
-                  key={review.name}
-                  className="min-w-[280px] snap-start rounded-xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-sm sm:min-w-[360px]"
-                >
-                  <Quote className="size-6 text-[#FF6B00]" aria-hidden="true" />
-                  <p className="mt-4 text-sm leading-7 text-slate-600">{review.text}</p>
-                  <p className="mt-5 text-sm font-semibold text-[#111827]">{review.name}</p>
-                </article>
-              ))}
+        {travelerReviews.length > 0 ? (
+          <section id="traveler-reviews" className="border-y border-slate-200 bg-white py-16">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <SectionHeading eyebrow="TRAVELER REVIEWS" title="What Travelers Say on Trustpilot">
+                Feedback from travelers who use Top7Spots to plan destinations, compare travel
+                ideas, and explore smarter.
+              </SectionHeading>
+              <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+                {travelerReviews.map((review) => (
+                  <TravelerReviewCard key={review.id} review={review} />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         {cityGroups.length > 0 ? (
           <section id="all-cities" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

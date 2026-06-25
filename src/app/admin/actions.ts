@@ -122,6 +122,11 @@ function numberValue(formData: FormData, key: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function ratingValue(formData: FormData, key: string) {
+  const parsed = numberValue(formData, key);
+  return Math.min(5, Math.max(1, parsed || 5));
+}
+
 function uniqueValues(values: string[]) {
   return Array.from(new Set(values));
 }
@@ -819,7 +824,11 @@ export async function saveHomepageReviewAction(formData: FormData) {
     id: value(formData, "id") || idFrom("review", name),
     name,
     reviewText,
+    rating: ratingValue(formData, "rating"),
+    source: value(formData, "source") || "Trustpilot",
+    reviewUrl: value(formData, "reviewUrl"),
     isPublished: checkboxValue(formData, "isPublished"),
+    showOnHomepage: checkboxValue(formData, "showOnHomepage"),
     sortOrder: numberValue(formData, "sortOrder"),
     createdAt: timestamp(formData),
     updatedAt: new Date().toISOString(),

@@ -69,29 +69,29 @@ function supabaseImageHost() {
 }
 
 const configuredSupabaseImageHost = supabaseImageHost();
+const top7SpotsSupabaseHost = "nilsoxlpjvudlfbmvxbl.supabase.co";
+const supabaseImageHosts = Array.from(
+  new Set([top7SpotsSupabaseHost, configuredSupabaseImageHost].filter((host): host is string => Boolean(host))),
+);
+const supabaseStorageBuckets = ["top7spots", "top7spots-media"] as const;
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
-    qualities: [62, 65, 68, 72, 75],
+    formats: ["image/avif", "image/webp"],
+    qualities: [62, 65, 68, 70, 72, 74, 75, 78],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "**.supabase.co",
-      },
-      ...(configuredSupabaseImageHost
-        ? [
-            {
-              protocol: "https" as const,
-              hostname: configuredSupabaseImageHost,
-              pathname: "/storage/v1/object/public/**",
-            },
-          ]
-        : []),
+      ...supabaseImageHosts.flatMap((hostname) =>
+        supabaseStorageBuckets.map((bucket) => ({
+          protocol: "https" as const,
+          hostname,
+          pathname: `/storage/v1/object/public/${bucket}/**`,
+        })),
+      ),
     ],
   },
   async headers() {

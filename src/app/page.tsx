@@ -235,8 +235,8 @@ export default async function Home() {
                   </span>
                 </div>
 
-                <div className="rounded-full border border-white/25 bg-white px-5 py-2.5 shadow-lg shadow-black/10">
-                  <div className="w-[320px] max-w-[72vw]">
+                <div className="rounded-full border border-white/30 bg-white px-5 py-2.5 shadow-lg shadow-black/10">
+                  <div className="h-6 w-[360px] max-w-[78vw] overflow-hidden">
                     <TrustpilotMicroScore />
                   </div>
                 </div>

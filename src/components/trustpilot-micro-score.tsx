@@ -37,6 +37,10 @@ export function TrustpilotMicroScore() {
         data-style-width="100%"
         data-token="616e8e2d-cd75-4b24-af50-1b133ff8970f"
         data-theme="light"
+        style={{
+          height: "24px",
+          overflow: "hidden",
+        }}
       >
         <a
           href="https://www.trustpilot.com/review/top7spots.com"

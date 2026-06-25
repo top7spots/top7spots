@@ -42,6 +42,7 @@ import {
   normalizeHomeHeroOverlayOpacity,
 } from "@/lib/home-hero-settings";
 import { cityImageAlt, destinationImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { defaultSeoDescription, defaultSeoTitle, seoMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -51,8 +52,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const heroImage = homeHeroFallbackImage;
-const featuredCityImageSizes = "(max-width: 768px) 100vw, 360px";
-const weeklyDestinationImageSizes = "(max-width: 768px) 100vw, 50vw";
+const featuredCityImageSizes = IMAGE_SIZES.fourColumnCard;
+const weeklyDestinationImageSizes = IMAGE_SIZES.twoColumn;
 const optimizedHomepageCityImages: Record<string, string> = {
   "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.jpg":
     "/uploads/cities/muscat-card-0323e163-7bed-4f4d-9338-4ec4255f731b.webp",
@@ -178,11 +179,8 @@ export default async function Home() {
             alt={homeHeroAlt}
             fill
             priority
-            loading="eager"
-            fetchPriority="high"
-            sizes="100vw"
-            quality={75}
-            unoptimized
+            sizes={IMAGE_SIZES.fullHero}
+            quality={IMAGE_QUALITY.hero}
             className="absolute inset-0 -z-20 object-cover"
           />
           <div className={`absolute inset-0 -z-10 ${overlayClassName}`} style={{ opacity: overlayOpacity }} />
@@ -520,8 +518,7 @@ function CityCard({ city }: { city: City }) {
             alt={city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card")}
             fill
             sizes={featuredCityImageSizes}
-            unoptimized
-            quality={68}
+            quality={IMAGE_QUALITY.card}
             className="object-cover transition duration-700 ease-out group-hover:scale-110"
           />
         ) : null}
@@ -574,8 +571,7 @@ function DestinationFeatureCard({ destination, city }: { destination: Destinatio
           alt={destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country })}
           fill
           sizes={weeklyDestinationImageSizes}
-          unoptimized
-          quality={68}
+          quality={IMAGE_QUALITY.card}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
       </div>

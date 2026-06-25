@@ -3,6 +3,7 @@ import path from "node:path";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { GuideEntityCardImage } from "@/components/guides/guide-entity-card-image";
+import { IMAGE_SIZES } from "@/lib/image-performance";
 import { isLocalUpload, resolveImagePath } from "@/lib/images";
 
 export type GuideEntityCardItem = {
@@ -47,7 +48,7 @@ function hasSafeImageSource(src: string) {
 
 export function GuideEntityCard({
   item,
-  imageSizes = "(min-width: 1024px) 360px, (min-width: 640px) calc((100vw - 3rem) / 2), 86vw",
+  imageSizes = IMAGE_SIZES.threeColumnCard,
   className = "",
 }: GuideEntityCardProps) {
   const resolvedImage = item.image ? resolveImagePath(item.image) : "";

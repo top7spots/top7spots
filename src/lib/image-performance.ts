@@ -1,5 +1,7 @@
+// Public Supabase content images should flow through SafeImage/Next Image.
+// Do not mark JPG, PNG, or WebP content images as unoptimized.
 export const IMAGE_QUALITY = {
-  hero: 78,
+  hero: 76,
   card: 72,
   gallery: 74,
   inline: 74,

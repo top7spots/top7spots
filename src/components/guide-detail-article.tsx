@@ -44,6 +44,7 @@ import {
   guideImageAlt,
   restaurantImageAlt,
 } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, cityTopicPages } from "@/lib/programmatic-seo";
 import type {
@@ -315,7 +316,8 @@ export function GuideDetailArticle({
                 alt={imageAlt}
                 fill
                 priority
-                sizes="100vw"
+                sizes={IMAGE_SIZES.fullHero}
+                quality={IMAGE_QUALITY.hero}
                 className="object-cover"
               />
             ) : null}
@@ -599,8 +601,8 @@ function AuthorAvatar({
           alt={author?.profileImageAlt || fallbackName}
           fill
           sizes={size === "sm" ? "44px" : "80px"}
+          quality={IMAGE_QUALITY.thumbnail}
           className="object-cover"
-          unoptimized
         />
       ) : (
         <span className="flex size-full items-center justify-center text-slate-400">
@@ -758,8 +760,7 @@ function GuideListingRowCard({
             alt={item.imageAlt || item.title}
             fill
             sizes={imageSizes}
-            quality={68}
-            loading="lazy"
+            quality={IMAGE_QUALITY.card}
             className="object-cover"
           />
         ) : (
@@ -988,9 +989,8 @@ function EditorialBlock({ block, guideTitle }: { block: GuideCmsBlock; guideTitl
             src={image}
             alt={block.imageAlt || block.title || `${guideTitle || "Top7Spots guide"} supporting image`}
             fill
-            sizes="(min-width: 768px) 760px, calc(100vw - 4rem)"
-            quality={68}
-            loading="lazy"
+            sizes={IMAGE_SIZES.guideInline}
+            quality={IMAGE_QUALITY.inline}
             className="object-cover"
           />
         </div>
@@ -1493,9 +1493,8 @@ function SimilarGuideCard({ guide }: { guide: Guide }) {
             src={image}
             alt={guideImageAlt(guide)}
             fill
-            sizes="(min-width: 640px) 180px, calc(100vw - 3rem)"
-            quality={65}
-            loading="lazy"
+            sizes="(max-width: 640px) 100vw, 180px"
+            quality={IMAGE_QUALITY.thumbnail}
             className="object-cover"
           />
         ) : (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
 import { restaurantImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import type { City, Restaurant } from "@/lib/types";
 
@@ -19,9 +20,8 @@ export function RestaurantCard({ restaurant, city }: { restaurant: Restaurant; c
             src={image}
             alt={restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
             fill
-            sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
-            quality={68}
-            loading="lazy"
+            sizes={IMAGE_SIZES.threeColumnCard}
+            quality={IMAGE_QUALITY.card}
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (

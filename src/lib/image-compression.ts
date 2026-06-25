@@ -1,7 +1,7 @@
 const maxUploadBytes = 8 * 1024 * 1024;
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/svg+xml", "image/webp"]);
 
-type ImageCompressionKind = "hero" | "standard";
+type ImageCompressionKind = "hero" | "card" | "featured" | "gallery" | "standard";
 type ImageOutputFormat = "image/jpeg" | "image/png" | "image/webp";
 
 export type CompressImageOptions = {
@@ -152,24 +152,40 @@ function resizeDimensions(width: number, height: number, maxWidth: number) {
 function compressionProfile(kind: ImageCompressionKind): CompressionProfile {
   if (kind === "hero") {
     return {
-      maxWidth: 1920,
-      quality: 0.82,
-      targetBytes: 760 * 1024,
+      maxWidth: 1600,
+      quality: 0.76,
+      targetBytes: 520 * 1024,
+    };
+  }
+
+  if (kind === "card") {
+    return {
+      maxWidth: 900,
+      quality: 0.72,
+      targetBytes: 260 * 1024,
+    };
+  }
+
+  if (kind === "featured" || kind === "gallery") {
+    return {
+      maxWidth: 1200,
+      quality: 0.74,
+      targetBytes: 360 * 1024,
     };
   }
 
   return {
     maxWidth: 1200,
-    quality: 0.8,
-    targetBytes: 420 * 1024,
+    quality: 0.74,
+    targetBytes: 360 * 1024,
   };
 }
 
 function compressionAttempts(profile: CompressionProfile) {
   return [
     { maxWidth: profile.maxWidth, quality: profile.quality },
-    { maxWidth: Math.round(profile.maxWidth * 0.9), quality: Math.max(0.75, profile.quality - 0.04) },
-    { maxWidth: Math.round(profile.maxWidth * 0.8), quality: Math.max(0.72, profile.quality - 0.08) },
+    { maxWidth: Math.round(profile.maxWidth * 0.9), quality: Math.max(0.7, profile.quality - 0.04) },
+    { maxWidth: Math.round(profile.maxWidth * 0.8), quality: Math.max(0.68, profile.quality - 0.08) },
   ];
 }
 

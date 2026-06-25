@@ -15,6 +15,7 @@ import {
   getCityBySlug,
 } from "@/lib/data";
 import { attractionImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -137,7 +138,8 @@ export default async function AttractionPage({ params }: AttractionPageProps) {
                   alt={attraction.imageAlt || attractionImageAlt({ ...attraction, country: city.country })}
                   fill
                   priority
-                  sizes="(min-width: 1024px) 420px, 100vw"
+                  sizes={IMAGE_SIZES.twoColumn}
+                  quality={IMAGE_QUALITY.hero}
                   className="object-cover"
                 />
               </div>

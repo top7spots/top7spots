@@ -12,6 +12,7 @@ import { getPublishedCities, getPublishedGuides, getPublishedRestaurant } from "
 import { slugify } from "@/lib/format";
 import { getGuideHref } from "@/lib/guide-routes";
 import { restaurantImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 
@@ -136,7 +137,8 @@ export default async function RestaurantPage({ params }: RestaurantPageProps) {
                     alt={restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country })}
                     fill
                     priority
-                    sizes="(min-width: 1024px) 420px, 100vw"
+                    sizes={IMAGE_SIZES.twoColumn}
+                    quality={IMAGE_QUALITY.hero}
                     className="object-cover"
                   />
                 </div>

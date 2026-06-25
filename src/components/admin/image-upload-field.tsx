@@ -328,7 +328,7 @@ export function GalleryUploadField({
     setIsProcessing(true);
 
     try {
-      const results = await Promise.all(selected.map((file) => compressAdminImage(file, { kind: "standard" })));
+      const results = await Promise.all(selected.map((file) => compressAdminImage(file, { kind: "gallery" })));
       const processedFiles = results.map((result) => result.file);
       const previewItems = processedFiles.map((file) => ({ src: URL.createObjectURL(file) }));
 
@@ -500,7 +500,17 @@ function errorMessage(error: unknown) {
 
 function imageCompressionKind(fieldName: string, label: string) {
   const text = `${fieldName} ${label}`.toLowerCase();
-  return text.includes("hero") || text.includes("banner") || text.includes("cover")
-    ? "hero"
-    : "standard";
+  if (text.includes("hero") || text.includes("banner") || text.includes("cover") || text.includes("main")) {
+    return "hero";
+  }
+
+  if (text.includes("card") || text.includes("thumbnail")) {
+    return "card";
+  }
+
+  if (text.includes("featured")) {
+    return "featured";
+  }
+
+  return "standard";
 }

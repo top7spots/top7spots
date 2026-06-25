@@ -15,6 +15,7 @@ import { getCityBySlug, getDestinationsByCity, getGuidesByCity, getPublishedCarR
 import { carRentalPageMetadata } from "@/lib/car-rental-seo";
 import { getGuideHref } from "@/lib/guide-routes";
 import { cityImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { seoMetadata } from "@/lib/seo";
 import type { City, Destination, Guide } from "@/lib/types";
@@ -146,7 +147,8 @@ export default async function CityPage({ params }: CityPageProps) {
                     alt={city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero")}
                     fill
                     priority
-                    sizes="(min-width: 1024px) 460px, 100vw"
+                    sizes={IMAGE_SIZES.twoColumn}
+                    quality={IMAGE_QUALITY.hero}
                     className="object-cover"
                   />
                 ) : null}
@@ -184,7 +186,7 @@ export default async function CityPage({ params }: CityPageProps) {
                   key={destination.id}
                   destination={destination}
                   city={city}
-                  imageSizes="(max-width: 768px) 100vw, 360px"
+                  imageSizes={IMAGE_SIZES.threeColumnCard}
                 />
               ))}
             </div>
@@ -306,8 +308,8 @@ function SimilarCityCard({ city }: { city: City }) {
             src={resolveImagePath(image)}
             alt={city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card")}
             fill
-            sizes="340px"
-            unoptimized
+            sizes="(max-width: 640px) 290px, 340px"
+            quality={IMAGE_QUALITY.card}
             className="object-cover transition duration-700 ease-out group-hover:scale-110"
           />
         ) : null}

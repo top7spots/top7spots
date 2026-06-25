@@ -19,7 +19,7 @@ export function SafeImage({
 }: SafeImageProps) {
   const initialSrc = usableImageSrc(src) ? src : fallbackSrc;
   const [currentSrc, setCurrentSrc] = useState(initialSrc);
-  const shouldBypassOptimization = unoptimized ?? isSupabaseStorageImage(currentSrc);
+  const shouldBypassOptimization = unoptimized ?? isSvgImage(currentSrc);
 
   useEffect(() => {
     setCurrentSrc(initialSrc);
@@ -47,11 +47,6 @@ function usableImageSrc(src: string | null | undefined): src is string {
   return value.startsWith("/") || /^https?:\/\//i.test(value);
 }
 
-function isSupabaseStorageImage(src: string) {
-  try {
-    const url = new URL(src);
-    return url.hostname.endsWith(".supabase.co") && url.pathname.includes("/storage/v1/object/");
-  } catch {
-    return false;
-  }
+function isSvgImage(src: string) {
+  return /\.svg(?:[?#].*)?$/i.test(src);
 }

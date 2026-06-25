@@ -4,6 +4,7 @@ import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { attractionImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import type { Attraction, City } from "@/lib/types";
 
@@ -24,9 +25,8 @@ export function AttractionCard({ attraction, city }: AttractionCardProps) {
           src={image}
           alt={imageAlt}
           fill
-          sizes="(min-width: 1280px) 292px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)"
-          quality={68}
-          loading="lazy"
+          sizes={IMAGE_SIZES.threeColumnCard}
+          quality={IMAGE_QUALITY.card}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent" />

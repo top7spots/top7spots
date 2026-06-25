@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getAuthorBySlug, getPublishedGuidesByAuthor } from "@/lib/data";
 import { getGuideHref } from "@/lib/guide-routes";
 import { guideImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { absoluteSeoImageUrl, absoluteUrl, cleanPath, seoMetadata, siteName } from "@/lib/seo";
 import type { Author, Guide } from "@/lib/types";
@@ -77,8 +78,8 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                       fill
                       priority
                       sizes="176px"
+                      quality={IMAGE_QUALITY.thumbnail}
                       className="object-cover"
-                      unoptimized
                     />
                   ) : (
                     <div className="flex size-full items-center justify-center text-slate-400">
@@ -223,9 +224,8 @@ function AuthorGuideCard({ guide }: { guide: Guide }) {
             src={image}
             alt={guideImageAlt(guide)}
             fill
-            sizes="(min-width: 640px) 180px, calc(100vw - 3rem)"
-            quality={65}
-            loading="lazy"
+            sizes="(max-width: 640px) 100vw, 180px"
+            quality={IMAGE_QUALITY.thumbnail}
             className="object-cover"
           />
         ) : (

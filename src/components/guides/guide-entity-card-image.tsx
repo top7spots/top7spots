@@ -1,5 +1,6 @@
 import { MapPinned } from "lucide-react";
 import { SafeImage } from "@/components/safe-image";
+import { IMAGE_QUALITY } from "@/lib/image-performance";
 
 type GuideEntityCardImageProps = {
   src: string;
@@ -19,8 +20,7 @@ export function GuideEntityCardImage({ src, alt, label, sizes }: GuideEntityCard
       alt={alt}
       fill
       sizes={sizes}
-      quality={65}
-      loading="lazy"
+      quality={IMAGE_QUALITY.card}
       className="object-cover"
     />
   );

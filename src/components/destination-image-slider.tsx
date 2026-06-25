@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type TouchEvent } from "react";
 import { SafeImage } from "@/components/safe-image";
 import { galleryImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import type { GalleryImageItem } from "@/lib/types";
 
 type DestinationImageSliderProps = {
@@ -64,9 +65,8 @@ export function DestinationImageSlider({ destinationName, destinationContext, im
           alt={activeImage?.alt || galleryImageAlt(destinationContext || { name: destinationName, city: "", category: "", location: "", region: "" }, activeIndex)}
           fill
           priority={activeIndex === 0}
-          loading={activeIndex === 0 ? "eager" : "lazy"}
-          quality={72}
-          sizes="(min-width: 1280px) 760px, (min-width: 1024px) 62vw, (min-width: 640px) calc(100vw - 3rem), calc(100vw - 2rem)"
+          quality={activeIndex === 0 ? IMAGE_QUALITY.hero : IMAGE_QUALITY.gallery}
+          sizes={IMAGE_SIZES.containedHero}
           className="object-cover"
         />
 

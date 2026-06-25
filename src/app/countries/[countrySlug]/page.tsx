@@ -18,6 +18,7 @@ import {
   getPublishedDestinations,
   getPublishedGuides,
 } from "@/lib/data";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { cityProgrammaticPages, citySeoPath } from "@/lib/programmatic-seo";
 import { seoMetadata } from "@/lib/seo";
@@ -119,7 +120,8 @@ export default async function CountryPage({ params }: CountryPageProps) {
                   alt={`${country.name} travel inspiration`}
                   fill
                   priority
-                  sizes="(min-width: 1024px) 440px, 100vw"
+                  sizes={IMAGE_SIZES.twoColumn}
+                  quality={IMAGE_QUALITY.hero}
                   className="object-cover"
                 />
               </div>

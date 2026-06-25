@@ -79,7 +79,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
-    qualities: [62, 65, 68, 70, 72, 74, 75, 78],
+    qualities: [62, 65, 68, 70, 72, 74, 75, 76, 78],
     remotePatterns: [
       {
         protocol: "https",

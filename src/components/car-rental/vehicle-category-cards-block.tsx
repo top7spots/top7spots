@@ -4,6 +4,7 @@ import { SafeImage } from "@/components/safe-image";
 import { getPublishedCarRentalPage } from "@/lib/data";
 import { getDefaultCarRentalPath, globalCarRentalSlug } from "@/lib/car-rental-pages";
 import { carRentalImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import type { CarRentalVehicleCategoryCard } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -134,6 +135,7 @@ function VehicleCategoryCard({
               })}
             fill
             sizes={compact ? "(max-width: 640px) 100vw, 320px" : "(max-width: 640px) 100vw, 260px"}
+            quality={IMAGE_QUALITY.card}
             className="object-cover"
           />
         ) : (

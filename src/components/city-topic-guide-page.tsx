@@ -12,6 +12,7 @@ import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import { countryPath } from "@/lib/country-hubs";
 import { getGuideHref } from "@/lib/guide-routes";
 import { attractionImageAlt, cityImageAlt, destinationImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { citySeoPath, type CityProgrammaticContent, type CitySeoPageConfig } from "@/lib/programmatic-seo";
 import type { Attraction, City, Destination } from "@/lib/types";
@@ -128,7 +129,8 @@ export function CityTopicGuidePage({
                   alt={city.heroImageAlt || city.featuredImageAlt || city.cardImageAlt || cityImageAlt(city, "hero")}
                   fill
                   priority
-                  sizes="(min-width: 1024px) 430px, 100vw"
+                  sizes={IMAGE_SIZES.twoColumn}
+                  quality={IMAGE_QUALITY.hero}
                   className="object-cover"
                 />
               </div>
@@ -279,8 +281,8 @@ function CompactDestinationLink({ destination, city }: { destination: Destinatio
           src={image}
           alt={destination.imageAlt || destinationImageAlt({ ...destination, country: city.country })}
           fill
-          sizes="112px"
-          unoptimized
+          sizes={IMAGE_SIZES.thumbnail}
+          quality={IMAGE_QUALITY.thumbnail}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>
@@ -313,8 +315,8 @@ function CompactAttractionLink({ attraction, city }: { attraction: Attraction; c
           src={image}
           alt={attraction.imageAlt || attractionImageAlt({ ...attraction, country: city.country })}
           fill
-          sizes="112px"
-          unoptimized
+          sizes={IMAGE_SIZES.thumbnail}
+          quality={IMAGE_QUALITY.thumbnail}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>

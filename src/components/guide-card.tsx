@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getGuideHref } from "@/lib/guide-routes";
 import { guideImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import type { Guide } from "@/lib/types";
 
@@ -15,8 +16,7 @@ type GuideCardProps = {
   imageSizes?: string;
 };
 
-const defaultGuideCardImageSizes =
-  "(min-width: 1280px) 360px, (min-width: 768px) calc((100vw - 4.5rem) / 2), calc(100vw - 2rem)";
+const defaultGuideCardImageSizes = IMAGE_SIZES.threeColumnCard;
 
 export function GuideCard({
   guide,
@@ -36,8 +36,7 @@ export function GuideCard({
           alt={imageAlt}
           fill
           sizes={imageSizes}
-          quality={68}
-          loading="lazy"
+          quality={IMAGE_QUALITY.card}
           className="object-cover transition duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent" />
@@ -95,9 +94,8 @@ export function CompactGuideCard({ guide, href: hrefOverride }: CompactGuideCard
           src={image}
           alt={imageAlt}
           fill
-          sizes="(min-width: 640px) 112px, 96px"
-          quality={62}
-          loading="lazy"
+          sizes={IMAGE_SIZES.thumbnail}
+          quality={IMAGE_QUALITY.thumbnail}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>

@@ -19,6 +19,7 @@ import { SiteHeader } from "@/components/site-header";
 import { CarRentalFAQ, DiscoverCarsWidget, ReadMoreText } from "@/components/car-rental/car-rental-client";
 import { carRentalCanonicalUrl, carRentalPublicPath } from "@/lib/car-rental-pages";
 import { carRentalImageAlt } from "@/lib/image-seo";
+import { IMAGE_QUALITY, IMAGE_SIZES } from "@/lib/image-performance";
 import { resolveImagePath } from "@/lib/images";
 import { absoluteSeoImageUrl, absoluteUrl, cleanPath, siteName } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -119,7 +120,8 @@ export function CarRentalHero({
           })}
           fill
           priority
-          sizes="100vw"
+          sizes={IMAGE_SIZES.fullHero}
+          quality={IMAGE_QUALITY.hero}
           className="object-cover opacity-[0.18]"
         />
       ) : null}
@@ -226,6 +228,7 @@ function VehicleCategoryCard({ card, page }: { card: CarRentalVehicleCategoryCar
             })}
             fill
             sizes="(max-width: 640px) 100vw, 260px"
+            quality={IMAGE_QUALITY.card}
             className="object-cover"
           />
         ) : (
@@ -346,6 +349,7 @@ function CompactCard({ card, kind }: { card: CarRentalLinkCard; kind: CompactCar
             alt={carRentalImageAlt({ title: card.title, type: `${kind}-card` as "guide-card" | "destination-card" | "location-card" })}
             fill
             sizes="56px"
+            quality={IMAGE_QUALITY.thumbnail}
             className="object-cover"
           />
         </span>

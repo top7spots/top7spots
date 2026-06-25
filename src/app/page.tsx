@@ -238,29 +238,65 @@ export default async function Home() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-white py-14">
-          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                Discover top travel spots worldwide
-              </p>
-              <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-[#111827] md:text-4xl">
-                A cleaner way to find the best places to visit
-              </h2>
-            </div>
-            <div className="grid gap-5 text-sm leading-7 text-slate-600 md:grid-cols-2">
-              <p>
-                Top7Spots helps travelers move from broad inspiration to useful destination
-                research without losing time in noisy search results. Each page is organized around
-                cities, destination ideas, local attractions, and travel guides, so you can compare
-                places by mood, geography, season, and trip style.
-              </p>
-              <p>
-                Whether you are looking for beaches, mountains, road trips, historic neighborhoods,
-                luxury escapes, family-friendly ideas, or quieter hidden gems, the site is designed
-                to make discovery feel visual, calm, and practical. Start with a city, browse its
-                best places to visit, then follow related links into guides and nearby destinations.
-              </p>
+        <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_34%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)] px-6 py-12 text-white shadow-2xl shadow-slate-950/20 sm:px-10 lg:px-14">
+              <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
+              <div className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-orange-500/15 blur-3xl" />
+
+              <div className="relative grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
+                <div>
+                  <p className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
+                    Discover top travel spots worldwide
+                  </p>
+                  <h2 className="max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+                    A cleaner way to find the best places to visit
+                  </h2>
+                  <p className="mt-5 max-w-lg text-base leading-8 text-slate-300">
+                    Explore curated city guides, destination ideas, local attractions, and practical
+                    travel inspiration without noisy search results.
+                  </p>
+
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+                      Curated guides
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+                      Global destinations
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+                      Travel made simple
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-6 shadow-xl shadow-slate-950/10 backdrop-blur">
+                    <div className="mb-5 flex size-11 items-center justify-center rounded-2xl bg-cyan-400/15 text-xl font-bold text-cyan-200">
+                      <Sparkles className="size-5" aria-hidden="true" />
+                    </div>
+                    <p className="text-sm leading-7 text-slate-200">
+                      Top7Spots helps travelers move from broad inspiration to useful destination
+                      research without losing time in noisy search results. Each page is organized
+                      around cities, destination ideas, local attractions, and travel guides, so you
+                      can compare places by mood, geography, season, and trip style.
+                    </p>
+                  </div>
+
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-6 shadow-xl shadow-slate-950/10 backdrop-blur">
+                    <div className="mb-5 flex size-11 items-center justify-center rounded-2xl bg-orange-400/15 text-xl font-bold text-orange-200">
+                      <ArrowRight className="size-5 -rotate-45" aria-hidden="true" />
+                    </div>
+                    <p className="text-sm leading-7 text-slate-200">
+                      Whether you are looking for beaches, mountains, road trips, historic
+                      neighborhoods, luxury escapes, family-friendly ideas, or quieter hidden gems,
+                      the site is designed to make discovery feel visual, calm, and practical. Start
+                      with a city, browse its best places to visit, then follow related links into
+                      guides and nearby destinations.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>

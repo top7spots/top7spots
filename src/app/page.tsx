@@ -24,6 +24,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { WebsiteJsonLd } from "@/components/seo-json-ld";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { TrustpilotMicroScore } from "@/components/trustpilot-micro-score";
 import { countryPath } from "@/lib/country-hubs";
 import { getCanonicalDestinationPath } from "@/lib/city-intelligence";
 import {
@@ -222,6 +223,22 @@ export default async function Home() {
               </p>
 
               <HomepageHeroModeSwitcher featuredCityCount={visibleCities.length} />
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-white/90 sm:justify-start">
+                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
+                  Global travel guides
+                </span>
+
+                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
+                  Car rental comparison
+                </span>
+
+                <div className="rounded-full border border-white/20 bg-white/90 px-4 py-2 shadow-sm backdrop-blur">
+                  <div className="w-[240px] max-w-[calc(100vw-4rem)]">
+                    <TrustpilotMicroScore />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <aside className="relative z-0 hidden rounded-2xl border border-white/15 bg-white/10 p-5 shadow-2xl shadow-blue-950/25 backdrop-blur-xl lg:block">

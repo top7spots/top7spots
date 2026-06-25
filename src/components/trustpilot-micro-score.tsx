@@ -33,7 +33,7 @@ export function TrustpilotMicroScore() {
         data-locale="en-US"
         data-template-id="5419b637fa0340045cd0c936"
         data-businessunit-id="6a36ebcab48c70a9ea470761"
-        data-style-height="20px"
+        data-style-height="24px"
         data-style-width="100%"
         data-token="616e8e2d-cd75-4b24-af50-1b133ff8970f"
         data-theme="light"

@@ -224,17 +224,19 @@ export default async function Home() {
 
               <HomepageHeroModeSwitcher featuredCityCount={visibleCities.length} />
 
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-white/90 sm:justify-start">
-                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
-                  Global travel guides
-                </span>
+              <div className="mt-5 flex flex-col items-start gap-3 sm:items-center lg:items-start">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-white/90">
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
+                    Global travel guides
+                  </span>
 
-                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
-                  Car rental comparison
-                </span>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur">
+                    Car rental comparison
+                  </span>
+                </div>
 
-                <div className="rounded-full border border-white/20 bg-white/90 px-4 py-2 shadow-sm backdrop-blur">
-                  <div className="w-[240px] max-w-[calc(100vw-4rem)]">
+                <div className="rounded-full border border-white/25 bg-white px-5 py-2.5 shadow-lg shadow-black/10">
+                  <div className="w-[320px] max-w-[72vw]">
                     <TrustpilotMicroScore />
                   </div>
                 </div>

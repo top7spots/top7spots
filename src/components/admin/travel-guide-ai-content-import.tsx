@@ -28,6 +28,9 @@ type SelectableItem = {
   id: string;
   label: string;
   meta?: string;
+  slug?: string;
+  city?: string;
+  country?: string;
 };
 
 type TravelGuideAiContentImportProps = {
@@ -109,7 +112,15 @@ export function TravelGuideAiContentImport({
       filledFields.push("isFeatured");
     }
 
-    const structuredImport = buildStructuredGuideImport(parsed);
+    const structuredImport = buildStructuredGuideImport(parsed, {
+      destinations,
+      cities,
+      countries,
+      restaurants,
+      activities,
+      guides,
+      warnings,
+    });
     window.dispatchEvent(new CustomEvent("guide-structured-import", { detail: structuredImport }));
     if (structuredImport.guideType && setSelectValue(form, "guideType", structuredImport.guideType)) {
       filledFields.push("guideType");
@@ -235,16 +246,20 @@ export function TravelGuideAiContentImport({
       requiredMissing.length > 0
         ? `Fields filled. Please review before saving. Missing required import field: ${requiredMissing.join(", ")}.`
         : "Fields filled. Please review before saving.";
-    const warningMessage = warnings.length > 0 ? ` Unmatched references: ${warnings.join("; ")}.` : "";
+    const uniqueWarnings = Array.from(new Set(warnings));
+    const warningMessage = uniqueWarnings.length > 0 ? ` ${uniqueWarnings.join(" ")}` : "";
 
     setState({
-      tone: requiredMissing.length > 0 || warnings.length > 0 ? "warning" : "success",
+      tone: requiredMissing.length > 0 || uniqueWarnings.length > 0 ? "warning" : "success",
       message: `${baseMessage}${warningMessage}`,
     });
   }
 }
 
-function buildStructuredGuideImport(parsed: ReturnType<typeof parseTravelGuideImportContent>): {
+function buildStructuredGuideImport(
+  parsed: ReturnType<typeof parseTravelGuideImportContent>,
+  context: TravelGuideAiContentImportProps & { warnings: string[] },
+): {
   guideType: GuideType;
   guideData?: GuideData;
   selectedItems?: GuideSelectedItem[];
@@ -253,7 +268,8 @@ function buildStructuredGuideImport(parsed: ReturnType<typeof parseTravelGuideIm
   const guideData = normalizeGuideData(parseJsonObject(parsed.guideData));
   const parsedItinerary = parseItineraryText(parsed.itinerary);
   const parsedRoute = parseRouteText(parsed.route);
-  const selectedItems = normalizeGuideSelectedItems(parseSelectedItemsText(parsed.selectedItems));
+  const selectedItemsSource = parsed.selectedItems || parsed.selectedDestinations;
+  const selectedItems = normalizeGuideSelectedItems(parseSelectedItemsText(selectedItemsSource, context));
 
   return {
     guideType,
@@ -266,29 +282,154 @@ function buildStructuredGuideImport(parsed: ReturnType<typeof parseTravelGuideIm
   };
 }
 
-function parseSelectedItemsText(value?: string): GuideSelectedItem[] {
+function parseSelectedItemsText(
+  value: string | undefined,
+  context: TravelGuideAiContentImportProps & { warnings: string[] },
+): GuideSelectedItem[] {
   const json = parseJsonArray(value);
   if (json.length > 0) {
-    return normalizeGuideSelectedItems(json);
+    return normalizeGuideSelectedItems(json).map((item, index) => resolveSelectedItemReference(item, index, context));
   }
 
-  return lines(value).map((line, index) => {
-    const [type, itemId, displayOrder, customTitle, customSummary, bestFor, suggestedTime, nearbyPlaces, readMoreLabel] =
-      line.split("|").map((item) => clean(item));
-
-    return {
-      id: `imported-selected-${index + 1}`,
-      type: normalizeSelectedItemType(type),
-      itemId: itemId || type,
-      displayOrder: Number(displayOrder) || index + 1,
+  return selectedItemLines(value).map((line, index) => {
+    const parts = line.split("|").map((item) => clean(item));
+    const hasStructuredColumns = parts.length >= 10;
+    const [
+      type,
+      itemSlug,
+      itemName,
+      city,
+      displayOrder,
       customTitle,
       customSummary,
       bestFor,
       suggestedTime,
-      nearbyPlaces: splitList(nearbyPlaces),
+      nearbyPlaces,
       readMoreLabel,
-    };
+    ] = hasStructuredColumns ? parts : [];
+
+    if (hasStructuredColumns) {
+      return resolveSelectedItemReference(
+        {
+          id: `imported-selected-${index + 1}`,
+          type: normalizeSelectedItemType(type),
+          itemId: itemSlug || itemName,
+          itemSlug,
+          itemName,
+          city,
+          displayOrder: Number(displayOrder) || index + 1,
+          customTitle,
+          customSummary,
+          bestFor,
+          suggestedTime,
+          nearbyPlaces: splitList(nearbyPlaces),
+          readMoreLabel,
+        },
+        index,
+        context,
+      );
+    }
+
+    const [legacyType, legacyItemId, legacyDisplayOrder, legacyCustomTitle, legacyCustomSummary, legacyBestFor, legacySuggestedTime, legacyNearbyPlaces, legacyReadMoreLabel] =
+      parts;
+
+    return resolveSelectedItemReference(
+      {
+        id: `imported-selected-${index + 1}`,
+        type: normalizeSelectedItemType(legacyType),
+        itemId: legacyItemId || legacyType,
+        itemSlug: legacyItemId,
+        itemName: legacyCustomTitle,
+        displayOrder: Number(legacyDisplayOrder) || index + 1,
+        customTitle: legacyCustomTitle,
+        customSummary: legacyCustomSummary,
+        bestFor: legacyBestFor,
+        suggestedTime: legacySuggestedTime,
+        nearbyPlaces: splitList(legacyNearbyPlaces),
+        readMoreLabel: legacyReadMoreLabel,
+      },
+      index,
+      context,
+    );
   });
+}
+
+function selectedItemLines(value?: string) {
+  return lines(value)
+    .flatMap((line) => (line.includes("|") ? [line] : splitReferenceList(line)))
+    .filter((line) => !isSelectedItemHeaderLine(line));
+}
+
+function isSelectedItemHeaderLine(line: string) {
+  const normalizedParts = line.split("|").map((item) => normalizeMatchValue(item));
+  return (
+    normalizedParts.includes("displayorder") ||
+    normalizedParts.includes("customtitle") ||
+    normalizedParts.includes("customsummary") ||
+    normalizedParts.includes("readmorelabel")
+  );
+}
+
+function resolveSelectedItemReference(
+  item: GuideSelectedItem,
+  index: number,
+  context: TravelGuideAiContentImportProps & { warnings: string[] },
+): GuideSelectedItem {
+  const match = matchSelectedItem(item, context);
+  const reference = item.itemSlug || item.itemId || item.itemName;
+
+  if (!match && reference && item.type !== "custom") {
+    context.warnings.push(`Warning: selected item slug not found: ${reference}.`);
+  }
+
+  if (!item.customSummary && reference && item.type === "destination") {
+    context.warnings.push(`Selected item needs a fresh custom summary: ${reference}.`);
+  }
+
+  return {
+    ...item,
+    itemId: match?.id || item.itemId || item.itemSlug || item.itemName || "",
+    itemSlug: item.itemSlug || match?.slug || "",
+    itemName: item.itemName || match?.label || "",
+    city: item.city || match?.city || "",
+    displayOrder: item.displayOrder || index + 1,
+  };
+}
+
+function matchSelectedItem(item: GuideSelectedItem, context: TravelGuideAiContentImportProps) {
+  const items = selectableItemsForType(item.type, context);
+  const references = [item.itemId, item.itemSlug, item.itemName].filter(isNonEmptyString);
+  const requestedCity = normalizeMatchValue(item.city || "");
+
+  for (const reference of references) {
+    const normalizedReference = normalizeMatchValue(reference);
+    const compactReference = compactMatchValue(reference);
+    const matches = items.filter((candidate) =>
+      exactSelectableValues(candidate).some(
+        (value) => value.normalized === normalizedReference || value.compact === compactReference,
+      ),
+    );
+
+    const cityMatch = requestedCity
+      ? matches.find((candidate) => exactSelectableValues(candidate).some((value) => value.normalized === requestedCity))
+      : matches[0];
+
+    if (cityMatch) {
+      return cityMatch;
+    }
+  }
+
+  return undefined;
+}
+
+function selectableItemsForType(type: GuideSelectedItemType, context: TravelGuideAiContentImportProps) {
+  if (type === "city") return context.cities;
+  if (type === "country") return context.countries;
+  if (type === "guide") return context.guides;
+  if (type === "restaurant") return context.restaurants;
+  if (type === "activity") return context.activities;
+  if (type === "custom") return [];
+  return context.destinations;
 }
 
 function parseItineraryText(value?: string): GuideItineraryItem[] {
@@ -520,7 +661,7 @@ function pushEntityBlock(
 
 function pushMissingWarnings(warnings: string[], label: string, missing: string[]) {
   if (missing.length > 0) {
-    warnings.push(`${label}: ${missing.join(", ")}`);
+    warnings.push(`Warning: unmatched ${label}: ${missing.join(", ")}.`);
   }
 }
 
@@ -549,14 +690,29 @@ function matchesItem(item: SelectableItem, reference: string) {
   const normalizedReference = normalizeMatchValue(reference);
   const compactReference = compactMatchValue(reference);
 
-  return [item.id, item.label, item.meta || ""].some((value) => {
-    const normalizedValue = normalizeMatchValue(value);
-    return (
-      normalizedValue === normalizedReference ||
-      compactMatchValue(value) === compactReference ||
-      normalizedValue.includes(normalizedReference)
-    );
-  });
+  return exactSelectableValues(item).some(
+    (value) => value.normalized === normalizedReference || value.compact === compactReference,
+  );
+}
+
+function exactSelectableValues(item: SelectableItem) {
+  return Array.from(
+    new Set(
+      [
+        item.id,
+        item.slug,
+        item.label,
+        item.city,
+        item.country,
+        ...(item.meta || "").split(/\s+-\s+|,/),
+      ]
+        .map((value) => clean(value))
+        .filter(Boolean),
+    ),
+  ).map((value) => ({
+    normalized: normalizeMatchValue(value),
+    compact: compactMatchValue(value),
+  }));
 }
 
 function splitReferenceList(value?: string) {
@@ -746,6 +902,10 @@ function lines(value?: string) {
 
 function clean(value?: string) {
   return value?.trim() || "";
+}
+
+function isNonEmptyString(value: string | undefined): value is string {
+  return Boolean(value);
 }
 
 function normalizeMatchValue(value: string) {

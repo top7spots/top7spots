@@ -1507,16 +1507,23 @@ function GuideForm({
           cities={cities.map((city) => ({
             id: city.slug,
             label: city.name,
+            slug: city.slug,
+            city: city.name,
+            country: city.country,
             meta: [city.country, city.region].filter(Boolean).join(" - "),
           }))}
           countries={countryOptions(cities).map((country) => ({
             id: country.id,
             label: country.label,
+            slug: country.id,
+            country: country.label,
             meta: country.meta,
           }))}
           destinations={destinations.map((destination) => ({
             id: destination.id,
             label: destination.name,
+            slug: destination.slug,
+            city: destination.city,
             meta: [destination.slug, destination.city, destination.category].filter(Boolean).join(" - "),
           }))}
           guides={guides
@@ -1524,16 +1531,22 @@ function GuideForm({
             .map((item) => ({
               id: item.id,
               label: item.title,
+              slug: item.slug,
+              city: cityLabel(cities, item.citySlug),
+              country: item.countryId,
               meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
             }))}
           restaurants={restaurantOptions(restaurants, cities).map((restaurant) => ({
             id: restaurant.id,
             label: restaurant.label,
+            slug: restaurant.slug,
             meta: restaurant.meta,
           }))}
           activities={attractions.map((attraction) => ({
             id: attraction.id,
             label: attraction.name,
+            slug: attraction.slug,
+            city: cityLabel(cities, attraction.citySlug),
             meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
           }))}
         />
@@ -1559,6 +1572,71 @@ function GuideForm({
             defaultGuideType={guide?.guideType}
             defaultGuideData={guide?.guideData}
             defaultSelectedItems={guide?.guideSelectedItems}
+            selectedItemOptions={{
+              destination: destinations.map((destination) => {
+                const destinationCity = cities.find((city) => city.slug === destination.citySlug);
+                return {
+                  id: destination.id,
+                  label: destination.name,
+                  slug: destination.slug,
+                  city: destination.city || destinationCity?.name,
+                  country: destinationCity?.country,
+                  meta: [destination.slug, destination.city || destinationCity?.name, destinationCity?.country, destination.category]
+                    .filter(Boolean)
+                    .join(" - "),
+                  image: destination.image,
+                  imageAlt: destination.imageAlt,
+                  href: getCanonicalDestinationPath(destination, destinationCity),
+                  badge: destination.category || "Destination",
+                };
+              }),
+              city: cities.map((city) => ({
+                id: city.slug,
+                label: city.name,
+                slug: city.slug,
+                city: city.name,
+                country: city.country,
+                meta: [city.country, city.region].filter(Boolean).join(" - "),
+                image: city.cardImage || city.featuredImage || city.heroImage,
+                imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt,
+                href: `/${city.slug}`,
+                badge: "City",
+              })),
+              guide: guides
+                .filter((item) => item.id !== guide?.id)
+                .map((item) => ({
+                  id: item.id,
+                  label: item.title,
+                  slug: item.slug,
+                  city: cityLabel(cities, item.citySlug),
+                  country: item.countryId,
+                  meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+                  image: item.coverImage || item.image,
+                  imageAlt: item.coverImageAlt,
+                  href: getGuideHref(item),
+                  badge: item.category || "Guide",
+                })),
+              restaurant: restaurantOptions(restaurants, cities).map((restaurant) => ({
+                id: restaurant.id,
+                label: restaurant.label,
+                slug: restaurant.slug,
+                meta: restaurant.meta,
+                image: restaurant.image,
+                href: `/restaurants/${restaurant.slug}`,
+                badge: restaurant.badge,
+              })),
+              activity: attractions.map((attraction) => ({
+                id: attraction.id,
+                label: attraction.name,
+                slug: attraction.slug,
+                city: cityLabel(cities, attraction.citySlug),
+                meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+                image: attraction.image,
+                imageAlt: attraction.imageAlt,
+                href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+                badge: attraction.category || attraction.type || "Activity",
+              })),
+            }}
           />
         </FormSection>
         <FormSection title="Guide ownership">

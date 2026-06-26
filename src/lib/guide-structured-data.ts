@@ -144,14 +144,17 @@ export function normalizeItineraryItems(value: unknown): GuideItineraryItem[] {
     .sort((a, b) => a.dayNumber - b.dayNumber || a.displayOrder - b.displayOrder);
 }
 
-function normalizeSelectedItem(item: Record<string, unknown>, index: number) {
+function normalizeSelectedItem(item: Record<string, unknown>, index: number): GuideSelectedItem | undefined {
   const type = normalizeSelectedItemType(item.type);
-  const itemId = stringValue(item.itemId || item.item_id || item.slug);
-  const customTitle = stringValue(item.customTitle || item.title);
+  const itemSlug = stringValue(item.itemSlug || item.item_slug || item.slug);
+  const itemName = stringValue(item.itemName || item.item_name || item.name);
+  const city = stringValue(item.city || item.cityName || item.city_name);
+  const itemId = stringValue(item.itemId || item.item_id || item.id || itemSlug);
+  const customTitle = stringValue(item.customTitle || item.custom_title || item.title);
   const customSummary = stringValue(item.customSummary || item.summary || item.description);
-  const id = stringValue(item.id) || slugify([type, itemId || customTitle, index + 1].filter(Boolean).join("-"));
+  const id = stringValue(item.id) || slugify([type, itemId || itemSlug || itemName || customTitle, index + 1].filter(Boolean).join("-"));
 
-  if (!itemId && !customTitle && !customSummary) {
+  if (!itemId && !itemSlug && !itemName && !customTitle && !customSummary) {
     return undefined;
   }
 
@@ -159,6 +162,9 @@ function normalizeSelectedItem(item: Record<string, unknown>, index: number) {
     id: id || `selected-item-${index + 1}`,
     type,
     itemId,
+    itemSlug,
+    itemName,
+    city,
     displayOrder: numberValue(item.displayOrder, index + 1),
     customTitle,
     customSummary,

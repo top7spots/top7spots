@@ -2453,7 +2453,8 @@ function resolveStructuredSelectedItems({
 }): StructuredSelectedItem[] {
   return selectedItems
     .map((selectedItem, index): StructuredSelectedItem | undefined => {
-      const fallbackTitle = selectedItem.customTitle || selectedItem.itemId;
+      const fallbackTitle =
+        selectedItem.customTitle || selectedItem.itemName || selectedItem.itemSlug || selectedItem.itemId;
       const base = resolveStructuredSelectedItemBase({
         selectedItem,
         cities,
@@ -2469,9 +2470,9 @@ function resolveStructuredSelectedItems({
 
       return {
         key: `structured-${selectedItem.id || index}`,
-        href: base?.href || selectedItem.itemId || "#",
+        href: base?.href || (selectedItem.type === "custom" ? selectedItem.itemId : "#"),
         title: selectedItem.customTitle || base?.title || fallbackTitle || "Selected item",
-        description: selectedItem.customSummary || base?.description,
+        description: selectedItem.customSummary,
         image: base?.image,
         imageAlt: base?.imageAlt,
         badge: base?.badge || selectedItem.type,
@@ -2502,17 +2503,18 @@ function resolveStructuredSelectedItemBase({
   restaurants: Restaurant[];
   guides: Guide[];
 }): ResolvedGuideListingBlockItem | undefined {
-  const id = selectedItem.itemId;
+  const candidates = [selectedItem.itemId, selectedItem.itemSlug, selectedItem.itemName].filter(
+    (candidate): candidate is string => Boolean(candidate),
+  );
 
   if (selectedItem.type === "destination") {
-    const destination = destinations.find((item) => matchesEntityId(item, id));
+    const destination = destinations.find((item) => candidates.some((candidate) => matchesEntityId(item, candidate)));
     const city = cities.find((item) => item.slug === destination?.citySlug);
     return destination
       ? {
           key: `destination-${destination.id}`,
           href: getCanonicalDestinationPath(destination),
           title: destination.name,
-          description: destination.summary || destination.location || destination.city,
           image: destination.image,
           imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country }),
           badge: destination.category || "Destination",
@@ -2521,13 +2523,12 @@ function resolveStructuredSelectedItemBase({
   }
 
   if (selectedItem.type === "city") {
-    const city = cities.find((item) => matchesEntityId(item, id));
+    const city = cities.find((item) => candidates.some((candidate) => matchesEntityId(item, candidate)));
     return city
       ? {
           key: `city-${city.id}`,
           href: `/${city.slug}`,
           title: city.name,
-          description: city.shortDescription || city.region || city.country,
           image: city.cardImage || city.featuredImage || city.heroImage,
           imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card"),
           badge: city.country || "City",
@@ -2536,13 +2537,12 @@ function resolveStructuredSelectedItemBase({
   }
 
   if (selectedItem.type === "country") {
-    const city = cities.find((item) => slugify(item.country) === slugify(id));
+    const city = cities.find((item) => candidates.some((candidate) => slugify(item.country) === slugify(candidate)));
     return city
       ? {
           key: `country-${slugify(city.country)}`,
           href: countryPath(city.country),
           title: city.country,
-          description: `Explore cities, destinations, and travel guides across ${city.country}.`,
           image: city.featuredImage || city.heroImage || city.cardImage,
           imageAlt: `${city.country} travel inspiration`,
           badge: "Country",
@@ -2551,14 +2551,13 @@ function resolveStructuredSelectedItemBase({
   }
 
   if (selectedItem.type === "restaurant") {
-    const restaurant = restaurants.find((item) => matchesEntityId(item, id));
+    const restaurant = restaurants.find((item) => candidates.some((candidate) => matchesEntityId(item, candidate)));
     const city = cities.find((item) => item.id === restaurant?.cityId);
     return restaurant
       ? {
           key: `restaurant-${restaurant.id}`,
           href: `/restaurants/${restaurant.slug}`,
           title: restaurant.name,
-          description: restaurant.shortDescription || restaurant.address,
           image: restaurant.image,
           imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
           badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
@@ -2567,14 +2566,13 @@ function resolveStructuredSelectedItemBase({
   }
 
   if (selectedItem.type === "activity") {
-    const attraction = attractions.find((item) => matchesEntityId(item, id));
+    const attraction = attractions.find((item) => candidates.some((candidate) => matchesEntityId(item, candidate)));
     const city = cities.find((item) => item.slug === attraction?.citySlug);
     return attraction
       ? {
           key: `activity-${attraction.id}`,
           href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
           title: attraction.name,
-          description: attraction.summary || attraction.description,
           image: attraction.image,
           imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: city?.country }),
           badge: attraction.category || attraction.type || "Activity",
@@ -2583,13 +2581,12 @@ function resolveStructuredSelectedItemBase({
   }
 
   if (selectedItem.type === "guide") {
-    const guide = guides.find((item) => matchesEntityId(item, id));
+    const guide = guides.find((item) => candidates.some((candidate) => matchesEntityId(item, candidate)));
     return guide
       ? {
           key: `guide-${guide.id}`,
           href: getGuideHref(guide),
           title: guide.title,
-          description: guide.excerpt || guide.seoDescription,
           image: guide.coverImage || guide.image,
           imageAlt: guideImageAlt(guide),
           badge: guide.category || "Guide",

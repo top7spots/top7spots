@@ -36,6 +36,9 @@ export type GuideSelectedItem = {
   id: string;
   type: GuideSelectedItemType;
   itemId: string;
+  itemSlug?: string;
+  itemName?: string;
+  city?: string;
   displayOrder: number;
   customTitle: string;
   customSummary: string;

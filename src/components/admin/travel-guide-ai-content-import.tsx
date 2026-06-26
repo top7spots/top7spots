@@ -3,7 +3,21 @@
 import { useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { parseTravelGuideImportContent } from "@/lib/admin-content-parser";
-import type { GuideContentBlock, GuideFaq, GuideQuickInfoItem } from "@/lib/types";
+import {
+  normalizeGuideData,
+  normalizeGuideSelectedItems,
+  normalizeGuideType,
+} from "@/lib/guide-structured-data";
+import type {
+  GuideContentBlock,
+  GuideData,
+  GuideFaq,
+  GuideItineraryItem,
+  GuideQuickInfoItem,
+  GuideSelectedItem,
+  GuideSelectedItemType,
+  GuideType,
+} from "@/lib/types";
 
 type FillState = {
   tone: "idle" | "success" | "warning";
@@ -93,6 +107,21 @@ export function TravelGuideAiContentImport({
 
     if (typeof parsed.isFeatured === "boolean" && setCheckboxValue(form, "isFeatured", parsed.isFeatured)) {
       filledFields.push("isFeatured");
+    }
+
+    const structuredImport = buildStructuredGuideImport(parsed);
+    window.dispatchEvent(new CustomEvent("guide-structured-import", { detail: structuredImport }));
+    if (structuredImport.guideType && setSelectValue(form, "guideType", structuredImport.guideType)) {
+      filledFields.push("guideType");
+    }
+    if (structuredImport.guideData && setHiddenInputValue(form, "guideData", JSON.stringify(structuredImport.guideData))) {
+      filledFields.push("guideData");
+    }
+    if (
+      structuredImport.selectedItems &&
+      setHiddenInputValue(form, "guideSelectedItems", JSON.stringify(structuredImport.selectedItems))
+    ) {
+      filledFields.push("guideSelectedItems");
     }
 
     const builderBlocks = buildGuideBuilderBlocks(parsed, {
@@ -213,6 +242,167 @@ export function TravelGuideAiContentImport({
       message: `${baseMessage}${warningMessage}`,
     });
   }
+}
+
+function buildStructuredGuideImport(parsed: ReturnType<typeof parseTravelGuideImportContent>): {
+  guideType: GuideType;
+  guideData?: GuideData;
+  selectedItems?: GuideSelectedItem[];
+} {
+  const guideType = normalizeGuideType(parsed.guideType);
+  const guideData = normalizeGuideData(parseJsonObject(parsed.guideData));
+  const parsedItinerary = parseItineraryText(parsed.itinerary);
+  const parsedRoute = parseRouteText(parsed.route);
+  const selectedItems = normalizeGuideSelectedItems(parseSelectedItemsText(parsed.selectedItems));
+
+  return {
+    guideType,
+    guideData: normalizeGuideData({
+      ...guideData,
+      itinerary: parsedItinerary.length > 0 ? parsedItinerary : guideData.itinerary,
+      route: hasRouteData(parsedRoute) ? parsedRoute : guideData.route,
+    }),
+    selectedItems,
+  };
+}
+
+function parseSelectedItemsText(value?: string): GuideSelectedItem[] {
+  const json = parseJsonArray(value);
+  if (json.length > 0) {
+    return normalizeGuideSelectedItems(json);
+  }
+
+  return lines(value).map((line, index) => {
+    const [type, itemId, displayOrder, customTitle, customSummary, bestFor, suggestedTime, nearbyPlaces, readMoreLabel] =
+      line.split("|").map((item) => clean(item));
+
+    return {
+      id: `imported-selected-${index + 1}`,
+      type: normalizeSelectedItemType(type),
+      itemId: itemId || type,
+      displayOrder: Number(displayOrder) || index + 1,
+      customTitle,
+      customSummary,
+      bestFor,
+      suggestedTime,
+      nearbyPlaces: splitList(nearbyPlaces),
+      readMoreLabel,
+    };
+  });
+}
+
+function parseItineraryText(value?: string): GuideItineraryItem[] {
+  const json = parseJsonArray(value);
+  if (json.length > 0) {
+    return normalizeGuideData({ itinerary: json }).itinerary;
+  }
+
+  return lines(value)
+    .map((line, index) => {
+      const [dayNumber, timeSlot, placeTitle, destinationId, details, travelTime, displayOrder] =
+        line.split("|").map((item) => clean(item));
+
+      return {
+        id: `imported-itinerary-${index + 1}`,
+        dayNumber: Number(dayNumber) || 1,
+        timeSlot,
+        placeTitle,
+        destinationId,
+        details,
+        travelTime,
+        displayOrder: Number(displayOrder) || index + 1,
+      };
+    })
+    .filter((item) => item.placeTitle || item.destinationId || item.details);
+}
+
+function parseRouteText(value?: string): GuideData["route"] {
+  const json = parseJsonObject(value);
+  const route = normalizeGuideData({ route: json }).route;
+  if (hasRouteData(route)) {
+    return route;
+  }
+
+  const routeRecord: Record<string, string> = {};
+  for (const line of lines(value)) {
+    const colonIndex = line.indexOf(":");
+    if (colonIndex < 0) {
+      continue;
+    }
+
+    const key = compactMatchValue(line.slice(0, colonIndex));
+    routeRecord[key] = clean(line.slice(colonIndex + 1));
+  }
+
+  return normalizeGuideData({
+    route: {
+      startingPoint: routeRecord.startingpoint || routeRecord.start || "",
+      endingPoint: routeRecord.endingpoint || routeRecord.end || "",
+      distance: routeRecord.distance || "",
+      travelTime: routeRecord.traveltime || routeRecord.duration || "",
+      bestTransport: routeRecord.besttransport || routeRecord.transport || "",
+      routeNotes: routeRecord.routenotes || routeRecord.notes || "",
+      parkingInfo: routeRecord.parkinginfo || routeRecord.parking || "",
+    },
+  }).route;
+}
+
+function parseJsonObject(value?: string) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function parseJsonArray(value?: string) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function hasRouteData(route: GuideData["route"]) {
+  return Boolean(
+    route.startingPoint ||
+      route.endingPoint ||
+      route.distance ||
+      route.travelTime ||
+      route.bestTransport ||
+      route.routeNotes ||
+      route.parkingInfo,
+  );
+}
+
+function normalizeSelectedItemType(value?: string): GuideSelectedItemType {
+  const normalized = normalizeMatchValue(value || "");
+  if (normalized.includes("city")) return "city";
+  if (normalized.includes("country")) return "country";
+  if (normalized.includes("guide")) return "guide";
+  if (normalized.includes("restaurant")) return "restaurant";
+  if (normalized.includes("activity") || normalized.includes("attraction")) return "activity";
+  if (normalized.includes("custom")) return "custom";
+  return "destination";
+}
+
+function splitList(value?: string) {
+  return String(value || "")
+    .split(/,|\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function buildGuideBuilderBlocks(

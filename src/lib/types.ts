@@ -12,6 +12,66 @@ export type GuideTableOfContentsItem = {
 
 export type GuideTargetType = "country" | "city" | "destination";
 
+export type GuideType =
+  | "best_places"
+  | "things_to_do"
+  | "itinerary"
+  | "day_trip"
+  | "road_trip"
+  | "practical"
+  | "destination_combination"
+  | "comparison"
+  | "seasonal";
+
+export type GuideSelectedItemType =
+  | "destination"
+  | "city"
+  | "country"
+  | "guide"
+  | "restaurant"
+  | "activity"
+  | "custom";
+
+export type GuideSelectedItem = {
+  id: string;
+  type: GuideSelectedItemType;
+  itemId: string;
+  displayOrder: number;
+  customTitle: string;
+  customSummary: string;
+  bestFor: string;
+  suggestedTime: string;
+  nearbyPlaces: string[];
+  readMoreLabel: string;
+};
+
+export type GuideItineraryItem = {
+  id: string;
+  dayNumber: number;
+  timeSlot: string;
+  placeTitle: string;
+  destinationId: string;
+  details: string;
+  travelTime: string;
+  displayOrder: number;
+};
+
+export type GuideRouteData = {
+  startingPoint: string;
+  endingPoint: string;
+  distance: string;
+  travelTime: string;
+  bestTransport: string;
+  routeNotes: string;
+  parkingInfo: string;
+};
+
+export type GuideData = {
+  itinerary: GuideItineraryItem[];
+  route: GuideRouteData;
+  [key: string]: unknown;
+};
+
 export type GuideListingBlockType =
   | "destinations"
   | "cities"
@@ -153,6 +213,9 @@ export type Destination = {
 
 export type Guide = {
   id: string;
+  guideType: GuideType;
+  guideData: GuideData;
+  guideSelectedItems: GuideSelectedItem[];
   targetType: GuideTargetType;
   countryId: string;
   cityId: string;

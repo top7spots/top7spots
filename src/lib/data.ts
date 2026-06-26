@@ -23,6 +23,12 @@ import {
 import { slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
+import {
+  compactGuideDataForStorage,
+  normalizeGuideData,
+  normalizeGuideSelectedItems,
+  normalizeGuideType,
+} from "@/lib/guide-structured-data";
 import { normalizeGalleryImageMetadata, parseGalleryImageMetadata } from "@/lib/image-metadata";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getSupabaseAdminClient, getSupabaseEnvStatus, hasSupabaseConfig } from "@/lib/supabase";
@@ -78,6 +84,9 @@ const tableNames: Record<AdminCollection, string> = {
 };
 
 const structuredGuideRowKeys = [
+  "guide_type",
+  "guide_data",
+  "guide_selected_items",
   "author_id",
   "target_type",
   "country_id",
@@ -371,6 +380,9 @@ function mapGuide(row: GuideRow): Guide {
 
   return {
     id: stringField(row, "id"),
+    guideType: normalizeGuideType(getField(row, "guide_type", "guideType")),
+    guideData: normalizeGuideData(getField(row, "guide_data", "guideData")),
+    guideSelectedItems: normalizeGuideSelectedItems(getField(row, "guide_selected_items", "guideSelectedItems")),
     targetType,
     countryId: slugify(stringField(row, "country_id", "countryId")),
     cityId: stringField(row, "city_id", "cityId"),
@@ -657,6 +669,9 @@ function toDestinationRow(item: Destination): DestinationRow {
 function toGuideRow(item: Guide): GuideRow {
   return {
     id: item.id,
+    guide_type: normalizeGuideType(item.guideType),
+    guide_data: compactGuideDataForStorage(item.guideData),
+    guide_selected_items: normalizeGuideSelectedItems(item.guideSelectedItems),
     target_type: item.targetType,
     country_id: item.countryId || "",
     city_id: nullableString(item.cityId),
@@ -1363,6 +1378,14 @@ export async function upsertItem<T extends AdminCollection>(
       Array.isArray(guideRow.listing_blocks) && guideRow.listing_blocks.length > 0;
     const hasContentBlocks =
       Array.isArray(guideRow.content_blocks) && guideRow.content_blocks.length > 0;
+    const hasStructuredGuideType = guideRow.guide_type && guideRow.guide_type !== "practical";
+    const hasGuideData =
+      Boolean(guideRow.guide_data) &&
+      typeof guideRow.guide_data === "object" &&
+      !Array.isArray(guideRow.guide_data) &&
+      Object.keys(guideRow.guide_data as Record<string, unknown>).length > 0;
+    const hasGuideSelectedItems =
+      Array.isArray(guideRow.guide_selected_items) && guideRow.guide_selected_items.length > 0;
 
     for (let attempt = 0; error && attempt < structuredGuideRowKeys.length; attempt += 1) {
       const missingColumn = missingStructuredGuideColumn(error);
@@ -1380,6 +1403,24 @@ export async function upsertItem<T extends AdminCollection>(
       if (missingColumn === "content_blocks" && hasContentBlocks) {
         throw new Error(
           "Failed to save guides: apply the guide content_blocks schema migration before saving block-based guide pages.",
+        );
+      }
+
+      if (missingColumn === "guide_type" && hasStructuredGuideType) {
+        throw new Error(
+          "Failed to save guides: apply the guide_type structured guide migration before saving multi-type guide pages.",
+        );
+      }
+
+      if (missingColumn === "guide_data" && hasGuideData) {
+        throw new Error(
+          "Failed to save guides: apply the guide_data structured guide migration before saving itinerary or route data.",
+        );
+      }
+
+      if (missingColumn === "guide_selected_items" && hasGuideSelectedItems) {
+        throw new Error(
+          "Failed to save guides: apply the guide_selected_items structured guide migration before saving selected item metadata.",
         );
       }
 

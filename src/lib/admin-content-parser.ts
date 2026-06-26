@@ -47,6 +47,7 @@ export type ParsedTravelGuideImport = Partial<{
   status: "published" | "draft";
   displayOrder: string;
   isFeatured: boolean;
+  guideType: string;
   targetType: "country" | "city" | "destination";
   countryId: string;
   citySlug: string;
@@ -71,6 +72,10 @@ export type ParsedTravelGuideImport = Partial<{
   seoKeywords: string;
   relatedGuideSlugs: string;
   relatedPlaceSlugs: string;
+  guideData: string;
+  selectedItems: string;
+  itinerary: string;
+  route: string;
 }>;
 
 const cityFieldAliases: Record<string, keyof ParsedCityImport> = {
@@ -160,6 +165,9 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   featured: "isFeatured",
   featuredguide: "isFeatured",
   isfeatured: "isFeatured",
+  guidetype: "guideType",
+  guidekind: "guideType",
+  pagetype: "guideType",
   targettype: "targetType",
   guidebelongsto: "targetType",
   belongsto: "targetType",
@@ -220,6 +228,15 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   relatedguides: "relatedGuideSlugs",
   relatedplaceslugs: "relatedPlaceSlugs",
   relatedplaces: "relatedPlaceSlugs",
+  guidedata: "guideData",
+  structureddata: "guideData",
+  selecteditems: "selectedItems",
+  selectedstops: "selectedItems",
+  stops: "selectedItems",
+  itinerary: "itinerary",
+  itineraryitems: "itinerary",
+  route: "route",
+  routedetails: "route",
 };
 
 const ignoredSections = new Set([

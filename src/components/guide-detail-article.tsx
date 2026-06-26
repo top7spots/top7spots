@@ -54,7 +54,10 @@ import type {
   Destination,
   Guide,
   GuideContentBlock as GuideCmsBlock,
+  GuideItineraryItem,
   GuideFaq,
+  GuideRouteData,
+  GuideSelectedItem,
   Restaurant,
 } from "@/lib/types";
 
@@ -128,6 +131,15 @@ type ContextualEntity = GuideEntityCardItem & {
 type ContextualEntitySection = {
   title: string;
   items: ContextualEntity[];
+};
+
+type StructuredSelectedItem = ResolvedGuideListingBlockItem & {
+  itemType: GuideSelectedItem["type"];
+  displayOrder: number;
+  bestFor?: string;
+  suggestedTime?: string;
+  nearbyPlaces: string[];
+  readMoreLabel?: string;
 };
 
 type EntityMention = {
@@ -215,7 +227,27 @@ export function GuideDetailArticle({
     .filter((block): block is ResolvedGuideListingBlock => Boolean(block));
   const allListingBlocks = [...listingBlocks, ...contentListingBlocks];
   const primaryPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type !== "faq") : [];
+  const structuredSelectedItems = resolveStructuredSelectedItems({
+    selectedItems: guide.guideSelectedItems,
+    cities,
+    destinations: listingDestinations ?? destinations,
+    attractions,
+    restaurants,
+    guides,
+  });
+  const structuredGuideSections = (
+    <GuideTypeSections
+      guide={guide}
+      selectedItems={structuredSelectedItems}
+      destinations={listingDestinations ?? destinations}
+    />
+  );
   const selectedItemListItems = guideItemListEntries(allListingBlocks);
+  const structuredItemListItems = structuredGuideItemListEntries(
+    guide,
+    structuredSelectedItems,
+    listingDestinations ?? destinations,
+  );
   const renderedListingBlocks = hasPageBlocks ? contentListingBlocks : listingBlocks;
   const tocItems = buildGuideTocItems({
     city,
@@ -227,6 +259,7 @@ export function GuideDetailArticle({
   });
   const guideArticleBody = hasPageBlocks ? (
     <>
+      {structuredGuideSections}
       <div className="grid gap-5">
         <div className="grid min-w-0 gap-5">
           <GuidePageBlocks
@@ -262,6 +295,7 @@ export function GuideDetailArticle({
     </>
   ) : (
     <div className="mx-auto grid min-w-0 max-w-3xl gap-5">
+      {structuredGuideSections}
       <WhyVisitSection guide={guide} city={city} description={heroDescription} />
       {contentBlocks.map((block) => (
         <ArticleBlockGroup
@@ -289,7 +323,7 @@ export function GuideDetailArticle({
     buildGuideItemListJsonLd({
       canonicalPath,
       name: `${guide.title} selected places`,
-      items: selectedItemListItems,
+      items: dedupeItemListEntries([...structuredItemListItems, ...selectedItemListItems]),
     }),
   ].filter((item): item is Record<string, unknown> => Boolean(item));
 
@@ -802,6 +836,244 @@ function GuideListingRowCard({
         </Link>
       </div>
     </article>
+  );
+}
+
+function GuideTypeSections({
+  guide,
+  selectedItems,
+  destinations,
+}: {
+  guide: Guide;
+  selectedItems: StructuredSelectedItem[];
+  destinations: Destination[];
+}) {
+  const itinerary = guide.guideData.itinerary || [];
+  const route = guide.guideData.route;
+
+  if (guide.guideType === "best_places" && selectedItems.length > 0) {
+    return (
+      <StructuredSelectedItemsSection
+        title="Best places in this guide"
+        eyebrow="Curated picks"
+        items={selectedItems}
+      />
+    );
+  }
+
+  if (guide.guideType === "itinerary" && itinerary.length > 0) {
+    return <ItineraryTimelineSection items={itinerary} destinations={destinations} />;
+  }
+
+  if ((guide.guideType === "day_trip" || guide.guideType === "road_trip") && (hasRouteData(route) || selectedItems.length > 0)) {
+    return (
+      <div className="grid gap-5">
+        {hasRouteData(route) ? <RouteSummarySection route={route} guideType={guide.guideType} /> : null}
+        {selectedItems.length > 0 ? (
+          <StructuredSelectedItemsSection
+            title={guide.guideType === "day_trip" ? "Suggested day trip stops" : "Suggested road trip stops"}
+            eyebrow={guide.guideType === "day_trip" ? "Day trip route" : "Road trip route"}
+            items={selectedItems}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function StructuredSelectedItemsSection({
+  title,
+  eyebrow,
+  items,
+}: {
+  title: string;
+  eyebrow: string;
+  items: StructuredSelectedItem[];
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="min-w-0 scroll-mt-32 [content-visibility:auto] [contain-intrinsic-size:1px_720px]">
+      <div className="mb-5">
+        <p className="text-sm font-semibold text-[#FF6B00]">{eyebrow}</p>
+        <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
+          {title}
+        </h2>
+      </div>
+      <div className="grid gap-3.5">
+        {items.map((item, index) => (
+          <StructuredSelectedItemCard key={item.key} item={item} index={index} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StructuredSelectedItemCard({
+  item,
+  index,
+}: {
+  item: StructuredSelectedItem;
+  index: number;
+}) {
+  const image = item.image ? resolveImagePath(item.image) : "";
+  const chips = [
+    item.bestFor ? `Best for: ${item.bestFor}` : "",
+    item.suggestedTime ? `Suggested time: ${item.suggestedTime}` : "",
+    item.nearbyPlaces.length > 0 ? `Nearby: ${item.nearbyPlaces.join(", ")}` : "",
+  ].filter(Boolean);
+
+  return (
+    <article className="group grid overflow-hidden rounded-[1.35rem] bg-white/92 shadow-[0_10px_28px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70 transition-[transform,box-shadow] duration-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.075)] motion-safe:hover:-translate-y-0.5 md:grid-cols-[minmax(220px,36%)_minmax(0,1fr)]">
+      <Link href={item.href} className="relative block aspect-[16/10] overflow-hidden bg-slate-100 md:aspect-auto md:min-h-56" aria-label={`Explore ${item.title}`}>
+        {image ? (
+          <SafeImage
+            src={image}
+            alt={item.imageAlt || item.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            quality={IMAGE_QUALITY.card}
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center bg-orange-50 text-sm font-semibold text-[#C24A00]">
+            {item.badge || "Guide"}
+          </div>
+        )}
+        <span className="absolute left-4 top-4 inline-flex size-11 items-center justify-center rounded-full bg-white text-sm font-bold text-[#FF6B00] shadow-md">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      </Link>
+      <div className="flex min-w-0 flex-col p-5">
+        {item.badge ? <p className="text-sm font-semibold text-[#FF6B00]">{item.badge}</p> : null}
+        <h3 className="mt-2 text-xl font-semibold leading-7 tracking-tight text-[#111827] md:text-[1.35rem]">
+          <Link href={item.href} className="hover:text-[#C24A00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]">
+            {item.title}
+          </Link>
+        </h3>
+        {item.description ? <p className="mt-2 text-[0.95rem] leading-6 text-slate-600">{item.description}</p> : null}
+        {chips.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <span key={chip} className="rounded-full border border-orange-100 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <Link
+          href={item.href}
+          className="mt-6 inline-flex w-fit rounded-full bg-[#0A2A66] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#123A7A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B00]"
+        >
+          {item.readMoreLabel || "Read more"}
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function ItineraryTimelineSection({
+  items,
+  destinations,
+}: {
+  items: GuideItineraryItem[];
+  destinations: Destination[];
+}) {
+  const days = groupItineraryByDay(items);
+
+  if (days.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7">
+      <p className="text-sm font-semibold text-[#FF6B00]">Itinerary</p>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
+        Day-by-day plan
+      </h2>
+      <div className="mt-6 grid gap-6">
+        {days.map((day) => (
+          <div key={day.dayNumber} className="grid gap-3">
+            <h3 className="text-lg font-semibold text-[#111827]">Day {day.dayNumber}</h3>
+            <div className="grid gap-3">
+              {day.items.map((item) => {
+                const destination = item.destinationId
+                  ? destinations.find((destinationItem) => matchesEntityId(destinationItem, item.destinationId))
+                  : undefined;
+                const href = destination ? getCanonicalDestinationPath(destination) : "";
+                const title = item.placeTitle || destination?.name || "Itinerary stop";
+
+                return (
+                  <article key={item.id} className="rounded-2xl border border-slate-200 bg-[#FCFBF8] p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                      {item.timeSlot ? <span>{item.timeSlot}</span> : null}
+                      {item.travelTime ? <span>Travel time: {item.travelTime}</span> : null}
+                    </div>
+                    <h4 className="mt-2 text-base font-semibold text-[#111827]">
+                      {href ? (
+                        <Link href={href} className="hover:text-[#C24A00]">
+                          {title}
+                        </Link>
+                      ) : (
+                        title
+                      )}
+                    </h4>
+                    {item.details ? <p className="mt-2 text-sm leading-6 text-slate-600">{item.details}</p> : null}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RouteSummarySection({
+  route,
+  guideType,
+}: {
+  route: GuideRouteData;
+  guideType: Guide["guideType"];
+}) {
+  const facts = [
+    ["Start", route.startingPoint],
+    ["End", route.endingPoint],
+    ["Distance", route.distance],
+    ["Travel time", route.travelTime],
+    ["Best transport", route.bestTransport],
+    ["Parking", route.parkingInfo],
+  ].filter(([, value]) => value);
+
+  if (!hasRouteData(route)) {
+    return null;
+  }
+
+  return (
+    <section className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] md:p-7">
+      <p className="text-sm font-semibold text-[#FF6B00]">
+        {guideType === "road_trip" ? "Road trip route" : "Day trip route"}
+      </p>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
+        Route summary
+      </h2>
+      {facts.length > 0 ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {facts.map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-slate-200 bg-[#FCFBF8] p-4 shadow-sm">
+              <p className="text-sm font-medium text-slate-500">{label}</p>
+              <p className="mt-1.5 text-sm font-semibold leading-6 text-[#1F2937]">{value}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {route.routeNotes ? <p className="mt-5 text-sm leading-7 text-slate-600">{route.routeNotes}</p> : null}
+    </section>
   );
 }
 
@@ -2162,6 +2434,247 @@ function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
 
 function isSafeGuideSlug(slug: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+}
+
+function resolveStructuredSelectedItems({
+  selectedItems,
+  cities,
+  destinations,
+  attractions,
+  restaurants,
+  guides,
+}: {
+  selectedItems: GuideSelectedItem[];
+  cities: City[];
+  destinations: Destination[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  guides: Guide[];
+}): StructuredSelectedItem[] {
+  return selectedItems
+    .map((selectedItem, index): StructuredSelectedItem | undefined => {
+      const fallbackTitle = selectedItem.customTitle || selectedItem.itemId;
+      const base = resolveStructuredSelectedItemBase({
+        selectedItem,
+        cities,
+        destinations,
+        attractions,
+        restaurants,
+        guides,
+      });
+
+      if (!base && !fallbackTitle) {
+        return undefined;
+      }
+
+      return {
+        key: `structured-${selectedItem.id || index}`,
+        href: base?.href || selectedItem.itemId || "#",
+        title: selectedItem.customTitle || base?.title || fallbackTitle || "Selected item",
+        description: selectedItem.customSummary || base?.description,
+        image: base?.image,
+        imageAlt: base?.imageAlt,
+        badge: base?.badge || selectedItem.type,
+        itemType: selectedItem.type,
+        displayOrder: selectedItem.displayOrder || index + 1,
+        bestFor: selectedItem.bestFor,
+        suggestedTime: selectedItem.suggestedTime,
+        nearbyPlaces: selectedItem.nearbyPlaces || [],
+        readMoreLabel: selectedItem.readMoreLabel,
+      };
+    })
+    .filter((item): item is StructuredSelectedItem => Boolean(item))
+    .sort((a, b) => a.displayOrder - b.displayOrder || a.title.localeCompare(b.title));
+}
+
+function resolveStructuredSelectedItemBase({
+  selectedItem,
+  cities,
+  destinations,
+  attractions,
+  restaurants,
+  guides,
+}: {
+  selectedItem: GuideSelectedItem;
+  cities: City[];
+  destinations: Destination[];
+  attractions: Attraction[];
+  restaurants: Restaurant[];
+  guides: Guide[];
+}): ResolvedGuideListingBlockItem | undefined {
+  const id = selectedItem.itemId;
+
+  if (selectedItem.type === "destination") {
+    const destination = destinations.find((item) => matchesEntityId(item, id));
+    const city = cities.find((item) => item.slug === destination?.citySlug);
+    return destination
+      ? {
+          key: `destination-${destination.id}`,
+          href: getCanonicalDestinationPath(destination),
+          title: destination.name,
+          description: destination.summary || destination.location || destination.city,
+          image: destination.image,
+          imageAlt: destination.imageAlt || destinationImageAlt({ ...destination, country: city?.country }),
+          badge: destination.category || "Destination",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "city") {
+    const city = cities.find((item) => matchesEntityId(item, id));
+    return city
+      ? {
+          key: `city-${city.id}`,
+          href: `/${city.slug}`,
+          title: city.name,
+          description: city.shortDescription || city.region || city.country,
+          image: city.cardImage || city.featuredImage || city.heroImage,
+          imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt || cityImageAlt(city, "card"),
+          badge: city.country || "City",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "country") {
+    const city = cities.find((item) => slugify(item.country) === slugify(id));
+    return city
+      ? {
+          key: `country-${slugify(city.country)}`,
+          href: countryPath(city.country),
+          title: city.country,
+          description: `Explore cities, destinations, and travel guides across ${city.country}.`,
+          image: city.featuredImage || city.heroImage || city.cardImage,
+          imageAlt: `${city.country} travel inspiration`,
+          badge: "Country",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "restaurant") {
+    const restaurant = restaurants.find((item) => matchesEntityId(item, id));
+    const city = cities.find((item) => item.id === restaurant?.cityId);
+    return restaurant
+      ? {
+          key: `restaurant-${restaurant.id}`,
+          href: `/restaurants/${restaurant.slug}`,
+          title: restaurant.name,
+          description: restaurant.shortDescription || restaurant.address,
+          image: restaurant.image,
+          imageAlt: restaurant.imageAlt || restaurantImageAlt({ ...restaurant, city: city?.name, country: city?.country }),
+          badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "activity") {
+    const attraction = attractions.find((item) => matchesEntityId(item, id));
+    const city = cities.find((item) => item.slug === attraction?.citySlug);
+    return attraction
+      ? {
+          key: `activity-${attraction.id}`,
+          href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+          title: attraction.name,
+          description: attraction.summary || attraction.description,
+          image: attraction.image,
+          imageAlt: attraction.imageAlt || attractionImageAlt({ ...attraction, country: city?.country }),
+          badge: attraction.category || attraction.type || "Activity",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "guide") {
+    const guide = guides.find((item) => matchesEntityId(item, id));
+    return guide
+      ? {
+          key: `guide-${guide.id}`,
+          href: getGuideHref(guide),
+          title: guide.title,
+          description: guide.excerpt || guide.seoDescription,
+          image: guide.coverImage || guide.image,
+          imageAlt: guideImageAlt(guide),
+          badge: guide.category || "Guide",
+        }
+      : undefined;
+  }
+
+  if (selectedItem.type === "custom" && selectedItem.itemId) {
+    return {
+      key: `custom-${selectedItem.id}`,
+      href: selectedItem.itemId,
+      title: selectedItem.customTitle || selectedItem.itemId,
+      description: selectedItem.customSummary,
+      badge: "Custom",
+    };
+  }
+
+  return undefined;
+}
+
+function structuredGuideItemListEntries(
+  guide: Guide,
+  selectedItems: StructuredSelectedItem[],
+  destinations: Destination[],
+) {
+  if (guide.guideType === "best_places" || guide.guideType === "day_trip" || guide.guideType === "road_trip") {
+    return selectedItems.map((item) => ({
+      href: item.href,
+      title: item.title,
+      description: item.description,
+      image: item.image,
+      badge: item.badge,
+    }));
+  }
+
+  if (guide.guideType === "itinerary") {
+    return (guide.guideData.itinerary || [])
+      .map((item) => {
+        const destination = item.destinationId
+          ? destinations.find((destinationItem) => matchesEntityId(destinationItem, item.destinationId))
+          : undefined;
+        return {
+          href: destination ? getCanonicalDestinationPath(destination) : "",
+          title: item.placeTitle || destination?.name || "",
+          description: item.details,
+          image: destination?.image,
+          badge: item.timeSlot || `Day ${item.dayNumber}`,
+        };
+      })
+      .filter((item) => item.href && item.title);
+  }
+
+  return [];
+}
+
+function dedupeItemListEntries(items: Array<{ href: string; title: string; description?: string; image?: string; badge?: string }>) {
+  return items.filter((item, index, list) => item.href && item.title && list.findIndex((candidate) => candidate.href === item.href) === index);
+}
+
+function groupItineraryByDay(items: GuideItineraryItem[]) {
+  const days = new Map<number, GuideItineraryItem[]>();
+
+  for (const item of items) {
+    const day = item.dayNumber || 1;
+    days.set(day, [...(days.get(day) || []), item]);
+  }
+
+  return Array.from(days.entries())
+    .sort(([dayA], [dayB]) => dayA - dayB)
+    .map(([dayNumber, dayItems]) => ({
+      dayNumber,
+      items: [...dayItems].sort((a, b) => a.displayOrder - b.displayOrder),
+    }));
+}
+
+function hasRouteData(route?: GuideRouteData) {
+  return Boolean(
+    route?.startingPoint ||
+      route?.endingPoint ||
+      route?.distance ||
+      route?.travelTime ||
+      route?.bestTransport ||
+      route?.routeNotes ||
+      route?.parkingInfo,
+  );
 }
 
 function guideItemListEntries(blocks: ResolvedGuideListingBlock[]) {

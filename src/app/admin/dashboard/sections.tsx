@@ -52,6 +52,7 @@ import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GuideRelatedSlugsField } from "@/components/admin/guide-related-slugs-field";
 import { GuideSeoPreviewPanel } from "@/components/admin/guide-seo-preview-panel";
+import { GuideStructuredFields } from "@/components/admin/guide-structured-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { TravelGuideAiContentImport } from "@/components/admin/travel-guide-ai-content-import";
 import { BrandLogo } from "@/components/brand-logo";
@@ -1553,6 +1554,13 @@ function GuideForm({
           <Field label="Display order" name="displayOrder" type="number" defaultValue={guide?.displayOrder ?? 0} />
           <Toggle label="Featured guide" name="isFeatured" defaultChecked={guide?.isFeatured} />
         </FormSection>
+        <FormSection title="Guide type and structured data" columns={1}>
+          <GuideStructuredFields
+            defaultGuideType={guide?.guideType}
+            defaultGuideData={guide?.guideData}
+            defaultSelectedItems={guide?.guideSelectedItems}
+          />
+        </FormSection>
         <FormSection title="Guide ownership">
           <GuideOwnershipFields
             cities={cities}
@@ -1569,7 +1577,7 @@ function GuideForm({
             label="Cover image alt text"
             name="coverImageAlt"
             defaultValue={guide?.coverImageAlt}
-            placeholder="Rental car parked near Muscat International Airport"
+            placeholder="Scenic viewpoint above Muscat at sunset"
           />
         </FormSection>
         <FormSection title="Guide summary" columns={1}>
@@ -1673,7 +1681,7 @@ function GuideForm({
             label="SEO keywords"
             name="seoKeywords"
             defaultValue={commaList(guide?.seoKeywords)}
-            placeholder="rent a car muscat, muscat airport car rental, self drive oman"
+            placeholder="best places in muscat, muscat itinerary, oman travel guide"
             helperText="Comma-separated keywords for search targeting."
           />
           <GuideSeoPreviewPanel
@@ -1758,7 +1766,7 @@ function LegacyGuideFallbackFields({ guide }: { guide?: Guide }) {
             name="faqs"
             defaultValue={formatFaqText(guide?.faqs)}
             placeholder={
-              "Question: Can tourists rent a car in Oman?\nAnswer: Yes, tourists can rent a car in Oman with a valid driving license, passport, and required documents.\n\nQuestion: Is a deposit required?\nAnswer: Most rental companies require a refundable security deposit."
+              "Question: Is this guide suitable for first-time visitors?\nAnswer: Yes, it keeps the route simple and focuses on practical highlights.\n\nQuestion: How much time should I allow?\nAnswer: Most travelers should allow at least half a day for the main stops."
             }
             rows={8}
           />
@@ -1767,7 +1775,7 @@ function LegacyGuideFallbackFields({ guide }: { guide?: Guide }) {
             name="tableOfContents"
             defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
             placeholder={
-              "Why rent a car in Muscat | why-rent-a-car-in-muscat\nDocuments needed | documents-needed\nDeposit and insurance | deposit-and-insurance"
+              "Why visit these places | why-visit\nSuggested route | suggested-route\nTravel tips | travel-tips"
             }
             rows={5}
           />

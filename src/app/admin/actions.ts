@@ -29,6 +29,11 @@ import { listFromTextarea, slugify } from "@/lib/format";
 import { normalizeGuideContentBlocks } from "@/lib/guide-content-blocks";
 import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import {
+  normalizeGuideData,
+  normalizeGuideSelectedItems,
+  normalizeGuideType,
+} from "@/lib/guide-structured-data";
+import {
   attractionImageAlt,
   attractionImageCaption,
   restaurantImageAlt,
@@ -430,6 +435,9 @@ export async function saveGuideAction(formData: FormData) {
     : undefined;
   const item: Guide = {
     id: id || idFrom("guide", title),
+    guideType: normalizeGuideType(value(formData, "guideType")),
+    guideData: normalizeGuideData(formData.get("guideData")),
+    guideSelectedItems: normalizeGuideSelectedItems(formData.get("guideSelectedItems")),
     targetType: ownership.targetType,
     countryId: ownership.countryId,
     cityId: ownership.cityId,

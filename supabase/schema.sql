@@ -89,6 +89,9 @@ create table if not exists public.authors (
 
 create table if not exists public.guides (
   id text primary key,
+  guide_type text not null default 'practical' check (guide_type in ('best_places', 'things_to_do', 'itinerary', 'day_trip', 'road_trip', 'practical', 'destination_combination', 'comparison', 'seasonal')),
+  guide_data jsonb not null default '{}'::jsonb,
+  guide_selected_items jsonb not null default '[]'::jsonb,
   target_type text not null default 'city' check (target_type in ('country', 'city', 'destination')),
   country_id text not null default '',
   city_id text references public.cities(id) on delete set null,
@@ -123,6 +126,9 @@ create table if not exists public.guides (
 );
 
 alter table public.guides add column if not exists target_type text not null default 'city';
+alter table public.guides add column if not exists guide_type text not null default 'practical';
+alter table public.guides add column if not exists guide_data jsonb not null default '{}'::jsonb;
+alter table public.guides add column if not exists guide_selected_items jsonb not null default '[]'::jsonb;
 alter table public.guides add column if not exists author_id text references public.authors(id) on delete set null;
 alter table public.guides add column if not exists country_id text not null default '';
 alter table public.guides add column if not exists destination_id text references public.destinations(id) on delete set null;
@@ -130,6 +136,8 @@ alter table public.guides alter column city_slug set default '';
 update public.guides set target_type = 'city' where target_type is null or target_type = '';
 alter table public.guides drop constraint if exists guides_target_type_check;
 alter table public.guides add constraint guides_target_type_check check (target_type in ('country', 'city', 'destination'));
+alter table public.guides drop constraint if exists guides_guide_type_check;
+alter table public.guides add constraint guides_guide_type_check check (guide_type in ('best_places', 'things_to_do', 'itinerary', 'day_trip', 'road_trip', 'practical', 'destination_combination', 'comparison', 'seasonal'));
 alter table public.guides add column if not exists seo_keywords text[] not null default '{}';
 alter table public.guides add column if not exists cover_image_alt text not null default '';
 alter table public.guides add column if not exists faqs jsonb not null default '[]'::jsonb;

@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 import { clearAdminSession, isValidAdminLogin, setAdminSession } from "@/lib/admin-auth";
 import { citySaveErrorRedirectPath, saveCityFromForm } from "@/lib/admin-city-save";
 import {
+  destinationEditRedirectPath,
+  destinationListRedirectPath,
+  destinationSaveErrorRedirectPath,
+  saveDestinationFromForm,
+} from "@/lib/admin-destination-save";
+import {
   defaultDiscoverCarsAffiliateLink,
   defaultDiscoverCarsWidgetCode,
   normalizeCarRentalImport,
@@ -25,14 +31,10 @@ import { normalizeGuideListingBlocks } from "@/lib/guide-listing-blocks";
 import {
   attractionImageAlt,
   attractionImageCaption,
-  destinationImageAlt,
-  destinationImageCaption,
-  galleryImageAlt,
-  galleryImageCaption,
   restaurantImageAlt,
   restaurantImageCaption,
 } from "@/lib/image-seo";
-import { imageMetadataValue, normalizeGalleryImageMetadata, parseGalleryImageMetadata } from "@/lib/image-metadata";
+import { imageMetadataValue } from "@/lib/image-metadata";
 import {
   normalizeHomeHeroOverlayOpacity,
   normalizeHomeHeroOverlayStyle,
@@ -45,7 +47,6 @@ import type {
   CarRentalPage,
   CarRentalVehicleCategoryCard,
   ContentStatus,
-  Destination,
   Guide,
   GuideFaq,
   GuideTargetType,
@@ -56,7 +57,7 @@ import type {
   SiteSettings,
   SitePage,
 } from "@/lib/types";
-import { getImagePathFromForm, getImagePathsFromForm } from "@/lib/uploads";
+import { getImagePathFromForm } from "@/lib/uploads";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -376,113 +377,17 @@ export async function deleteCityAction(formData: FormData) {
 }
 
 export async function saveDestinationAction(formData: FormData) {
-  const name = value(formData, "name");
-  const id = value(formData, "id");
-  const { cityId, cityName, citySlug, countryName, countrySlug } = await cityContext(formData);
-  let image: string;
-  let galleryImages: string[];
-  const slug = value(formData, "slug") || slugify(name);
-  const existingDestination = id ? (await getDestinations()).find((destination) => destination.id === id) : undefined;
+  const result = await saveDestinationFromForm(formData);
 
-  try {
-    image = await getImagePathFromForm(formData, {
-      fieldName: "image",
-      folder: "destinations",
-      fallbackName: [countrySlug, citySlug, slug, "hero"].filter(Boolean).join("-"),
-    });
-  } catch (error) {
-    redirectWithUploadError(error);
+  if (!result.ok) {
+    redirect(destinationSaveErrorRedirectPath(formData, result.message, result.id));
   }
 
-  try {
-    galleryImages = await getImagePathsFromForm(formData, {
-      fieldName: "galleryImages",
-      folder: "destinations",
-      fallbackName: [countrySlug, citySlug, slug, "gallery"].filter(Boolean).join("-"),
-    });
-  } catch (error) {
-    redirectWithUploadError(error);
+  if (result.isCreating) {
+    redirect(destinationEditRedirectPath(result.destination.id));
   }
 
-  const destinationContext = {
-    ...existingDestination,
-    name,
-    city: cityName,
-    country: countryName,
-    category: value(formData, "category"),
-    location: value(formData, "location"),
-    region: value(formData, "region"),
-  };
-  const previousDestinationContext = existingDestination
-    ? { ...existingDestination, country: countryName }
-    : destinationContext;
-  const imageAlt = imageMetadataValue(
-    value(formData, "imageAlt"),
-    value(formData, "imageAltAuto") || destinationImageAlt(previousDestinationContext),
-    destinationImageAlt(destinationContext),
-  );
-  const imageCaption = imageMetadataValue(
-    value(formData, "imageCaption"),
-    value(formData, "imageCaptionAuto") || destinationImageCaption(previousDestinationContext),
-    destinationImageCaption(destinationContext),
-  );
-  const submittedGalleryMetadata = parseGalleryImageMetadata(formData.get("galleryImagesMetadata"));
-  const galleryImagesMetadata = normalizeGalleryImageMetadata(galleryImages, submittedGalleryMetadata).map((item, index) => {
-    const previousContext = previousDestinationContext;
-    const nextContext = destinationContext;
-    const previousAlt = galleryImageAlt(previousContext, index);
-    const previousCaption = galleryImageCaption(previousContext, index);
-
-    return {
-      ...item,
-      alt: imageMetadataValue(item.alt || "", previousAlt, galleryImageAlt(nextContext, index)),
-      caption: imageMetadataValue(item.caption || "", previousCaption, galleryImageCaption(nextContext, index)),
-    };
-  });
-
-  const item: Destination = {
-    id: id || idFrom("dst", name),
-    cityId,
-    citySlug,
-    slug,
-    name,
-    city: cityName,
-    region: value(formData, "region"),
-    category: value(formData, "category"),
-    location: value(formData, "location"),
-    duration: value(formData, "duration"),
-    bestSeason: value(formData, "bestSeason"),
-    image,
-    imageAlt,
-    imageCaption,
-    galleryImages,
-    galleryImagesMetadata,
-    summary: value(formData, "summary"),
-    description: value(formData, "description"),
-    highlights: listFromTextarea(formData.get("highlights")),
-    practicalInfo: listFromTextarea(formData.get("practicalInfo")),
-    howToGo: value(formData, "howToGo"),
-    travelTips: listFromTextarea(formData.get("travelTips")),
-    nearbyAttractions: listFromTextarea(formData.get("nearbyAttractions")),
-    faqs: parseFaqText(formData.get("faqs")),
-    status: statusValue(formData),
-    isFeatured: checkboxValue(formData, "isFeatured"),
-    displayOrder: numberValue(formData, "displayOrder"),
-    seoTitle: value(formData, "seoTitle"),
-    seoDescription: value(formData, "seoDescription"),
-    createdAt: timestamp(formData),
-    updatedAt: new Date().toISOString(),
-  };
-
-  try {
-    await upsertItem("destinations", item);
-  } catch (error) {
-    redirectWithSaveError("destinations", error, item.id);
-  }
-
-  revalidateCoreRoutes(item.citySlug, item.slug, "destinations");
-  revalidatePath("/destinations");
-  redirectToAdminSection("destinations");
+  redirect(destinationListRedirectPath());
 }
 
 export async function deleteDestinationAction(formData: FormData) {

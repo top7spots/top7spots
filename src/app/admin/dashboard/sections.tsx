@@ -36,7 +36,6 @@ import {
 import {
   saveAttractionAction,
   saveAuthorAction,
-  saveDestinationAction,
   saveGuideAction,
   saveHomepageFaqAction,
   saveHomepageReviewAction,
@@ -1323,7 +1322,7 @@ function DestinationForm({
 
   return (
     <EditShell title={title} backHref={backHref}>
-      <form action={saveDestinationAction} className="grid gap-6">
+      <form action="/api/admin/destinations" method="post" encType="multipart/form-data" className="grid gap-6">
         <input type="hidden" name="id" value={destination?.id ?? ""} />
         <HiddenTimestamps createdAt={destination?.createdAt} />
         <DestinationAiContentImport />

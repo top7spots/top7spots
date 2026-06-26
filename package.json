@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "content:complete": "node scripts/complete-content-data.mjs",
+    "content:index": "node scripts/export-content-index.mjs",
     "migrate:supabase": "node scripts/migrate-json-to-supabase.mjs"
   },
   "dependencies": {

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "india",
+    "name": "India",
+    "slug": "india",
+    "country": "India",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 0,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "india",
+    "updatedAt": "2026-06-26T12:58:53.39+00:00"
+  },
+  {
+    "id": "indonesia",
+    "name": "Indonesia",
+    "slug": "indonesia",
+    "country": "Indonesia",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 0,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "indonesia",
+    "updatedAt": "2026-06-26T13:00:44.225+00:00"
+  },
+  {
+    "id": "oman",
+    "name": "Oman",
+    "slug": "oman",
+    "country": "Oman",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 0,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "oman",
+    "updatedAt": "2026-06-23T18:43:55.427+00:00"
+  },
+  {
+    "id": "united-arab-emirates",
+    "name": "United Arab Emirates",
+    "slug": "united-arab-emirates",
+    "country": "United Arab Emirates",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 0,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "united-arab-emirates",
+    "updatedAt": "2026-06-26T13:01:41.441+00:00"
+  },
+  {
+    "id": "turkey",
+    "name": "Turkey",
+    "slug": "turkey",
+    "country": "Turkey",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 1,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "turkey",
+    "updatedAt": "2026-06-12T14:09:30.793+00:00"
+  },
+  {
+    "id": "united-kingdom",
+    "name": "United Kingdom",
+    "slug": "united-kingdom",
+    "country": "United Kingdom",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 5,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "united-kingdom",
+    "updatedAt": "2026-06-26T12:59:51.105+00:00"
+  },
+  {
+    "id": "malaysia",
+    "name": "Malaysia",
+    "slug": "malaysia",
+    "country": "Malaysia",
+    "city": "",
+    "category": "country",
+    "status": "published",
+    "displayOrder": 6,
+    "relatedCitySlug": "",
+    "relatedCountrySlug": "malaysia",
+    "updatedAt": "2026-06-26T13:00:07.204+00:00"
+  }
+]

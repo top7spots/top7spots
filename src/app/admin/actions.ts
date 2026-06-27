@@ -445,7 +445,7 @@ export async function saveGuideAction(formData: FormData) {
     destinationId: ownership.destinationId,
     slug,
     title,
-    category: value(formData, "category"),
+    category: cleanGuideCategory(value(formData, "category")),
     readTime: value(formData, "readTime"),
     image,
     coverImage: image,
@@ -502,6 +502,14 @@ export async function saveGuideAction(formData: FormData) {
   await revalidateGuideRoutes(item);
   revalidatePath("/guides");
   redirectToAdminSection("guides");
+}
+
+function cleanGuideCategory(category: string) {
+  return category
+    .replace(/(?:Primary Keyword|Primary Keywords|Secondary Keyword|Secondary Keywords|SEO Title|SEO Description|SEO Keywords)\s*:[\s\S]*$/i, "")
+    .replace(/(?:Quick Answer|Estimated Cost|Common Mistakes|FAQs?|Frequently Asked Questions)\s*:[\s\S]*$/i, "")
+    .split("\n")[0]
+    .trim();
 }
 
 export async function deleteGuideAction(formData: FormData) {

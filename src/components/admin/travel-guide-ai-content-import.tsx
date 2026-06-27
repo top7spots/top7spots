@@ -650,9 +650,18 @@ function buildGuideBuilderBlocks(
       id: "imported-hero",
       type: "hero",
       title: parsed.title,
-      body: parsed.excerpt,
+      body: cleanHeroExcerpt(parsed.excerpt),
       image: heroImage,
       imageAlt: parsed.coverImageAlt || parsed.title,
+    });
+  }
+
+  if (parsed.quickAnswer) {
+    blocks.push({
+      id: "imported-quick-answer",
+      type: "quick-answer",
+      title: "Quick Answer",
+      body: parsed.quickAnswer,
     });
   }
 
@@ -673,7 +682,7 @@ function buildGuideBuilderBlocks(
   pushEntityBlock(blocks, "imported-cities", "selected-cities", "Selected cities", cityMatches);
   pushMissingWarnings(context.warnings, "cities", cityMatches.missing);
 
-  const countryMatches = matchEntities(parsed.selectedCountries || parsed.countryId, context.countries);
+  const countryMatches = matchEntities(parsed.selectedCountries, context.countries);
   pushEntityBlock(blocks, "imported-countries", "selected-countries", "Selected countries", countryMatches);
   pushMissingWarnings(context.warnings, "countries", countryMatches.missing);
 
@@ -709,6 +718,16 @@ function buildGuideBuilderBlocks(
     });
   }
 
+  if (parsed.estimatedCost) {
+    blocks.push({
+      id: "imported-estimated-cost",
+      type: "estimated-cost",
+      title: "Estimated cost",
+      body: parsed.estimatedCost,
+      tips: lines(parsed.estimatedCost).length > 1 ? lines(parsed.estimatedCost) : [],
+    });
+  }
+
   const tips = lines(parsed.travelTips);
   if (tips.length > 0) {
     blocks.push({
@@ -719,12 +738,23 @@ function buildGuideBuilderBlocks(
     });
   }
 
+  const mistakes = lines(parsed.commonMistakes);
+  if (mistakes.length > 0 || parsed.commonMistakes) {
+    blocks.push({
+      id: "imported-common-mistakes",
+      type: "warnings",
+      title: "Common mistakes",
+      body: parsed.commonMistakes,
+      tips: mistakes.length > 1 ? mistakes : [],
+    });
+  }
+
   const faqs = parseFaqText(parsed.faqs);
   if (faqs.length > 0) {
     blocks.push({
       id: "imported-faq",
       type: "faq",
-      title: "FAQ",
+      title: "FAQs",
       faqs,
     });
   }
@@ -840,7 +870,17 @@ function parseQuickInfoText(value?: string): GuideQuickInfoItem[] {
 
       return { label: "", value: "" };
     })
-    .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value));
+    .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value && !isPlaceholderQuickInfo(item)));
+}
+
+function cleanHeroExcerpt(value?: string) {
+  return String(value || "")
+    .replace(/Quick Answer\s*:[\s\S]*$/i, "")
+    .trim();
+}
+
+function isPlaceholderQuickInfo(item: GuideQuickInfoItem) {
+  return item.label.trim().toLowerCase() === "label" && item.value.trim().toLowerCase() === "value";
 }
 
 function parseFaqText(value?: string): GuideFaq[] {

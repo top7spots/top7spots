@@ -147,12 +147,12 @@ export function normalizeItineraryItems(value: unknown): GuideItineraryItem[] {
 function normalizeSelectedItem(item: Record<string, unknown>, index: number): GuideSelectedItem | undefined {
   const type = normalizeSelectedItemType(item.type);
   const itemSlug = stringValue(item.itemSlug || item.item_slug || item.slug);
-  const itemName = stringValue(item.itemName || item.item_name || item.name);
+  const itemName = cleanSelectedItemText(item.itemName || item.item_name || item.name);
   const city = stringValue(item.city || item.cityName || item.city_name);
   const country = stringValue(item.country || item.countryName || item.country_name);
   const itemId = stringValue(item.itemId || item.item_id || item.id || itemSlug);
-  const customTitle = stringValue(item.customTitle || item.custom_title || item.title);
-  const customSummary = stringValue(item.customSummary || item.summary || item.description);
+  const customTitle = cleanSelectedItemText(item.customTitle || item.custom_title || item.title);
+  const customSummary = cleanSelectedItemText(item.customSummary || item.summary || item.description);
   const id = stringValue(item.id) || slugify([type, itemId || itemSlug || itemName || customTitle, index + 1].filter(Boolean).join("-"));
 
   if (!itemId && !itemSlug && !itemName && !customTitle && !customSummary) {
@@ -170,10 +170,10 @@ function normalizeSelectedItem(item: Record<string, unknown>, index: number): Gu
     displayOrder: numberValue(item.displayOrder, index + 1),
     customTitle,
     customSummary,
-    bestFor: stringValue(item.bestFor),
-    suggestedTime: stringValue(item.suggestedTime),
-    nearbyPlaces: stringArrayValue(item.nearbyPlaces),
-    readMoreLabel: stringValue(item.readMoreLabel),
+    bestFor: cleanSelectedItemText(item.bestFor),
+    suggestedTime: cleanSelectedItemText(item.suggestedTime),
+    nearbyPlaces: stringArrayValue(item.nearbyPlaces).filter((value) => !isSelectedItemPlaceholder(value)),
+    readMoreLabel: cleanSelectedItemText(item.readMoreLabel),
   };
 }
 
@@ -221,6 +221,23 @@ function numberValue(value: unknown, fallback: number) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value.trim() : String(value ?? "").trim();
+}
+
+function cleanSelectedItemText(value: unknown) {
+  const text = stringValue(value);
+  return isSelectedItemPlaceholder(text) ? "" : text;
+}
+
+function isSelectedItemPlaceholder(value: string) {
+  return [
+    "custom title",
+    "custom summary",
+    "fresh summary",
+    "best for",
+    "suggested time",
+    "nearby places",
+    "read more label",
+  ].includes(value.trim().toLowerCase());
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -167,9 +167,22 @@ export function GuideDetailArticle({
   descriptionFallback,
 }: GuideDetailArticleProps) {
   const heroBlock = guide.contentBlocks.find((block) => block.type === "hero");
-  const pageBlocks = guide.contentBlocks.filter((block) => block.type !== "hero");
+  const storedPageBlocks = guide.contentBlocks.filter((block) => block.type !== "hero");
   const heroTitle = heroBlock?.title || guide.title;
-  const heroDescription = heroBlock?.body || guide.excerpt || descriptionFallback;
+  const splitHeroDescription = splitQuickAnswerFromText(heroBlock?.body || guide.excerpt || descriptionFallback);
+  const heroDescription = splitHeroDescription.description;
+  const quickAnswerFallbackBlock: GuideCmsBlock | undefined =
+    splitHeroDescription.quickAnswer && !storedPageBlocks.some((block) => block.type === "quick-answer")
+      ? {
+          id: "quick-answer",
+          type: "quick-answer",
+          title: "Quick Answer",
+          body: splitHeroDescription.quickAnswer,
+        }
+      : undefined;
+  const pageBlocks = quickAnswerFallbackBlock ? [quickAnswerFallbackBlock, ...storedPageBlocks] : storedPageBlocks;
+  const cleanCategory = cleanGuideDisplayLabel(guide.category);
+  const cleanHeroEyebrow = cleanGuideDisplayLabel(heroBlock?.eyebrow);
   const heroImage = heroBlock?.image || guide.coverImage || guide.image;
   const image = resolveImagePath(heroImage);
   const imageAlt = heroBlock?.imageAlt || guideImageAlt(guide);
@@ -209,10 +222,24 @@ export function GuideDetailArticle({
     currentCountrySlug: guide.countryId || city?.country,
   });
   const legacyFaqItems = mergeFaqItems(guide.faqs, extractFaqsFromContent(guide.content));
-  const faqPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type === "faq") : [];
+  const structuredSelectedItems = resolveStructuredSelectedItems({
+    selectedItems: guide.guideSelectedItems,
+    cities,
+    destinations: listingDestinations ?? destinations,
+    attractions,
+    restaurants,
+    guides,
+  });
+  const displayPageBlocks =
+    structuredSelectedItems.length > 0
+      ? mainPageBlocks.filter((block) => !isSelectedReusableContentBlock(block.type))
+      : guide.guideType === "best_places"
+        ? mainPageBlocks.filter((block) => block.type !== "selected-countries")
+        : mainPageBlocks;
+  const faqPageBlocks = hasPageBlocks ? displayPageBlocks.filter((block) => block.type === "faq") : [];
   const blockFaqItems = mergeFaqItems(faqPageBlocks.flatMap((block) => block.faqs || []));
   const visibleFaqItems = faqPageBlocks.length > 0 ? blockFaqItems : legacyFaqItems;
-  const contentListingBlocks = mainPageBlocks
+  const contentListingBlocks = displayPageBlocks
     .map((block) =>
       listingBlockForContentBlock(block, {
         guide,
@@ -226,15 +253,13 @@ export function GuideDetailArticle({
     )
     .filter((block): block is ResolvedGuideListingBlock => Boolean(block));
   const allListingBlocks = [...listingBlocks, ...contentListingBlocks];
-  const primaryPageBlocks = hasPageBlocks ? mainPageBlocks.filter((block) => block.type !== "faq") : [];
-  const structuredSelectedItems = resolveStructuredSelectedItems({
-    selectedItems: guide.guideSelectedItems,
-    cities,
-    destinations: listingDestinations ?? destinations,
-    attractions,
-    restaurants,
-    guides,
-  });
+  const primaryPageBlocks = hasPageBlocks ? displayPageBlocks.filter((block) => block.type !== "faq") : [];
+  const bestPlacesIntroBlocks = guide.guideType === "best_places"
+    ? primaryPageBlocks.filter((block) => block.type === "quick-answer" || block.type === "intro" || block.type === "overview")
+    : [];
+  const bestPlacesLaterBlocks = guide.guideType === "best_places"
+    ? primaryPageBlocks.filter((block) => block.type !== "quick-answer" && block.type !== "intro" && block.type !== "overview")
+    : primaryPageBlocks;
   const structuredGuideSections = (
     <GuideTypeSections
       guide={guide}
@@ -251,20 +276,36 @@ export function GuideDetailArticle({
   const renderedListingBlocks = hasPageBlocks ? contentListingBlocks : listingBlocks;
   const tocItems = buildGuideTocItems({
     city,
+    guide,
     hasPageBlocks,
-    pageBlocks: mainPageBlocks,
+    pageBlocks: displayPageBlocks,
     legacyBlocks: contentBlocks,
     renderedListingBlocks,
+    hasStructuredSelectedItems: structuredSelectedItems.length > 0,
     visibleFaqItems,
   });
   const guideArticleBody = hasPageBlocks ? (
     <>
+      {guide.guideType === "best_places" && bestPlacesIntroBlocks.length > 0 ? (
+        <div className="grid gap-5">
+          <GuidePageBlocks
+            guide={guide}
+            blocks={bestPlacesIntroBlocks}
+            listingBlocks={listingBlocks}
+            cities={cities}
+            destinations={listingDestinations ?? destinations}
+            attractions={attractions}
+            restaurants={restaurants}
+            guides={guides}
+          />
+        </div>
+      ) : null}
       {structuredGuideSections}
       <div className="grid gap-5">
         <div className="grid min-w-0 gap-5">
           <GuidePageBlocks
             guide={guide}
-            blocks={primaryPageBlocks}
+            blocks={bestPlacesLaterBlocks}
             listingBlocks={listingBlocks}
             cities={cities}
             destinations={listingDestinations ?? destinations}
@@ -367,7 +408,7 @@ export function GuideDetailArticle({
                       </Badge>
                     ) : null}
                     <Badge className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-white backdrop-blur hover:bg-white/12">
-                      {heroBlock?.eyebrow || guide.category || "Travel guide"}
+                      {cleanHeroEyebrow || cleanCategory || guideTypeLabel(guide.guideType)}
                     </Badge>
                   </div>
                   <h1 className="mt-5 text-[2.1rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
@@ -649,17 +690,21 @@ function AuthorAvatar({
 
 function buildGuideTocItems({
   city,
+  guide,
   hasPageBlocks,
   pageBlocks,
   legacyBlocks,
   renderedListingBlocks,
+  hasStructuredSelectedItems,
   visibleFaqItems,
 }: {
   city?: City;
+  guide: Guide;
   hasPageBlocks: boolean;
   pageBlocks: GuideCmsBlock[];
   legacyBlocks: GuideArticleContentBlock[];
   renderedListingBlocks: ResolvedGuideListingBlock[];
+  hasStructuredSelectedItems: boolean;
   visibleFaqItems: GuideFaqItem[];
 }) {
   const tocItems: GuideTocItem[] = [];
@@ -677,11 +722,10 @@ function buildGuideTocItems({
     tocItems.push({ id: normalizedId, title: normalizedTitle, level });
   };
 
-  if (hasPageBlocks) {
-    pageBlocks.forEach((block) => {
+  const addPageBlock = (block: GuideCmsBlock) => {
       if (block.type === "faq") {
         if ((block.faqs || []).length > 0) {
-          addItem("guide-faq-heading", block.title || "Common questions");
+          addItem("guide-faq-heading", "FAQs");
         }
         return;
       }
@@ -692,7 +736,20 @@ function buildGuideTocItems({
       }
 
       addItem(guideContentBlockTocId(block, title), title);
-    });
+  };
+
+  if (hasPageBlocks) {
+    if (guide.guideType === "best_places" && hasStructuredSelectedItems) {
+      pageBlocks
+        .filter((block) => block.type === "quick-answer" || block.type === "intro" || block.type === "overview")
+        .forEach(addPageBlock);
+      addItem(selectedItemsSectionId(guide.guideType), selectedItemsTocLabel(guide.guideType));
+      pageBlocks
+        .filter((block) => block.type !== "quick-answer" && block.type !== "intro" && block.type !== "overview")
+        .forEach(addPageBlock);
+    } else {
+      pageBlocks.forEach(addPageBlock);
+    }
   } else {
     addItem("why-visit", city ? `Why visit ${city.name}` : "Why this guide matters");
 
@@ -707,12 +764,16 @@ function buildGuideTocItems({
     });
   }
 
+  if (hasStructuredSelectedItems && !(guide.guideType === "best_places" && hasPageBlocks)) {
+    addItem(selectedItemsSectionId(guide.guideType), selectedItemsTocLabel(guide.guideType));
+  }
+
   renderedListingBlocks.forEach((block) => {
     addItem(`listing-block-${slugify(block.id || block.title)}`, block.title);
   });
 
   if (visibleFaqItems.length > 0) {
-    addItem("guide-faq-heading", "Common questions");
+    addItem("guide-faq-heading", "FAQs");
   }
 
   return tocItems.length >= 2 ? tocItems : [];
@@ -854,7 +915,19 @@ function GuideTypeSections({
   if (guide.guideType === "best_places" && selectedItems.length > 0) {
     return (
       <StructuredSelectedItemsSection
+        id="best-places"
         title="Best places in this guide"
+        eyebrow="Curated picks"
+        items={selectedItems}
+      />
+    );
+  }
+
+  if (guide.guideType === "things_to_do" && selectedItems.length > 0) {
+    return (
+      <StructuredSelectedItemsSection
+        id="things-to-do"
+        title="Things to do in this guide"
         eyebrow="Curated picks"
         items={selectedItems}
       />
@@ -871,6 +944,7 @@ function GuideTypeSections({
         {hasRouteData(route) ? <RouteSummarySection route={route} guideType={guide.guideType} /> : null}
         {selectedItems.length > 0 ? (
           <StructuredSelectedItemsSection
+            id="stops"
             title={guide.guideType === "day_trip" ? "Suggested day trip stops" : "Suggested road trip stops"}
             eyebrow={guide.guideType === "day_trip" ? "Day trip route" : "Road trip route"}
             items={selectedItems}
@@ -880,14 +954,27 @@ function GuideTypeSections({
     );
   }
 
+  if (guide.guideType === "practical" && selectedItems.length > 0) {
+    return (
+      <StructuredSelectedItemsSection
+        id="selected-places"
+        title="Selected places"
+        eyebrow="Helpful links"
+        items={selectedItems}
+      />
+    );
+  }
+
   return null;
 }
 
 function StructuredSelectedItemsSection({
+  id,
   title,
   eyebrow,
   items,
 }: {
+  id: string;
   title: string;
   eyebrow: string;
   items: StructuredSelectedItem[];
@@ -897,7 +984,7 @@ function StructuredSelectedItemsSection({
   }
 
   return (
-    <section className="min-w-0 scroll-mt-32 [content-visibility:auto] [contain-intrinsic-size:1px_720px]">
+    <section id={id} className="min-w-0 scroll-mt-32 [content-visibility:auto] [contain-intrinsic-size:1px_720px]">
       <div className="mb-5">
         <p className="text-sm font-semibold text-[#FF6B00]">{eyebrow}</p>
         <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
@@ -1090,6 +1177,7 @@ function HeroQuickChips({
 }) {
   const date = updatedDate || formatDate(guide.updatedAt || guide.createdAt);
   const iconClassName = tone === "dark" ? "size-4 text-[#FFB36B]" : "size-4 text-[#FF6B00]";
+  const categoryLabel = cleanGuideDisplayLabel(guide.category) || guideTypeLabel(guide.guideType);
   const chips: Array<{ label: string; icon: ReactNode } | undefined> = [
     city
       ? { label: city.name, icon: <MapPin className={iconClassName} aria-hidden="true" /> }
@@ -1097,9 +1185,7 @@ function HeroQuickChips({
     city?.country || guide.countryId
       ? { label: city?.country || guide.countryId, icon: <Globe2 className={iconClassName} aria-hidden="true" /> }
       : undefined,
-    guide.category
-      ? { label: guide.category, icon: <BookOpen className={iconClassName} aria-hidden="true" /> }
-      : { label: "Travel guide", icon: <BookOpen className={iconClassName} aria-hidden="true" /> },
+    { label: categoryLabel, icon: <BookOpen className={iconClassName} aria-hidden="true" /> },
     guide.readTime
       ? { label: guide.readTime, icon: <Clock className={iconClassName} aria-hidden="true" /> }
       : undefined,
@@ -1228,11 +1314,15 @@ function GuidePageBlock({
     return <QuickInfoBlock block={block} />;
   }
 
+  if (block.type === "quick-answer") {
+    return <QuickAnswerBlock block={block} />;
+  }
+
   if (block.type === "map") {
     return <MapBlock block={block} />;
   }
 
-  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit" || block.type === "estimated-cost") {
     return <TipsBlock block={block} />;
   }
 
@@ -1272,10 +1362,10 @@ function EditorialBlock({ block, guideTitle }: { block: GuideCmsBlock; guideTitl
 }
 
 function QuickInfoBlock({ block }: { block: GuideCmsBlock }) {
-  const items = block.quickInfo || [];
+  const items = (block.quickInfo || []).filter((item) => !isPlaceholderQuickInfo(item));
 
   if (items.length === 0) {
-    return <EditorialBlock block={block} />;
+    return block.body || block.image ? <EditorialBlock block={block} /> : null;
   }
 
   return (
@@ -1289,6 +1379,22 @@ function QuickInfoBlock({ block }: { block: GuideCmsBlock }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function QuickAnswerBlock({ block }: { block: GuideCmsBlock }) {
+  if (!block.body) {
+    return null;
+  }
+
+  return (
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-orange-100 bg-orange-50/70 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.045)] md:p-7">
+      <p className="text-sm font-semibold text-[#C24A00]">Quick Answer</p>
+      <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">
+        {block.title || "Quick Answer"}
+      </h2>
+      <MarkdownContent content={block.body} className="mt-3" />
     </section>
   );
 }
@@ -2452,6 +2558,7 @@ function resolveStructuredSelectedItems({
   guides: Guide[];
 }): StructuredSelectedItem[] {
   return selectedItems
+    .filter((selectedItem) => selectedItem.type !== "country" && !isPlaceholderSelectedItem(selectedItem))
     .map((selectedItem, index): StructuredSelectedItem | undefined => {
       const fallbackTitle =
         selectedItem.customTitle || selectedItem.itemName || selectedItem.itemSlug || selectedItem.itemId;
@@ -2465,6 +2572,10 @@ function resolveStructuredSelectedItems({
       });
 
       if (!base && !fallbackTitle) {
+        return undefined;
+      }
+
+      if (!base && selectedItem.type !== "custom") {
         return undefined;
       }
 
@@ -2485,6 +2596,7 @@ function resolveStructuredSelectedItems({
       };
     })
     .filter((item): item is StructuredSelectedItem => Boolean(item))
+    .filter((item) => item.href !== "#")
     .sort((a, b) => a.displayOrder - b.displayOrder || a.title.localeCompare(b.title));
 }
 
@@ -2862,9 +2974,9 @@ function selectedBlockListingType(type: GuideCmsBlock["type"]): ResolvedGuideLis
 }
 
 function selectedBlockFallbackTitle(type: GuideCmsBlock["type"]) {
-  if (type === "selected-destinations") return "Selected destinations";
+  if (type === "selected-destinations") return "Selected places";
   if (type === "selected-cities") return "Selected cities";
-  if (type === "selected-countries") return "Selected countries";
+  if (type === "selected-countries") return "Selected places";
   if (type === "selected-restaurants") return "Selected restaurants";
   if (type === "selected-activities") return "Selected activities";
   if (type === "related-guides") return "Related guides";
@@ -2886,11 +2998,15 @@ function guideContentBlockTocTitle(block: GuideCmsBlock) {
     return block.title || "Quick info";
   }
 
+  if (block.type === "quick-answer") {
+    return block.title || "Quick Answer";
+  }
+
   if (block.type === "map") {
     return block.title || "Map";
   }
 
-  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit" || block.type === "estimated-cost") {
     return block.title || tipsFallbackTitle(block.type);
   }
 
@@ -2920,6 +3036,16 @@ function isSelectedEntityBlock(type: GuideCmsBlock["type"]) {
   );
 }
 
+function isSelectedReusableContentBlock(type: GuideCmsBlock["type"]) {
+  return (
+    type === "selected-destinations" ||
+    type === "selected-cities" ||
+    type === "selected-countries" ||
+    type === "selected-restaurants" ||
+    type === "selected-activities"
+  );
+}
+
 function ctaFallbackTitle(type: GuideCmsBlock["type"]) {
   if (type === "newsletter-cta") {
     return "Get fresh travel ideas";
@@ -2937,11 +3063,105 @@ function tipsFallbackTitle(type: GuideCmsBlock["type"]) {
     return "Best time to visit";
   }
 
+  if (type === "estimated-cost") {
+    return "Estimated cost";
+  }
+
   if (type === "warnings") {
-    return "Good to know";
+    return "Common mistakes";
   }
 
   return "Travel tips";
+}
+
+function guideTypeLabel(type: Guide["guideType"]) {
+  if (type === "best_places") return "Best Places";
+  if (type === "things_to_do") return "Things To Do";
+  if (type === "itinerary") return "Itinerary";
+  if (type === "day_trip") return "Day Trip";
+  if (type === "road_trip") return "Road Trip";
+  if (type === "destination_combination") return "Destination Guide";
+  if (type === "comparison") return "Comparison Guide";
+  if (type === "seasonal") return "Seasonal Guide";
+  return "Travel Guide";
+}
+
+function selectedItemsTocLabel(type: Guide["guideType"]) {
+  if (type === "best_places") return "Best places";
+  if (type === "things_to_do") return "Things to do";
+  if (type === "itinerary") return "Itinerary";
+  if (type === "day_trip" || type === "road_trip") return "Stops";
+  return "Selected places";
+}
+
+function selectedItemsSectionId(type: Guide["guideType"]) {
+  if (type === "best_places") return "best-places";
+  if (type === "things_to_do") return "things-to-do";
+  if (type === "day_trip" || type === "road_trip") return "stops";
+  return "selected-places";
+}
+
+function cleanGuideDisplayLabel(value?: string) {
+  const cleaned = String(value || "")
+    .replace(/(?:Primary Keyword|Primary Keywords|Secondary Keyword|Secondary Keywords|SEO Title|SEO Description|SEO Keywords)\s*:[\s\S]*$/i, "")
+    .replace(/(?:Quick Answer|Estimated Cost|Common Mistakes|FAQs?|Frequently Asked Questions)\s*:[\s\S]*$/i, "")
+    .split("\n")[0]
+    .trim();
+
+  return cleaned.length > 48 ? "" : cleaned;
+}
+
+function splitQuickAnswerFromText(value: string) {
+  const match = value.match(/([\s\S]*?)Quick Answer\s*:\s*([\s\S]+)$/i);
+
+  if (!match) {
+    return {
+      description: value.trim(),
+      quickAnswer: "",
+    };
+  }
+
+  return {
+    description: match[1].trim(),
+    quickAnswer: match[2].trim(),
+  };
+}
+
+function isPlaceholderQuickInfo(item: { label: string; value: string }) {
+  return item.label.trim().toLowerCase() === "label" && item.value.trim().toLowerCase() === "value";
+}
+
+function isPlaceholderSelectedItem(item: GuideSelectedItem) {
+  const values = [
+    item.itemId,
+    item.itemSlug,
+    item.itemName,
+    item.customTitle,
+    item.customSummary,
+    item.bestFor,
+    item.suggestedTime,
+    item.readMoreLabel,
+    ...(item.nearbyPlaces || []),
+  ].map((value) => String(value || "").trim().toLowerCase());
+  const meaningfulValues = values.filter(Boolean);
+
+  if (meaningfulValues.length === 0) {
+    return true;
+  }
+
+  return meaningfulValues.every((value) =>
+    [
+      "custom title",
+      "custom summary",
+      "fresh summary",
+      "best for",
+      "suggested time",
+      "nearby places",
+      "read more label",
+      "label",
+      "value",
+    ].includes(value),
+  );
 }
 
 function matchesEntityId(item: { id: string; slug?: string; name?: string; title?: string }, id: string) {

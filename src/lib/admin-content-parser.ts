@@ -55,6 +55,7 @@ export type ParsedTravelGuideImport = Partial<{
   image: string;
   coverImageAlt: string;
   excerpt: string;
+  quickAnswer: string;
   content: string;
   selectedDestinations: string;
   selectedCities: string;
@@ -64,7 +65,9 @@ export type ParsedTravelGuideImport = Partial<{
   selectedGuides: string;
   quickInfo: string;
   bestTimeToVisit: string;
+  estimatedCost: string;
   travelTips: string;
+  commonMistakes: string;
   faqs: string;
   tableOfContents: string;
   seoTitle: string;
@@ -187,6 +190,7 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   summary: "excerpt",
   shortdescription: "excerpt",
   shortdesc: "excerpt",
+  quickanswer: "quickAnswer",
   description: "content",
   longdescription: "content",
   overview: "content",
@@ -217,8 +221,15 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   besttime: "bestTimeToVisit",
   besttimetovisit: "bestTimeToVisit",
   bestseason: "bestTimeToVisit",
+  estimatedcost: "estimatedCost",
+  budget: "estimatedCost",
+  cost: "estimatedCost",
   traveltips: "travelTips",
   tips: "travelTips",
+  commonmistakes: "commonMistakes",
+  mistakes: "commonMistakes",
+  warning: "commonMistakes",
+  warnings: "commonMistakes",
   faqs: "faqs",
   faq: "faqs",
   tableofcontents: "tableOfContents",
@@ -250,10 +261,12 @@ const ignoredSections = new Set([
   "relatedinternallinks",
   "internallinks",
   "seo",
+  "primarykeyword",
+  "primarykeywords",
+  "secondarykeyword",
+  "secondarykeywords",
   "seokeywords",
   "keywords",
-  "estimatedcost",
-  "commonmistakes",
   "notes",
 ]);
 
@@ -395,6 +408,16 @@ function assignTravelGuideParsedValue(
     return;
   }
 
+  if (field === "category") {
+    parsed.category = cleanInlineGuideLabel(value);
+    return;
+  }
+
+  if (field === "excerpt") {
+    parsed.excerpt = stripTrailingGuideSubsections(value);
+    return;
+  }
+
   parsed[field] = value;
 }
 
@@ -447,6 +470,17 @@ function cleanValue(value: string) {
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+}
+
+function cleanInlineGuideLabel(value: string) {
+  return stripTrailingGuideSubsections(value).split("\n")[0]?.trim() || "";
+}
+
+function stripTrailingGuideSubsections(value: string) {
+  return value
+    .replace(/(?:Primary Keyword|Primary Keywords|Secondary Keyword|Secondary Keywords|SEO Title|SEO Description|SEO Keywords)\s*:[\s\S]*$/i, "")
+    .replace(/(?:Quick Answer|Estimated Cost|Common Mistakes|FAQs?|Frequently Asked Questions)\s*:[\s\S]*$/i, "")
     .trim();
 }
 

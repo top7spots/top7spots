@@ -103,6 +103,7 @@ export type GuideListingBlock = {
 
 export type GuideContentBlockType =
   | "hero"
+  | "quick-answer"
   | "intro"
   | "overview"
   | "selected-destinations"
@@ -115,6 +116,7 @@ export type GuideContentBlockType =
   | "travel-tips"
   | "warnings"
   | "best-time-to-visit"
+  | "estimated-cost"
   | "cta"
   | "car-rental-cta"
   | "related-guides"

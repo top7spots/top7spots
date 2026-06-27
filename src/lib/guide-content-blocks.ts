@@ -8,6 +8,7 @@ import type {
 
 const guideContentBlockTypes: GuideContentBlockType[] = [
   "hero",
+  "quick-answer",
   "intro",
   "overview",
   "selected-destinations",
@@ -20,6 +21,7 @@ const guideContentBlockTypes: GuideContentBlockType[] = [
   "travel-tips",
   "warnings",
   "best-time-to-visit",
+  "estimated-cost",
   "cta",
   "car-rental-cta",
   "related-guides",
@@ -101,7 +103,7 @@ function quickInfoValue(value: unknown): GuideQuickInfoItem[] {
       label: stringValue(item.label),
       value: stringValue(item.value),
     }))
-    .filter((item) => item.label && item.value);
+    .filter((item) => item.label && item.value && !isPlaceholderQuickInfo(item));
 }
 
 function faqValue(value: unknown): GuideFaq[] {
@@ -154,6 +156,10 @@ function ctaRelValue(value: unknown) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value.trim() : String(value ?? "").trim();
+}
+
+function isPlaceholderQuickInfo(item: GuideQuickInfoItem) {
+  return item.label.toLowerCase() === "label" && item.value.toLowerCase() === "value";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

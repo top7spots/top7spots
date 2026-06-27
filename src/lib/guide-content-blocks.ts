@@ -50,6 +50,7 @@ function normalizeGuideContentBlock(block: Record<string, unknown>, index: numbe
   }
 
   const id = stringValue(block.id) || `${type}-${index + 1}`;
+  const estimatedCost = quickInfoValue(block.estimatedCost ?? block.estimated_cost);
   const normalizedBlock: GuideContentBlock = {
     id: slugify(id) || `${type}-${index + 1}`,
     type,
@@ -60,7 +61,8 @@ function normalizeGuideContentBlock(block: Record<string, unknown>, index: numbe
     imageAlt: optionalString(block.imageAlt),
     itemIds: stringArrayValue(block.itemIds),
     quickInfo: quickInfoValue(block.quickInfo ?? block.quick_info),
-    estimatedCost: quickInfoValue(block.estimatedCost ?? block.estimated_cost),
+    estimatedCost,
+    estimated_cost: estimatedCost,
     tips: stringArrayValue(block.tips),
     faqs: faqValue(block.faqs),
     mapEmbedUrl: optionalString(block.mapEmbedUrl),

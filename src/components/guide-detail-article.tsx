@@ -237,7 +237,7 @@ export function GuideDetailArticle({
       : guide.guideType === "best_places"
         ? mainPageBlocks.filter((block) => block.type !== "selected-countries")
         : mainPageBlocks;
-  const renderPageBlocks = dedupeEstimatedCostBlocks(displayPageBlocks);
+  const renderPageBlocks = dedupeEstimatedCostBlocks(displayPageBlocks).filter(isRenderableGuidePageBlock);
   const faqPageBlocks = hasPageBlocks ? renderPageBlocks.filter((block) => block.type === "faq") : [];
   const blockFaqItems = mergeFaqItems(faqPageBlocks.flatMap((block) => block.faqs || []));
   const visibleFaqItems = faqPageBlocks.length > 0 ? blockFaqItems : legacyFaqItems;
@@ -1337,6 +1337,42 @@ function GuidePageBlock({
   }
 
   return <EditorialBlock block={block} guideTitle={guide.title} />;
+}
+
+function isRenderableGuidePageBlock(block: GuideCmsBlock) {
+  if (block.type === "faq") {
+    return (block.faqs || []).some((faq) => faq.question.trim() && faq.answer.trim());
+  }
+
+  if (isSelectedEntityBlock(block.type)) {
+    return (block.itemIds || []).length > 0;
+  }
+
+  if (block.type === "quick-info") {
+    return (block.quickInfo || []).some((item) => item.label && item.value && !isPlaceholderQuickInfo(item));
+  }
+
+  if (block.type === "estimated-cost") {
+    return estimatedCostItemsForBlock(block).length > 0 || Boolean(estimatedCostPlainText(block));
+  }
+
+  if (block.type === "quick-answer") {
+    return Boolean(block.body?.trim());
+  }
+
+  if (block.type === "map") {
+    return Boolean(block.mapEmbedUrl?.trim());
+  }
+
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
+    return Boolean(block.body?.trim() || block.tips?.length);
+  }
+
+  if (block.type === "cta" || block.type === "car-rental-cta" || block.type === "newsletter-cta") {
+    return Boolean(block.body?.trim() || (block.ctaLabel?.trim() && block.ctaHref?.trim()));
+  }
+
+  return Boolean(block.title?.trim() || block.body?.trim() || block.image?.trim());
 }
 
 function EditorialBlock({ block, guideTitle }: { block: GuideCmsBlock; guideTitle?: string }) {
@@ -3190,7 +3226,7 @@ function dedupeEstimatedCostBlocks(blocks: GuideCmsBlock[]) {
 }
 
 function estimatedCostItemsForBlock(block: GuideCmsBlock): GuideQuickInfoItem[] {
-  const storedItems = estimatedCostValueItems((block as { estimatedCost?: unknown }).estimatedCost);
+  const storedItems = estimatedCostCandidateValues(block).flatMap((value) => estimatedCostValueItems(value));
   const parsedItems = storedItems.length > 0 ? storedItems : parseEstimatedCostItems(block.body || block.tips?.join("\n") || "");
   const seen = new Set<string>();
 
@@ -3199,13 +3235,27 @@ function estimatedCostItemsForBlock(block: GuideCmsBlock): GuideQuickInfoItem[] 
     const value = normalizeDisplayKey(item.value);
     const key = `${label}:${value}`;
 
-    if (!label || !value || isEstimatedCostLabelOnly(item.label) || isEstimatedCostLabelOnly(item.value) || seen.has(key)) {
+    if (!label || !value || isEstimatedCostLabelOnly(item.value) || seen.has(key)) {
       return false;
     }
 
     seen.add(key);
     return true;
   });
+}
+
+function estimatedCostCandidateValues(block: GuideCmsBlock): unknown[] {
+  const record = block as Record<string, unknown>;
+  const values: unknown[] = [record.estimatedCost, record.estimated_cost];
+
+  for (const [key, value] of Object.entries(record)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    if (normalizedKey.includes("estimated") && normalizedKey.includes("cost")) {
+      values.push(value);
+    }
+  }
+
+  return values.filter((value, index, items) => Boolean(value) && items.indexOf(value) === index);
 }
 
 function estimatedCostPlainText(block: GuideCmsBlock) {

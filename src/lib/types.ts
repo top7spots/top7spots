@@ -139,6 +139,7 @@ export type GuideContentBlock = {
   itemIds?: string[];
   quickInfo?: GuideQuickInfoItem[];
   estimatedCost?: GuideQuickInfoItem[];
+  estimated_cost?: GuideQuickInfoItem[];
   tips?: string[];
   faqs?: GuideFaq[];
   mapEmbedUrl?: string;

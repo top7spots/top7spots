@@ -80,14 +80,7 @@ export function GuideContentBlocksField({
   activities,
 }: GuideContentBlocksFieldProps) {
   const [blocks, setBlocks] = useState<GuideContentBlock[]>(() =>
-    defaultBlocks.map((block) => ({
-      ...block,
-      itemIds: uniqueStrings(block.itemIds || []),
-      quickInfo: block.quickInfo || [],
-      estimatedCost: block.estimatedCost || [],
-      tips: block.tips || [],
-      faqs: block.faqs || [],
-    })),
+    defaultBlocks.map(normalizeEditableBlock),
   );
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<string[]>([]);
   const selectorItems = useMemo(
@@ -279,8 +272,8 @@ function normalizeEditableBlock(block: GuideContentBlock): GuideContentBlock {
   return {
     ...block,
     itemIds: uniqueStrings(block.itemIds || []),
-    quickInfo: block.quickInfo || [],
-    estimatedCost: block.estimatedCost || [],
+    quickInfo: quickInfoItems((block as { quickInfo?: unknown }).quickInfo),
+    estimatedCost: quickInfoItems((block as { estimatedCost?: unknown }).estimatedCost),
     tips: block.tips || [],
     faqs: block.faqs || [],
   };
@@ -1035,17 +1028,34 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
 }
 
 function parseQuickInfo(value: string): GuideQuickInfoItem[] {
-  return value
-    .split("\n")
-    .map((line) => {
-      const [label, ...rest] = line.split("|");
-      return { label: clean(label), value: clean(rest.join("|")) };
-    })
-    .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value));
+  return quickInfoItems(value);
 }
 
 function formatQuickInfo(items?: GuideQuickInfoItem[]) {
   return (items || []).map((item) => `${item.label} | ${item.value}`).join("\n");
+}
+
+function quickInfoItems(value: unknown): GuideQuickInfoItem[] {
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n/)
+      .map((line) => {
+        const [label, ...rest] = line.split("|");
+        return { label: clean(label), value: clean(rest.join("|")) };
+      })
+      .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value));
+  }
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = typeof item === "object" && item !== null ? (item as Partial<GuideQuickInfoItem>) : {};
+      return { label: clean(record.label), value: clean(record.value) };
+    })
+    .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value));
 }
 
 function lines(value: string) {

@@ -222,7 +222,6 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   besttimetovisit: "bestTimeToVisit",
   bestseason: "bestTimeToVisit",
   estimatedcost: "estimatedCost",
-  budget: "estimatedCost",
   cost: "estimatedCost",
   traveltips: "travelTips",
   tips: "travelTips",

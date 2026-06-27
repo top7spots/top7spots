@@ -817,6 +817,14 @@ function validateGuideImport(
   if (parsed.estimatedCost && parsed.content && /estimated cost\s*:/i.test(parsed.content)) {
     warnings.push("Warning: Estimated Cost appears both in Content and the Estimated Cost field. The duplicate content copy will be ignored.");
   }
+
+  for (const block of estimatedCostBlocks) {
+    const missingLabels = missingEstimatedCostLabels(block.estimatedCost || []);
+
+    if ((block.estimatedCost || []).length > 0 && missingLabels.length > 0) {
+      warnings.push(`Warning: Estimated Cost is missing ${missingLabels.join("/")}.`);
+    }
+  }
 }
 
 function cleanImportedContentBody(
@@ -852,28 +860,13 @@ function parseEstimatedCostText(value: string | undefined, warnings: string[]): 
     return [];
   }
 
-  const labels = ["Budget", "Mid-range", "Premium"];
-  const sections: GuideQuickInfoItem[] = [];
+  const { items: sections, emptyLabels, extraText } = parseEstimatedCostRows(text);
 
-  for (let index = 0; index < labels.length; index += 1) {
-    const label = labels[index];
-    const nextLabel = labels[index + 1];
-    const pattern = nextLabel
-      ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
-      : new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*)$`, "i");
-    const match = text.match(pattern);
-    const sectionValue = cleanEstimatedCostValue(match?.[1] || "");
-
-    if (match && !sectionValue) {
-      warnings.push(`Warning: Estimated Cost has an empty ${label} entry.`);
-    }
-
-    if (sectionValue) {
-      sections.push({ label, value: sectionValue });
-    }
+  for (const label of emptyLabels) {
+    warnings.push(`Warning: Estimated Cost has an empty ${label} entry.`);
   }
 
-  if (sections.length > 0 && hasPlainEstimatedCostOutsideSections(text, labels)) {
+  if (sections.length > 0 && extraText) {
     warnings.push("Warning: Estimated Cost includes structured labels and extra plain text. Structured cards will be used.");
   }
 
@@ -1001,22 +994,71 @@ function cleanEstimatedCostValue(value: string) {
     .trim();
 }
 
-function hasPlainEstimatedCostOutsideSections(value: string, labels: string[]) {
-  const withoutSections = labels
-    .reduce((text, label, index) => {
-      const nextLabel = labels[index + 1];
-      const pattern = nextLabel
-        ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*[\\s\\S]*?(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
-        : new RegExp(`${escapeRegExp(label)}\\s*:\\s*[\\s\\S]*$`, "i");
-      return text.replace(pattern, "");
-    }, value)
-    .trim();
+function parseEstimatedCostRows(value: string): {
+  items: GuideQuickInfoItem[];
+  emptyLabels: string[];
+  extraText: boolean;
+} {
+  const items: GuideQuickInfoItem[] = [];
+  const emptyLabels: string[] = [];
+  const extraLines: string[] = [];
+  let currentLabel = "";
+  let currentLines: string[] = [];
 
-  return Boolean(withoutSections);
+  const flush = () => {
+    if (!currentLabel) {
+      return;
+    }
+
+    const sectionValue = cleanEstimatedCostValue(currentLines.join("\n"));
+    if (sectionValue) {
+      items.push({ label: currentLabel, value: sectionValue });
+    } else {
+      emptyLabels.push(currentLabel);
+    }
+
+    currentLabel = "";
+    currentLines = [];
+  };
+
+  for (const rawLine of value.replace(/\r\n?/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    const rowMatch = line.match(/^[-*]?\s*(Budget|Mid[-\s]?range|Premium)\s*(?::|\|)\s*(.*)$/i);
+
+    if (rowMatch) {
+      flush();
+      currentLabel = displayEstimatedCostLabel(rowMatch[1]);
+      currentLines = rowMatch[2] ? [rowMatch[2]] : [];
+      continue;
+    }
+
+    if (currentLabel) {
+      currentLines.push(rawLine);
+    } else if (line) {
+      extraLines.push(line);
+    }
+  }
+
+  flush();
+
+  return {
+    items,
+    emptyLabels,
+    extraText: extraLines.some((line) => !isEstimatedCostLabelOnly(line)),
+  };
 }
 
 function isEstimatedCostLabelOnly(value: string) {
   return /^(budget|mid-range|mid range|premium)\s*:?\s*$/i.test(value.trim());
+}
+
+function displayEstimatedCostLabel(value: string) {
+  return normalizeMatchValue(value) === "midrange" ? "Mid-range" : value.trim().replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
+function missingEstimatedCostLabels(items: GuideQuickInfoItem[]) {
+  const presentLabels = new Set(items.map((item) => normalizeMatchValue(item.label)));
+  return ["Budget", "Mid-range", "Premium"].filter((label) => !presentLabels.has(normalizeMatchValue(label)));
 }
 
 function dedupeQuickInfoItems(items: GuideQuickInfoItem[]) {
@@ -1031,10 +1073,6 @@ function dedupeQuickInfoItems(items: GuideQuickInfoItem[]) {
     seen.add(key);
     return true;
   });
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function cleanHeroExcerpt(value?: string) {

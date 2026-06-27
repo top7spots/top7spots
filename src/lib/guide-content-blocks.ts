@@ -95,6 +95,10 @@ function hasBlockContent(block: GuideContentBlock) {
 }
 
 function quickInfoValue(value: unknown): GuideQuickInfoItem[] {
+  if (typeof value === "string") {
+    return quickInfoStringValue(value);
+  }
+
   if (!Array.isArray(value)) {
     return [];
   }
@@ -105,6 +109,19 @@ function quickInfoValue(value: unknown): GuideQuickInfoItem[] {
       label: stringValue(item.label),
       value: stringValue(item.value),
     }))
+    .filter((item) => item.label && item.value && !isPlaceholderQuickInfo(item));
+}
+
+function quickInfoStringValue(value: string): GuideQuickInfoItem[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => {
+      const [label, ...rest] = line.split("|");
+      return {
+        label: stringValue(label),
+        value: stringValue(rest.join("|")),
+      };
+    })
     .filter((item) => item.label && item.value && !isPlaceholderQuickInfo(item));
 }
 

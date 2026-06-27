@@ -3190,7 +3190,7 @@ function dedupeEstimatedCostBlocks(blocks: GuideCmsBlock[]) {
 }
 
 function estimatedCostItemsForBlock(block: GuideCmsBlock): GuideQuickInfoItem[] {
-  const storedItems = (block.estimatedCost || []).filter((item) => item.label && item.value && !isEstimatedCostLabelOnly(item.value));
+  const storedItems = estimatedCostValueItems((block as { estimatedCost?: unknown }).estimatedCost);
   const parsedItems = storedItems.length > 0 ? storedItems : parseEstimatedCostItems(block.body || block.tips?.join("\n") || "");
   const seen = new Set<string>();
 
@@ -3221,24 +3221,64 @@ function estimatedCostPlainText(block: GuideCmsBlock) {
 }
 
 function parseEstimatedCostItems(value: string) {
-  const labels = ["Budget", "Mid-range", "Premium"];
   const items: GuideQuickInfoItem[] = [];
+  let currentLabel = "";
+  let currentLines: string[] = [];
 
-  for (let index = 0; index < labels.length; index += 1) {
-    const label = labels[index];
-    const nextLabel = labels[index + 1];
-    const pattern = nextLabel
-      ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
-      : new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*)$`, "i");
-    const match = value.match(pattern);
-    const sectionValue = cleanEstimatedCostText(match?.[1] || "");
+  const flush = () => {
+    if (!currentLabel) {
+      return;
+    }
+
+    const sectionValue = cleanEstimatedCostText(currentLines.join("\n"));
 
     if (sectionValue) {
-      items.push({ label, value: sectionValue });
+      items.push({ label: currentLabel, value: sectionValue });
+    }
+
+    currentLabel = "";
+    currentLines = [];
+  };
+
+  for (const rawLine of value.replace(/\r\n?/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    const rowMatch = line.match(/^[-*]?\s*(Budget|Mid[-\s]?range|Premium)\s*(?::|\|)\s*(.*)$/i);
+
+    if (rowMatch) {
+      flush();
+      currentLabel = displayEstimatedCostLabel(rowMatch[1]);
+      currentLines = rowMatch[2] ? [rowMatch[2]] : [];
+      continue;
+    }
+
+    if (currentLabel) {
+      currentLines.push(rawLine);
     }
   }
 
+  flush();
+
   return items;
+}
+
+function estimatedCostValueItems(value: unknown): GuideQuickInfoItem[] {
+  if (typeof value === "string") {
+    return parseEstimatedCostItems(value);
+  }
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = typeof item === "object" && item !== null ? (item as Partial<GuideQuickInfoItem>) : {};
+      return {
+        label: String(record.label || "").trim(),
+        value: String(record.value || "").trim(),
+      };
+    })
+    .filter((item) => item.label && item.value && !isEstimatedCostLabelOnly(item.value));
 }
 
 function cleanEstimatedCostText(value: string) {
@@ -3253,6 +3293,12 @@ function cleanEstimatedCostText(value: string) {
 
 function isEstimatedCostLabelOnly(value: string) {
   return /^(budget|mid-range|mid range|premium)\s*:?\s*$/i.test(value.trim());
+}
+
+function displayEstimatedCostLabel(value: string) {
+  return normalizeDisplayKey(value).replace(/[-\s]/g, "") === "midrange"
+    ? "Mid-range"
+    : value.trim().replace(/^\w/, (letter) => letter.toUpperCase());
 }
 
 function normalizeDisplayKey(value: string) {

@@ -195,6 +195,9 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   longdescription: "content",
   overview: "content",
   content: "content",
+  contentsection: "content",
+  contentsections: "content",
+  maincontent: "content",
   body: "content",
   paragraphs: "content",
   articlebody: "content",
@@ -311,6 +314,23 @@ function parseStructuredImport<T extends object>(
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+
+    if (String(currentField) === "content") {
+      const contentHeading = line.match(/^H([2-6])\s*:\s*(.+)$/i);
+      if (contentHeading) {
+        buffer.push(`${"#".repeat(Number(contentHeading[1]))} ${contentHeading[2].trim()}`);
+        continue;
+      }
+
+      if (normalizeLabel(line.slice(0, line.indexOf(":") >= 0 ? line.indexOf(":") : 0)) === "content") {
+        const inlineContent = line.slice(line.indexOf(":") + 1).trim();
+        if (inlineContent) {
+          buffer.push(inlineContent);
+        }
+        continue;
+      }
+    }
+
     const headingField = fieldFromMarkdownHeading(line, aliases);
 
     if (headingField || isIgnoredHeading(line)) {
@@ -421,12 +441,21 @@ function assignTravelGuideParsedValue(
     return;
   }
 
+  if (field === "content") {
+    parsed.content = appendTextBlock(parsed.content, value);
+    return;
+  }
+
   if (field === "relatedGuideSlugs" || field === "relatedPlaceSlugs" || field === "seoKeywords") {
     parsed[field] = mergeListText(parsed[field], value);
     return;
   }
 
   parsed[field] = value;
+}
+
+function appendTextBlock(current: string | undefined, next: string) {
+  return [current, next].filter((value): value is string => Boolean(value?.trim())).join("\n\n").trim();
 }
 
 function mergeListText(current: string | undefined, next: string) {

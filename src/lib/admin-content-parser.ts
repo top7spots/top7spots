@@ -297,10 +297,12 @@ function parseStructuredImport<T extends object>(
   const lines = input.replace(/\r\n?/g, "\n").split("\n");
   let currentField: keyof T | null = null;
   let buffer: string[] = [];
+  let pendingContentHeadingLevel: number | null = null;
 
   const flush = () => {
     if (!currentField) {
       buffer = [];
+      pendingContentHeadingLevel = null;
       return;
     }
 
@@ -310,19 +312,34 @@ function parseStructuredImport<T extends object>(
     }
 
     buffer = [];
+    pendingContentHeadingLevel = null;
   };
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
     if (String(currentField) === "content") {
-      const contentHeading = line.match(/^H([2-6])\s*:\s*(.+)$/i);
-      if (contentHeading) {
-        buffer.push(`${"#".repeat(Number(contentHeading[1]))} ${contentHeading[2].trim()}`);
+      if (pendingContentHeadingLevel && line) {
+        buffer.push(`${"#".repeat(pendingContentHeadingLevel)} ${line}`);
+        pendingContentHeadingLevel = null;
         continue;
       }
 
-      if (normalizeLabel(line.slice(0, line.indexOf(":") >= 0 ? line.indexOf(":") : 0)) === "content") {
+      const contentHeading = line.match(/^H([2-6])\s*:\s*(.*)$/i);
+      if (contentHeading) {
+        const headingLevel = Number(contentHeading[1]);
+        const headingTitle = contentHeading[2].trim();
+
+        if (headingTitle) {
+          buffer.push(`${"#".repeat(headingLevel)} ${headingTitle}`);
+        } else {
+          pendingContentHeadingLevel = headingLevel;
+        }
+        continue;
+      }
+
+      const colonIndex = line.indexOf(":");
+      if (colonIndex >= 0 && normalizeLabel(line.slice(0, colonIndex)) === "content") {
         const inlineContent = line.slice(line.indexOf(":") + 1).trim();
         if (inlineContent) {
           buffer.push(inlineContent);

@@ -738,6 +738,7 @@ function buildGuideTocItems({
       }
 
       addItem(guideContentBlockTocId(block, title), title);
+      contentHeadingTocItems(block).forEach((item) => addItem(item.id, item.title, item.level));
   };
 
   if (hasPageBlocks) {
@@ -1385,7 +1386,7 @@ function EditorialBlock({ block, guideTitle }: { block: GuideCmsBlock; guideTitl
         <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight text-[#111827] md:text-[1.7rem]">{block.title}</h2>
       ) : null}
       {block.body ? (
-        <MarkdownContent content={block.body} className="mt-3" />
+        <MarkdownContent content={block.body} className="mt-3" headingIdPrefix={block.id} />
       ) : null}
       {block.image ? (
         <div className="relative mt-5 aspect-[16/10] min-h-64 overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
@@ -1677,7 +1678,7 @@ function ContextualEntitySectionCards({ section }: { section: ContextualEntitySe
 }
 
 type ParsedMarkdownBlock =
-  | { kind: "heading"; key: string; level: 2 | 3; text: string }
+  | { kind: "heading"; key: string; level: 2 | 3; text: string; id?: string }
   | { kind: "paragraph"; key: string; text: string }
   | { kind: "list"; key: string; items: string[] }
   | { kind: "divider"; key: string };
@@ -1686,12 +1687,14 @@ function MarkdownContent({
   content,
   className = "",
   entities = [],
+  headingIdPrefix,
 }: {
   content: string;
   className?: string;
   entities?: ContextualEntity[];
+  headingIdPrefix?: string;
 }) {
-  const blocks = parseMarkdownBlocks(content);
+  const blocks = parseMarkdownBlocksWithHeadingIds(content, headingIdPrefix);
 
   return (
     <div className={`grid gap-4 ${className}`}>
@@ -1704,7 +1707,7 @@ function MarkdownContent({
               : "max-w-3xl scroll-mt-24 text-xl font-semibold leading-tight tracking-tight text-[#1F2937] md:text-[1.35rem]";
 
           return (
-            <HeadingTag key={block.key} className={headingClassName}>
+            <HeadingTag key={block.key} id={block.id} className={headingClassName}>
               {renderInlineContent(block.text, entities)}
             </HeadingTag>
           );
@@ -1734,9 +1737,86 @@ function MarkdownContent({
   );
 }
 
+function parseMarkdownBlocksWithHeadingIds(content: string, headingIdPrefix?: string): ParsedMarkdownBlock[] {
+  const idCounts = new Map<string, number>();
+
+  return parseMarkdownBlocks(content).map((block) => {
+    if (block.kind !== "heading") {
+      return block;
+    }
+
+    return {
+      ...block,
+      id: uniqueId(markdownHeadingBaseId(block.text, headingIdPrefix), idCounts),
+    };
+  });
+}
+
+function contentHeadingTocItems(block: GuideCmsBlock): GuideTocItem[] {
+  if (!block.body || !isEditorialContentBlock(block.type)) {
+    return [];
+  }
+
+  return parseMarkdownBlocksWithHeadingIds(block.body, block.id)
+    .filter((item): item is Extract<ParsedMarkdownBlock, { kind: "heading" }> => item.kind === "heading" && Boolean(item.id))
+    .map((item) => ({
+      id: item.id || "",
+      title: item.text,
+      level: item.level,
+    }));
+}
+
+function isEditorialContentBlock(type: GuideCmsBlock["type"]) {
+  return type === "intro" || type === "overview" || type === "hero";
+}
+
+function markdownHeadingBaseId(title: string, headingIdPrefix?: string) {
+  const headingSlug = slugify(title) || "heading";
+  const prefixSlug = headingIdPrefix ? slugify(headingIdPrefix) : "";
+
+  return prefixSlug ? `${prefixSlug}-${headingSlug}` : `content-${headingSlug}`;
+}
+
+function normalizeLabeledContentHeadings(content: string) {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const normalizedLines: string[] = [];
+  let pendingHeadingLevel: 2 | 3 | null = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (pendingHeadingLevel && line) {
+      normalizedLines.push(`${"#".repeat(pendingHeadingLevel)} ${line}`);
+      pendingHeadingLevel = null;
+      continue;
+    }
+
+    const headingMatch = line.match(/^H([23])\s*:\s*(.*)$/i);
+    if (headingMatch) {
+      const headingLevel = Number(headingMatch[1]) as 2 | 3;
+      const headingTitle = headingMatch[2].trim();
+
+      if (headingTitle) {
+        normalizedLines.push(`${"#".repeat(headingLevel)} ${headingTitle}`);
+      } else {
+        pendingHeadingLevel = headingLevel;
+      }
+      continue;
+    }
+
+    if (/^Content\s*:\s*$/i.test(line)) {
+      continue;
+    }
+
+    normalizedLines.push(rawLine);
+  }
+
+  return normalizedLines.join("\n");
+}
+
 function parseMarkdownBlocks(content: string): ParsedMarkdownBlock[] {
   const blocks: ParsedMarkdownBlock[] = [];
-  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const lines = normalizeLabeledContentHeadings(content).replace(/\r\n?/g, "\n").split("\n");
   let paragraphLines: string[] = [];
   let listItems: string[] = [];
 
@@ -2454,7 +2534,7 @@ function buildGuideArticleContentBlocks(content: string[], tableOfContents: Guid
 }
 
 function containsMarkdown(content: string[]) {
-  return content.some((item) => /(^|\n)\s*(#{2,3}\s+|[-*]\s+|---+\s*$)|\*\*[^*]+\*\*/m.test(item));
+  return content.some((item) => /(^|\n)\s*(#{2,3}\s+|H[23]\s*:|[-*]\s+|---+\s*$)|\*\*[^*]+\*\*/im.test(item));
 }
 
 function buildMarkdownArticleContentBlocks(
@@ -2508,6 +2588,14 @@ function buildMarkdownArticleContentBlocks(
 }
 
 function headingFromText(text: string): { level: 2 | 3; title: string } | undefined {
+  const labeledHeading = text.match(/^H([23])\s*:\s*(.+)$/i);
+  if (labeledHeading) {
+    return {
+      level: Number(labeledHeading[1]) as 2 | 3,
+      title: labeledHeading[2].trim(),
+    };
+  }
+
   if (text.startsWith("## ")) {
     return {
       level: 2,

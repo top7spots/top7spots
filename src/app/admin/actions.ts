@@ -134,13 +134,24 @@ function ratingValue(formData: FormData, key: string) {
 }
 
 function uniqueValues(values: string[]) {
-  return Array.from(new Set(values));
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(value);
+    }
+  }
+
+  return unique;
 }
 
 function parseCommaSeparatedList(value: FormDataEntryValue | null) {
   return uniqueValues(
     String(value ?? "")
-      .split(",")
+      .split(/,|\r?\n|;/)
       .map((item) => item.trim())
       .filter(Boolean),
   );

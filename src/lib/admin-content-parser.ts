@@ -241,6 +241,10 @@ const travelGuideFieldAliases: Record<string, keyof ParsedTravelGuideImport> = {
   relatedguides: "relatedGuideSlugs",
   relatedplaceslugs: "relatedPlaceSlugs",
   relatedplaces: "relatedPlaceSlugs",
+  citypages: "relatedPlaceSlugs",
+  citypage: "relatedPlaceSlugs",
+  destinationpages: "relatedPlaceSlugs",
+  destinationpage: "relatedPlaceSlugs",
   guidedata: "guideData",
   structureddata: "guideData",
   selecteditems: "selectedItems",
@@ -417,7 +421,31 @@ function assignTravelGuideParsedValue(
     return;
   }
 
+  if (field === "relatedGuideSlugs" || field === "relatedPlaceSlugs" || field === "seoKeywords") {
+    parsed[field] = mergeListText(parsed[field], value);
+    return;
+  }
+
   parsed[field] = value;
+}
+
+function mergeListText(current: string | undefined, next: string) {
+  return uniqueTextValues([current, next].filter((value): value is string => Boolean(value)).join("\n")).join("\n");
+}
+
+function uniqueTextValues(value: string) {
+  const seen = new Set<string>();
+  const items: string[] = [];
+
+  for (const item of value.split(/,|\r?\n|;/).map((entry) => entry.trim()).filter(Boolean)) {
+    const key = item.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      items.push(item);
+    }
+  }
+
+  return items;
 }
 
 function fieldFromMarkdownHeading<T extends object>(line: string, aliases: Record<string, keyof T>) {

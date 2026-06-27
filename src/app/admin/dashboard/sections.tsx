@@ -48,11 +48,10 @@ import { CarRentalBulkImport } from "@/components/admin/car-rental-bulk-import";
 import { CityAiContentImport } from "@/components/admin/city-ai-content-import";
 import { DestinationAiContentImport } from "@/components/admin/destination-ai-content-import";
 import { GuideContentBlocksField } from "@/components/admin/guide-content-blocks-field";
-import { GuideListingBlocksField } from "@/components/admin/guide-listing-blocks-field";
 import { GuideOwnershipFields } from "@/components/admin/guide-ownership-fields";
 import { GuideRelatedSlugsField } from "@/components/admin/guide-related-slugs-field";
 import { GuideSeoPreviewPanel } from "@/components/admin/guide-seo-preview-panel";
-import { GuideStructuredFields } from "@/components/admin/guide-structured-fields";
+import { GuideSelectedItemsField, GuideStructuredFields } from "@/components/admin/guide-structured-fields";
 import { GalleryUploadField, ImageUploadField } from "@/components/admin/image-upload-field";
 import { TravelGuideAiContentImport } from "@/components/admin/travel-guide-ai-content-import";
 import { BrandLogo } from "@/components/brand-logo";
@@ -1503,153 +1502,108 @@ function GuideForm({
       <form action={saveGuideAction} encType="multipart/form-data" className="grid gap-6">
         <input type="hidden" name="id" value={guide?.id ?? ""} />
         <HiddenTimestamps createdAt={guide?.createdAt} />
-        <TravelGuideAiContentImport
-          cities={cities.map((city) => ({
-            id: city.slug,
-            label: city.name,
-            slug: city.slug,
-            city: city.name,
-            country: city.country,
-            meta: [city.country, city.region].filter(Boolean).join(" - "),
-          }))}
-          countries={countryOptions(cities).map((country) => ({
-            id: country.id,
-            label: country.label,
-            slug: country.id,
-            country: country.label,
-            meta: country.meta,
-          }))}
-          destinations={destinations.map((destination) => ({
-            id: destination.id,
-            label: destination.name,
-            slug: destination.slug,
-            city: destination.city,
-            meta: [destination.slug, destination.city, destination.category].filter(Boolean).join(" - "),
-          }))}
-          guides={guides
-            .filter((item) => item.id !== guide?.id)
-            .map((item) => ({
-              id: item.id,
-              label: item.title,
-              slug: item.slug,
-              city: cityLabel(cities, item.citySlug),
-              country: item.countryId,
-              meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
-            }))}
-          restaurants={restaurantOptions(restaurants, cities).map((restaurant) => ({
-            id: restaurant.id,
-            label: restaurant.label,
-            slug: restaurant.slug,
-            meta: restaurant.meta,
-          }))}
-          activities={attractions.map((attraction) => ({
-            id: attraction.id,
-            label: attraction.name,
-            slug: attraction.slug,
-            city: cityLabel(cities, attraction.citySlug),
-            meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
-          }))}
-        />
-        <FormSection title="Basic info">
+        <input type="hidden" name="slug" value={guide?.slug ?? ""} />
+        <input type="hidden" name="displayOrder" value={guide?.displayOrder ?? 0} />
+        <input type="hidden" name="author" value={guide?.author ?? ""} />
+        <FormSection title="Basic Guide Information">
           <Field label="Title" name="title" defaultValue={guide?.title} placeholder="Best places in Muscat" />
-          <Field label="Slug" name="slug" defaultValue={guide?.slug} placeholder="best-places-in-muscat" />
           <Field label="Category" name="category" defaultValue={guide?.category} placeholder="Planning" />
           <AuthorSelect authors={authors} defaultValue={guide?.authorId} />
-          <Field
-            label="Legacy author fallback"
-            name="author"
-            defaultValue={guide?.author}
-            placeholder="Top7Spots editorial"
-            helperText="Used only when no structured author profile is selected."
-          />
           <Field label="Read time" name="readTime" defaultValue={guide?.readTime} placeholder="5 min read" />
           <StatusSelect defaultValue={guide?.status} />
-          <Field label="Display order" name="displayOrder" type="number" defaultValue={guide?.displayOrder ?? 0} />
           <Toggle label="Featured guide" name="isFeatured" defaultChecked={guide?.isFeatured} />
+          <div className="md:col-span-2">
+            <GuideOwnershipFields
+              cities={cities}
+              destinations={destinations}
+              defaultTargetType={guide?.targetType ?? "city"}
+              defaultCountryId={guide?.countryId}
+              defaultCitySlug={guide?.citySlug}
+              defaultDestinationId={guide?.destinationId}
+            />
+          </div>
         </FormSection>
-        <FormSection title="Guide type and structured data" columns={1}>
-          <GuideStructuredFields
-            defaultGuideType={guide?.guideType}
-            defaultGuideData={guide?.guideData}
-            defaultSelectedItems={guide?.guideSelectedItems}
-            selectedItemOptions={{
-              destination: destinations.map((destination) => {
-                const destinationCity = cities.find((city) => city.slug === destination.citySlug);
-                return {
-                  id: destination.id,
-                  label: destination.name,
-                  slug: destination.slug,
-                  city: destination.city || destinationCity?.name,
-                  country: destinationCity?.country,
-                  meta: [destination.slug, destination.city || destinationCity?.name, destinationCity?.country, destination.category]
-                    .filter(Boolean)
-                    .join(" - "),
-                  image: destination.image,
-                  imageAlt: destination.imageAlt,
-                  href: getCanonicalDestinationPath(destination, destinationCity),
-                  badge: destination.category || "Destination",
-                };
-              }),
-              city: cities.map((city) => ({
-                id: city.slug,
-                label: city.name,
-                slug: city.slug,
-                city: city.name,
-                country: city.country,
-                meta: [city.country, city.region].filter(Boolean).join(" - "),
-                image: city.cardImage || city.featuredImage || city.heroImage,
-                imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt,
-                href: `/${city.slug}`,
-                badge: "City",
-              })),
-              guide: guides
-                .filter((item) => item.id !== guide?.id)
-                .map((item) => ({
-                  id: item.id,
-                  label: item.title,
-                  slug: item.slug,
-                  city: cityLabel(cities, item.citySlug),
-                  country: item.countryId,
-                  meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
-                  image: item.coverImage || item.image,
-                  imageAlt: item.coverImageAlt,
-                  href: getGuideHref(item),
-                  badge: item.category || "Guide",
-                })),
-              restaurant: restaurantOptions(restaurants, cities).map((restaurant) => ({
+        <FormSection title="Bulk Import / Auto Fill" columns={1}>
+          <TravelGuideAiContentImport
+            cities={cities.map((city) => ({
+              id: city.slug,
+              label: city.name,
+              slug: city.slug,
+              city: city.name,
+              country: city.country,
+              category: city.region,
+              status: city.status,
+              meta: [city.country, city.region].filter(Boolean).join(" - "),
+            }))}
+            countries={countryOptions(cities).map((country) => ({
+              id: country.id,
+              label: country.label,
+              slug: country.id,
+              country: country.label,
+              meta: country.meta,
+            }))}
+            destinations={destinations.map((destination) => {
+              const destinationCity = cities.find((city) => city.slug === destination.citySlug);
+              return {
+                id: destination.id,
+                label: destination.name,
+                slug: destination.slug,
+                city: destination.city,
+                country: destinationCity?.country,
+                category: destination.category,
+                status: destination.status,
+                meta: [destination.slug, destination.city, destinationCity?.country, destination.category].filter(Boolean).join(" - "),
+              };
+            })}
+            guides={guides
+              .filter((item) => item.id !== guide?.id)
+              .map((item) => ({
+                id: item.id,
+                label: item.title,
+                slug: item.slug,
+                city: cityLabel(cities, item.citySlug),
+                country: item.countryId,
+                category: item.category,
+                status: item.status,
+                meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+              }))}
+            restaurants={restaurants.map((restaurant) => {
+              const restaurantCity = cities.find((city) => city.id === restaurant.cityId);
+              return {
                 id: restaurant.id,
-                label: restaurant.label,
+                label: restaurant.name,
                 slug: restaurant.slug,
-                meta: restaurant.meta,
-                image: restaurant.image,
-                href: `/restaurants/${restaurant.slug}`,
-                badge: restaurant.badge,
-              })),
-              activity: attractions.map((attraction) => ({
-                id: attraction.id,
-                label: attraction.name,
-                slug: attraction.slug,
-                city: cityLabel(cities, attraction.citySlug),
-                meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
-                image: attraction.image,
-                imageAlt: attraction.imageAlt,
-                href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
-                badge: attraction.category || attraction.type || "Activity",
-              })),
-            }}
+                city: restaurantCity?.name,
+                country: restaurantCity?.country,
+                category: restaurant.cuisineType || restaurant.priceRange,
+                status: restaurant.published ? "published" : "draft",
+                meta: [restaurant.cuisineType, restaurantCity?.name, restaurantCity?.country].filter(Boolean).join(" - "),
+              };
+            })}
+            activities={attractions.map((attraction) => ({
+              id: attraction.id,
+              label: attraction.name,
+              slug: attraction.slug,
+              city: cityLabel(cities, attraction.citySlug),
+              country: cities.find((city) => city.slug === attraction.citySlug)?.country,
+              category: attraction.category || attraction.type,
+              status: attraction.status,
+              meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+            }))}
           />
         </FormSection>
-        <FormSection title="Guide ownership">
-          <GuideOwnershipFields
-            cities={cities}
-            destinations={destinations}
-            defaultTargetType={guide?.targetType ?? "city"}
-            defaultCountryId={guide?.countryId}
-            defaultCitySlug={guide?.citySlug}
-            defaultDestinationId={guide?.destinationId}
+        <FormSection title="SEO" columns={1}>
+          <Field label="SEO title" name="seoTitle" defaultValue={guide?.seoTitle} />
+          <Field label="SEO description" name="seoDescription" defaultValue={guide?.seoDescription} />
+          <Field
+            label="SEO keywords"
+            name="seoKeywords"
+            defaultValue={commaList(guide?.seoKeywords)}
+            placeholder="best places in muscat, muscat itinerary, oman travel guide"
+            helperText="Comma-separated keywords for search targeting."
           />
         </FormSection>
-        <FormSection title="Cover image" columns={1}>
+        <FormSection title="Main Content" columns={1}>
           <ImageUploadField fieldName="image" label="Cover image" currentImage={guide?.image || guide?.coverImage} />
           <Field
             label="Cover image alt text"
@@ -1657,11 +1611,7 @@ function GuideForm({
             defaultValue={guide?.coverImageAlt}
             placeholder="Scenic viewpoint above Muscat at sunset"
           />
-        </FormSection>
-        <FormSection title="Guide summary" columns={1}>
           <Area label="Excerpt" name="excerpt" defaultValue={guide?.excerpt} />
-        </FormSection>
-        <FormSection title="Guide Page Builder" columns={1}>
           <GuideContentBlocksField
             defaultBlocks={guide?.contentBlocks}
             cities={cities.map((city) => ({
@@ -1710,66 +1660,103 @@ function GuideForm({
             }))}
           />
         </FormSection>
-        <FormSection title="Listing blocks" columns={1}>
-          <GuideListingBlocksField
-            defaultBlocks={guide?.listingBlocks}
-            cities={cities.map((city) => ({
-              id: city.id,
-              label: city.name,
-              meta: [city.country, city.region].filter(Boolean).join(" - "),
-              description: city.shortDescription || city.seoDescription,
-              image: city.cardImage || city.featuredImage || city.heroImage,
-              badge: "City",
-            }))}
-            countries={countryOptions(cities)}
-            destinations={destinations.map((destination) => ({
-              id: destination.id,
-              label: destination.name,
-              meta: [destination.city, destination.category].filter(Boolean).join(" - "),
-              description: destination.summary || destination.location,
-              image: destination.image,
-              badge: destination.category || "Destination",
-            }))}
-            guides={guides
-              .filter((item) => item.id !== guide?.id)
-              .map((item) => ({
-                id: item.id,
-                label: item.title,
-                meta: [item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
-                description: item.excerpt || item.seoDescription,
-                image: item.coverImage || item.image,
-                badge: item.category || "Guide",
-              }))}
-            restaurants={restaurantOptions(restaurants, cities)}
-            activities={attractions.map((attraction) => ({
-              id: attraction.id,
-              label: attraction.name,
-              meta: [cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
-              description: attraction.summary || attraction.description,
-              image: attraction.image,
-              badge: attraction.category || attraction.type || "Activity",
-            }))}
+        <FormSection title="Guide Type Specific Details" columns={1}>
+          <GuideStructuredFields
+            defaultGuideType={guide?.guideType}
+            defaultGuideData={guide?.guideData}
           />
         </FormSection>
-        <LegacyGuideFallbackFields guide={guide} />
-        <FormSection title="SEO" columns={1}>
-          <Field label="SEO title" name="seoTitle" defaultValue={guide?.seoTitle} />
-          <Field label="SEO description" name="seoDescription" defaultValue={guide?.seoDescription} />
-          <Field
-            label="SEO keywords"
-            name="seoKeywords"
-            defaultValue={commaList(guide?.seoKeywords)}
-            placeholder="best places in muscat, muscat itinerary, oman travel guide"
-            helperText="Comma-separated keywords for search targeting."
+        <FormSection title="Selected Reusable Items" columns={1}>
+          <GuideSelectedItemsField
+            defaultSelectedItems={guide?.guideSelectedItems}
+            selectedItemOptions={{
+              destination: destinations.map((destination) => {
+                const destinationCity = cities.find((city) => city.slug === destination.citySlug);
+                return {
+                  id: destination.id,
+                  label: destination.name,
+                  slug: destination.slug,
+                  city: destination.city || destinationCity?.name,
+                  country: destinationCity?.country,
+                  category: destination.category,
+                  status: destination.status,
+                  meta: [destination.slug, destination.city || destinationCity?.name, destinationCity?.country, destination.category]
+                    .filter(Boolean)
+                    .join(" - "),
+                  image: destination.image,
+                  imageAlt: destination.imageAlt,
+                  href: getCanonicalDestinationPath(destination, destinationCity),
+                  badge: destination.category || "Destination",
+                };
+              }),
+              city: cities.map((city) => ({
+                id: city.slug,
+                label: city.name,
+                slug: city.slug,
+                city: city.name,
+                country: city.country,
+                category: city.region,
+                status: city.status,
+                meta: [city.country, city.region].filter(Boolean).join(" - "),
+                image: city.cardImage || city.featuredImage || city.heroImage,
+                imageAlt: city.cardImageAlt || city.featuredImageAlt || city.heroImageAlt,
+                href: `/${city.slug}`,
+                badge: "City",
+              })),
+              guide: guides
+                .filter((item) => item.id !== guide?.id)
+                .map((item) => ({
+                  id: item.id,
+                  label: item.title,
+                  slug: item.slug,
+                  city: cityLabel(cities, item.citySlug),
+                  country: item.countryId,
+                  category: item.category,
+                  status: item.status,
+                  meta: [item.slug, item.category, guideTargetLabel(item, cities, destinations)].filter(Boolean).join(" - "),
+                  image: item.coverImage || item.image,
+                  imageAlt: item.coverImageAlt,
+                  href: getGuideHref(item),
+                  badge: item.category || "Guide",
+                })),
+              restaurant: restaurants.map((restaurant) => {
+                const restaurantCity = cities.find((city) => city.id === restaurant.cityId);
+                return {
+                  id: restaurant.id,
+                  label: restaurant.name,
+                  slug: restaurant.slug,
+                  city: restaurantCity?.name,
+                  country: restaurantCity?.country,
+                  category: restaurant.cuisineType || restaurant.priceRange,
+                  status: restaurant.published ? "published" : "draft",
+                  meta: [restaurant.cuisineType, restaurantCity?.name, restaurantCity?.country].filter(Boolean).join(" - "),
+                  image: restaurant.image,
+                  imageAlt: restaurant.imageAlt,
+                  href: `/restaurants/${restaurant.slug}`,
+                  badge: restaurant.priceRange || restaurant.cuisineType || "Restaurant",
+                };
+              }),
+              activity: attractions.map((attraction) => ({
+                id: attraction.id,
+                label: attraction.name,
+                slug: attraction.slug,
+                city: cityLabel(cities, attraction.citySlug),
+                country: cities.find((city) => city.slug === attraction.citySlug)?.country,
+                category: attraction.category || attraction.type,
+                status: attraction.status,
+                meta: [attraction.slug, cityLabel(cities, attraction.citySlug), attraction.category || attraction.type].filter(Boolean).join(" - "),
+                image: attraction.image,
+                imageAlt: attraction.imageAlt,
+                href: `/${attraction.citySlug}/attractions/${attraction.slug}`,
+                badge: attraction.category || attraction.type || "Activity",
+              })),
+            }}
           />
-          <GuideSeoPreviewPanel
-            canonicalPath={guideCanonicalPath}
-            defaultTitle={guide?.title}
-            defaultExcerpt={guide?.excerpt}
-            defaultSeoTitle={guide?.seoTitle}
-            defaultSeoDescription={guide?.seoDescription}
-            defaultCoverImageAlt={guide?.coverImageAlt}
-          />
+        </FormSection>
+        <FormSection title="Tips, Mistakes, FAQs" columns={1}>
+          <LegacyGuideFallbackFields guide={guide} />
+        </FormSection>
+        <FormSection title="Related Links" columns={1}>
           <GuideRelatedSlugsField
             defaultGuideSlugs={guide?.relatedGuideSlugs}
             defaultPlaceSlugs={guide?.relatedPlaceSlugs}
@@ -1799,13 +1786,23 @@ function GuideForm({
             ]}
           />
         </FormSection>
-        <FormActions
-          backHref={backHref}
-          label="Save guide"
-          previewHref={guide ? `/admin/guides/preview/${encodeURIComponent(guide.id)}` : undefined}
-          previewUnavailableText="Save the guide first to preview it."
-          previewNote={guide ? "Preview shows the last saved version." : undefined}
-        />
+        <FormSection title="Preview / Validation" columns={1}>
+          <GuideSeoPreviewPanel
+            canonicalPath={guideCanonicalPath}
+            defaultTitle={guide?.title}
+            defaultExcerpt={guide?.excerpt}
+            defaultSeoTitle={guide?.seoTitle}
+            defaultSeoDescription={guide?.seoDescription}
+            defaultCoverImageAlt={guide?.coverImageAlt}
+          />
+          <FormActions
+            backHref={backHref}
+            label="Save guide"
+            previewHref={guide ? `/admin/guides/preview/${encodeURIComponent(guide.id)}` : undefined}
+            previewUnavailableText="Save the guide first to preview it."
+            previewNote={guide ? "Preview shows the last saved version." : undefined}
+          />
+        </FormSection>
       </form>
     </EditShell>
   );
@@ -1820,46 +1817,43 @@ function LegacyGuideFallbackFields({ guide }: { guide?: Guide }) {
   const hasBuilderData = Boolean(guide?.contentBlocks?.length);
 
   return (
-    <FormSection title="Legacy fallback content" columns={1}>
-      <details
-        open={hasLegacyData && !hasBuilderData}
-        className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
-      >
-        <summary className="cursor-pointer text-sm font-semibold text-[#0A2A66]">
-          Edit preserved paragraph, FAQ, and table-of-contents fallbacks
-        </summary>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          New guides should use the page builder above. These fields remain available so older
-          guides keep rendering safely and existing FAQ metadata is not lost.
-        </p>
-        <div className="mt-4 grid gap-4">
-          <Area
-            label="Legacy content paragraphs, one per line"
-            name="content"
-            defaultValue={lines(guide?.content)}
-            rows={6}
-          />
-          <Area
-            label="Legacy FAQ blocks"
-            name="faqs"
-            defaultValue={formatFaqText(guide?.faqs)}
-            placeholder={
-              "Question: Is this guide suitable for first-time visitors?\nAnswer: Yes, it keeps the route simple and focuses on practical highlights.\n\nQuestion: How much time should I allow?\nAnswer: Most travelers should allow at least half a day for the main stops."
-            }
-            rows={8}
-          />
-          <Area
-            label="Legacy table of contents"
-            name="tableOfContents"
-            defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
-            placeholder={
-              "Why visit these places | why-visit\nSuggested route | suggested-route\nTravel tips | travel-tips"
-            }
-            rows={5}
-          />
-        </div>
-      </details>
-    </FormSection>
+    <details
+      open={hasLegacyData && !hasBuilderData}
+      className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
+    >
+      <summary className="cursor-pointer text-sm font-semibold text-[#0A2A66]">
+        Edit preserved paragraph, FAQ, and table-of-contents fallbacks
+      </summary>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        These fields keep older guide content safe. New guide sections can be added in Main Content.
+      </p>
+      <div className="mt-4 grid gap-4">
+        <Area
+          label="Content paragraphs, one per line"
+          name="content"
+          defaultValue={lines(guide?.content)}
+          rows={6}
+        />
+        <Area
+          label="FAQs"
+          name="faqs"
+          defaultValue={formatFaqText(guide?.faqs)}
+          placeholder={
+            "Question: Is this guide suitable for first-time visitors?\nAnswer: Yes, it keeps the route simple and focuses on practical highlights.\n\nQuestion: How much time should I allow?\nAnswer: Most travelers should allow at least half a day for the main stops."
+          }
+          rows={8}
+        />
+        <Area
+          label="Table of contents"
+          name="tableOfContents"
+          defaultValue={formatTableOfContentsText(guide?.tableOfContents)}
+          placeholder={
+            "Why visit these places | why-visit\nSuggested route | suggested-route\nTravel tips | travel-tips"
+          }
+          rows={5}
+        />
+      </div>
+    </details>
   );
 }
 

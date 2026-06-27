@@ -31,6 +31,8 @@ type SelectableItem = {
   slug?: string;
   city?: string;
   country?: string;
+  category?: string;
+  status?: string;
 };
 
 type TravelGuideAiContentImportProps = {
@@ -46,6 +48,11 @@ type EntityMatchResult = {
   ids: string[];
   missing: string[];
 };
+
+type SelectedItemMatchResult =
+  | { status: "matched"; item: SelectableItem }
+  | { status: "ambiguous"; matches: SelectableItem[] }
+  | { status: "missing" };
 
 const textFields = [
   "title",
@@ -173,17 +180,17 @@ export function TravelGuideAiContentImport({
         <span>
           <span className="flex items-center gap-2 text-lg font-semibold text-[#111827]">
             <Sparkles className="size-5 text-[#FF6B00]" aria-hidden="true" />
-            AI Content Import
+            Paste Bulk Guide Content
           </span>
           <span className="mt-1 block text-sm leading-6 text-slate-600">
-            Paste structured guide content, then review matched builder blocks before saving.
+            Paste content, auto-fill the guide, then review any warnings before saving.
           </span>
         </span>
         <span className="text-sm font-semibold text-[#0A2A66]">Open</span>
       </summary>
       <div className="grid gap-4 border-t border-slate-100 px-6 pb-6 pt-5">
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-slate-700">Structured travel guide content</span>
+          <span className="text-sm font-medium text-slate-700">Bulk guide content</span>
           <textarea
             value={importText}
             onChange={(event) => setImportText(event.target.value)}
@@ -200,7 +207,7 @@ export function TravelGuideAiContentImport({
             onClick={fillFields}
             className="inline-flex h-10 items-center justify-center rounded-full bg-[#0A2A66] px-5 text-sm font-semibold text-white transition hover:bg-[#1D4ED8]"
           >
-            Parse and Fill Fields
+            Parse / Auto Fill
           </button>
           <button
             type="button"
@@ -291,30 +298,67 @@ function parseSelectedItemsText(
     return normalizeGuideSelectedItems(json).map((item, index) => resolveSelectedItemReference(item, index, context));
   }
 
-  return selectedItemLines(value).map((line, index) => {
+  const importedItems = selectedItemLines(value).map((line, index) => {
     const parts = line.split("|").map((item) => clean(item));
-    const hasStructuredColumns = parts.length >= 10;
-    const [
-      type,
-      itemSlug,
-      itemName,
-      city,
-      displayOrder,
-      customTitle,
-      customSummary,
-      bestFor,
-      suggestedTime,
-      nearbyPlaces,
-      readMoreLabel,
-    ] = hasStructuredColumns ? parts : [];
+    const hasSlugAndNameColumns = parts.length >= 11;
+    const hasNameColumns = parts.length >= 10;
 
-    if (hasStructuredColumns) {
+    if (hasSlugAndNameColumns) {
+      const [
+        type,
+        itemSlug,
+        itemName,
+        city,
+        displayOrder,
+        customTitle,
+        customSummary,
+        bestFor,
+        suggestedTime,
+        nearbyPlaces,
+        readMoreLabel,
+      ] = parts;
+
       return resolveSelectedItemReference(
         {
           id: `imported-selected-${index + 1}`,
           type: normalizeSelectedItemType(type),
           itemId: itemSlug || itemName,
           itemSlug,
+          itemName,
+          city,
+          displayOrder: Number(displayOrder) || index + 1,
+          customTitle,
+          customSummary,
+          bestFor,
+          suggestedTime,
+          nearbyPlaces: splitList(nearbyPlaces),
+          readMoreLabel,
+        },
+        index,
+        context,
+      );
+    }
+
+    if (hasNameColumns) {
+      const [
+        type,
+        itemName,
+        city,
+        displayOrder,
+        customTitle,
+        customSummary,
+        bestFor,
+        suggestedTime,
+        nearbyPlaces,
+        readMoreLabel,
+      ] = parts;
+
+      return resolveSelectedItemReference(
+        {
+          id: `imported-selected-${index + 1}`,
+          type: normalizeSelectedItemType(type),
+          itemId: itemName,
+          itemSlug: looksLikeSlug(itemName) ? itemName : "",
           itemName,
           city,
           displayOrder: Number(displayOrder) || index + 1,
@@ -352,6 +396,9 @@ function parseSelectedItemsText(
       context,
     );
   });
+
+  warnDuplicateSelectedItems(importedItems, context.warnings);
+  return importedItems;
 }
 
 function selectedItemLines(value?: string) {
@@ -378,8 +425,12 @@ function resolveSelectedItemReference(
   const match = matchSelectedItem(item, context);
   const reference = item.itemSlug || item.itemId || item.itemName;
 
-  if (!match && reference && item.type !== "custom") {
-    context.warnings.push(`Warning: selected item slug not found: ${reference}.`);
+  if (match.status === "ambiguous" && reference && item.type !== "custom") {
+    context.warnings.push(`Warning: multiple ${item.type} records match "${reference}". Please select the correct item.`);
+  }
+
+  if (match.status === "missing" && reference && item.type !== "custom") {
+    context.warnings.push(`Warning: selected item not found: ${reference}.`);
   }
 
   if (!item.customSummary && reference && item.type === "destination") {
@@ -388,38 +439,42 @@ function resolveSelectedItemReference(
 
   return {
     ...item,
-    itemId: match?.id || item.itemId || item.itemSlug || item.itemName || "",
-    itemSlug: item.itemSlug || match?.slug || "",
-    itemName: item.itemName || match?.label || "",
-    city: item.city || match?.city || "",
+    itemId: match.status === "matched" ? match.item.id : item.itemId || item.itemSlug || item.itemName || "",
+    itemSlug: item.itemSlug || (match.status === "matched" ? match.item.slug || "" : ""),
+    itemName: item.itemName || (match.status === "matched" ? match.item.label : ""),
+    city: item.city || (match.status === "matched" ? match.item.city || "" : ""),
+    country: item.country || (match.status === "matched" ? match.item.country || "" : ""),
     displayOrder: item.displayOrder || index + 1,
   };
 }
 
-function matchSelectedItem(item: GuideSelectedItem, context: TravelGuideAiContentImportProps) {
+function matchSelectedItem(item: GuideSelectedItem, context: TravelGuideAiContentImportProps): SelectedItemMatchResult {
   const items = selectableItemsForType(item.type, context);
-  const references = [item.itemId, item.itemSlug, item.itemName].filter(isNonEmptyString);
+  const requestedId = normalizeMatchValue(item.itemId || "");
+  const requestedSlug = normalizeMatchValue(item.itemSlug || "");
+  const requestedName = normalizeMatchValue(item.itemName || item.customTitle || "");
   const requestedCity = normalizeMatchValue(item.city || "");
+  const requestedCountry = normalizeMatchValue(item.country || "");
 
-  for (const reference of references) {
-    const normalizedReference = normalizeMatchValue(reference);
-    const compactReference = compactMatchValue(reference);
-    const matches = items.filter((candidate) =>
-      exactSelectableValues(candidate).some(
-        (value) => value.normalized === normalizedReference || value.compact === compactReference,
-      ),
-    );
-
-    const cityMatch = requestedCity
-      ? matches.find((candidate) => exactSelectableValues(candidate).some((value) => value.normalized === requestedCity))
-      : matches[0];
-
-    if (cityMatch) {
-      return cityMatch;
-    }
-  }
-
-  return undefined;
+  return firstSelectedItemMatch([
+    requestedId ? items.filter((candidate) => normalizeMatchValue(candidate.id) === requestedId) : [],
+    requestedSlug ? items.filter((candidate) => normalizeMatchValue(candidate.slug || "") === requestedSlug) : [],
+    requestedName && requestedCity
+      ? items.filter(
+          (candidate) =>
+            normalizeMatchValue(candidate.label) === requestedName &&
+            normalizeMatchValue(candidate.city || "") === requestedCity,
+        )
+      : [],
+    requestedName && requestedCountry
+      ? items.filter(
+          (candidate) =>
+            normalizeMatchValue(candidate.label) === requestedName &&
+            normalizeMatchValue(candidate.country || "") === requestedCountry,
+        )
+      : [],
+    requestedName ? items.filter((candidate) => normalizeMatchValue(candidate.label) === requestedName) : [],
+  ]);
 }
 
 function selectableItemsForType(type: GuideSelectedItemType, context: TravelGuideAiContentImportProps) {
@@ -430,6 +485,43 @@ function selectableItemsForType(type: GuideSelectedItemType, context: TravelGuid
   if (type === "activity") return context.activities;
   if (type === "custom") return [];
   return context.destinations;
+}
+
+function firstSelectedItemMatch(matchGroups: SelectableItem[][]): SelectedItemMatchResult {
+  for (const matches of matchGroups) {
+    if (matches.length === 1) {
+      return { status: "matched", item: matches[0] };
+    }
+
+    if (matches.length > 1) {
+      return { status: "ambiguous", matches };
+    }
+  }
+
+  return { status: "missing" };
+}
+
+function warnDuplicateSelectedItems(items: GuideSelectedItem[], warnings: string[]) {
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    const key = [item.type, item.itemId || item.itemSlug || item.itemName].map((value) => compactMatchValue(value || "")).join(":");
+    if (key === `${compactMatchValue(item.type)}:`) {
+      continue;
+    }
+
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+
+  for (const [key, count] of counts) {
+    if (count > 1) {
+      warnings.push(`Warning: duplicate selected item in import: ${key}.`);
+    }
+  }
+}
+
+function looksLikeSlug(value: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.trim());
 }
 
 function parseItineraryText(value?: string): GuideItineraryItem[] {
@@ -902,10 +994,6 @@ function lines(value?: string) {
 
 function clean(value?: string) {
   return value?.trim() || "";
-}
-
-function isNonEmptyString(value: string | undefined): value is string {
-  return Boolean(value);
 }
 
 function normalizeMatchValue(value: string) {

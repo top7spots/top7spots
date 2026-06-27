@@ -149,6 +149,7 @@ function normalizeSelectedItem(item: Record<string, unknown>, index: number): Gu
   const itemSlug = stringValue(item.itemSlug || item.item_slug || item.slug);
   const itemName = stringValue(item.itemName || item.item_name || item.name);
   const city = stringValue(item.city || item.cityName || item.city_name);
+  const country = stringValue(item.country || item.countryName || item.country_name);
   const itemId = stringValue(item.itemId || item.item_id || item.id || itemSlug);
   const customTitle = stringValue(item.customTitle || item.custom_title || item.title);
   const customSummary = stringValue(item.customSummary || item.summary || item.description);
@@ -165,6 +166,7 @@ function normalizeSelectedItem(item: Record<string, unknown>, index: number): Gu
     itemSlug,
     itemName,
     city,
+    country,
     displayOrder: numberValue(item.displayOrder, index + 1),
     customTitle,
     customSummary,

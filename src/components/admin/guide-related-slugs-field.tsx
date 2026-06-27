@@ -31,7 +31,6 @@ export function GuideRelatedSlugsField({
         name="relatedGuideSlugs"
         selectedSlugs={guideSlugs}
         options={guideOptions}
-        placeholder="first-time-oman-itinerary, oman-speed-limits"
         onChange={setGuideSlugs}
       />
       <RelatedPicker
@@ -39,7 +38,6 @@ export function GuideRelatedSlugsField({
         name="relatedPlaceSlugs"
         selectedSlugs={placeSlugs}
         options={placeOptions}
-        placeholder="mutrah-corniche, sultan-qaboos-grand-mosque"
         onChange={setPlaceSlugs}
       />
     </div>
@@ -51,14 +49,12 @@ function RelatedPicker({
   name,
   selectedSlugs,
   options,
-  placeholder,
   onChange,
 }: {
   title: string;
   name: string;
   selectedSlugs: string[];
   options: RelatedOption[];
-  placeholder: string;
   onChange: (slugs: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -87,18 +83,9 @@ function RelatedPicker({
       <div>
         <p className="text-sm font-semibold text-slate-800">{title}</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          Select from existing records, or paste comma-separated slugs as a fallback.
+          Select from existing records.
         </p>
       </div>
-      <label className="grid gap-2">
-        <span className="text-xs font-semibold text-slate-600">Manual slugs</span>
-        <input
-          value={manualValue}
-          onChange={(event) => onChange(uniqueValues(event.target.value.split(",")))}
-          placeholder={placeholder}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-        />
-      </label>
       {selectedOptions.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {selectedOptions.map((option) => (

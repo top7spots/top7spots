@@ -19,8 +19,6 @@ import type {
 type GuideStructuredFieldsProps = {
   defaultGuideType?: GuideType;
   defaultGuideData?: GuideData;
-  defaultSelectedItems?: GuideSelectedItem[];
-  selectedItemOptions: SelectedItemOptions;
 };
 
 export type SelectedItemOption = {
@@ -29,6 +27,8 @@ export type SelectedItemOption = {
   slug?: string;
   city?: string;
   country?: string;
+  category?: string;
+  status?: string;
   meta?: string;
   image?: string;
   imageAlt?: string;
@@ -37,6 +37,11 @@ export type SelectedItemOption = {
 };
 
 export type SelectedItemOptions = Partial<Record<GuideSelectedItemType, SelectedItemOption[]>>;
+
+type GuideSelectedItemsFieldProps = {
+  defaultSelectedItems?: GuideSelectedItem[];
+  selectedItemOptions: SelectedItemOptions;
+};
 
 type SelectedItemWarning = {
   key: string;
@@ -54,29 +59,23 @@ const selectedItemTypeOptions: Array<{ value: GuideSelectedItemType; label: stri
   { value: "custom", label: "Custom" },
 ];
 
+const manualSelectedItemTypeOptions = selectedItemTypeOptions.filter((option) =>
+  ["destination", "city", "guide", "restaurant", "activity"].includes(option.value),
+);
+
 export function GuideStructuredFields({
   defaultGuideType,
   defaultGuideData,
-  defaultSelectedItems,
-  selectedItemOptions,
 }: GuideStructuredFieldsProps) {
   const [guideType, setGuideType] = useState<GuideType>(() => normalizeGuideType(defaultGuideType));
   const [guideData, setGuideData] = useState<GuideData>(() => normalizeGuideData(defaultGuideData));
-  const [selectedItems, setSelectedItems] = useState<GuideSelectedItem[]>(() =>
-    normalizeGuideSelectedItems(defaultSelectedItems),
-  );
   const normalizedData = useMemo(() => normalizeGuideData(guideData), [guideData]);
-  const selectedItemsForStorage = useMemo(
-    () => normalizeGuideSelectedItems(selectedItems.map((item) => resolveSelectedItemForStorage(item, selectedItemOptions))),
-    [selectedItemOptions, selectedItems],
-  );
 
   useEffect(() => {
     const handleImport = (event: Event) => {
       const detail = (event as CustomEvent<{
         guideType?: GuideType;
         guideData?: GuideData;
-        selectedItems?: GuideSelectedItem[];
       }>).detail;
 
       if (!detail) {
@@ -90,10 +89,6 @@ export function GuideStructuredFields({
       if (detail.guideData) {
         setGuideData(normalizeGuideData(detail.guideData));
       }
-
-      if (detail.selectedItems) {
-        setSelectedItems(normalizeGuideSelectedItems(detail.selectedItems));
-      }
     };
 
     window.addEventListener("guide-structured-import", handleImport);
@@ -103,7 +98,6 @@ export function GuideStructuredFields({
   return (
     <div className="grid gap-5">
       <input type="hidden" name="guideData" value={JSON.stringify(normalizedData)} />
-      <input type="hidden" name="guideSelectedItems" value={JSON.stringify(selectedItemsForStorage)} />
 
       <label className="grid gap-2 text-sm font-medium text-slate-700">
         Guide type
@@ -121,15 +115,6 @@ export function GuideStructuredFields({
         </select>
       </label>
 
-      {guideType === "best_places" ? (
-        <SelectedItemsEditor
-          title="Best places selected items"
-          items={selectedItems}
-          options={selectedItemOptions}
-          onChange={setSelectedItems}
-        />
-      ) : null}
-
       {guideType === "itinerary" ? (
         <ItineraryEditor
           items={normalizedData.itinerary}
@@ -143,14 +128,46 @@ export function GuideStructuredFields({
             route={normalizedData.route}
             onChange={(route) => setGuideData({ ...normalizedData, route })}
           />
-          <SelectedItemsEditor
-            title={guideType === "day_trip" ? "Day trip stops" : "Road trip stops"}
-            items={selectedItems}
-            options={selectedItemOptions}
-            onChange={setSelectedItems}
-          />
         </>
       ) : null}
+    </div>
+  );
+}
+
+export function GuideSelectedItemsField({
+  defaultSelectedItems,
+  selectedItemOptions,
+}: GuideSelectedItemsFieldProps) {
+  const [selectedItems, setSelectedItems] = useState<GuideSelectedItem[]>(() =>
+    normalizeGuideSelectedItems(defaultSelectedItems),
+  );
+  const selectedItemsForStorage = useMemo(
+    () => normalizeGuideSelectedItems(selectedItems.map((item) => resolveSelectedItemForStorage(item, selectedItemOptions))),
+    [selectedItemOptions, selectedItems],
+  );
+
+  useEffect(() => {
+    const handleImport = (event: Event) => {
+      const detail = (event as CustomEvent<{ selectedItems?: GuideSelectedItem[] }>).detail;
+
+      if (detail?.selectedItems) {
+        setSelectedItems(normalizeGuideSelectedItems(detail.selectedItems));
+      }
+    };
+
+    window.addEventListener("guide-structured-import", handleImport);
+    return () => window.removeEventListener("guide-structured-import", handleImport);
+  }, []);
+
+  return (
+    <div className="grid gap-5">
+      <input type="hidden" name="guideSelectedItems" value={JSON.stringify(selectedItemsForStorage)} />
+      <SelectedItemsEditor
+        title="Selected reusable items"
+        items={selectedItems}
+        options={selectedItemOptions}
+        onChange={setSelectedItems}
+      />
     </div>
   );
 }
@@ -167,6 +184,20 @@ function SelectedItemsEditor({
   onChange: (items: GuideSelectedItem[]) => void;
 }) {
   const duplicateDestinationKeys = duplicateSelectedDestinationKeys(items, options);
+  const [filters, setFilters] = useState({
+    type: "destination" as GuideSelectedItemType,
+    country: "",
+    city: "",
+    category: "",
+    status: "",
+    search: "",
+  });
+  const selectableOptions = useMemo(() => filterTypedOptions(allTypedOptions(options), filters), [filters, options]);
+  const selectedKeys = useMemo(
+    () => new Set(items.map((item) => selectedItemOptionKey(item, findMatchingOption(item, optionsForType(options, item.type))))),
+    [items, options],
+  );
+  const filterChoices = useMemo(() => optionFilterChoices(allTypedOptions(options), filters.type), [filters.type, options]);
 
   return (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -174,10 +205,7 @@ function SelectedItemsEditor({
         <div>
           <p className="text-sm font-semibold text-slate-800">{title}</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            Add ordered cards or stops. Use existing item IDs/slugs where possible.
-          </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            Images and links are pulled from the matched destination. Card text should be written fresh for this guide.
+            Select existing records, then write fresh guide text for each card.
           </p>
         </div>
         <button
@@ -189,6 +217,78 @@ function SelectedItemsEditor({
         </button>
       </div>
 
+      <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">Add from existing records</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Filter the list, then select items to add cards below.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <SelectField
+            label="Item type"
+            value={filters.type}
+            onChange={(type) =>
+              setFilters((current) => ({
+                ...current,
+                type: type as GuideSelectedItemType,
+                country: "",
+                city: "",
+                category: "",
+                status: "",
+              }))
+            }
+            options={manualSelectedItemTypeOptions}
+          />
+          <FilterSelect label="Country" value={filters.country} values={filterChoices.countries} onChange={(country) => setFilters((current) => ({ ...current, country }))} />
+          <FilterSelect label="City" value={filters.city} values={filterChoices.cities} onChange={(city) => setFilters((current) => ({ ...current, city }))} />
+          <FilterSelect label="Category" value={filters.category} values={filterChoices.categories} onChange={(category) => setFilters((current) => ({ ...current, category }))} />
+          <FilterSelect label="Status" value={filters.status} values={filterChoices.statuses} onChange={(status) => setFilters((current) => ({ ...current, status }))} />
+          <label className="grid gap-2">
+            <span className="text-xs font-semibold text-slate-600">Search text</span>
+            <input
+              value={filters.search}
+              onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+              placeholder="Search by name, city, or category"
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+            />
+          </label>
+        </div>
+        <div className="grid max-h-72 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2 md:grid-cols-2">
+          {selectableOptions.length > 0 ? (
+            selectableOptions.map(({ type, option }) => {
+              const key = typedOptionKey(type, option);
+              const checked = selectedKeys.has(key);
+
+              return (
+                <label key={key} className="flex gap-3 rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      checked
+                        ? onChange(items.filter((item) => selectedItemOptionKey(item, findMatchingOption(item, optionsForType(options, item.type))) !== key))
+                        : onChange([...items, newSelectedItemFromOption(type, option, items.length + 1)])
+                    }
+                    className="mt-1"
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-slate-800">{option.label}</span>
+                    <span className="mt-1 block truncate text-xs text-slate-500">
+                      {[option.city, option.country, option.category, option.status].filter(Boolean).join(" - ") || option.slug}
+                    </span>
+                  </span>
+                </label>
+              );
+            })
+          ) : (
+            <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+              No matching records found.
+            </p>
+          )}
+        </div>
+      </div>
+
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
           No structured selected items yet.
@@ -198,7 +298,7 @@ function SelectedItemsEditor({
       {items.map((item, index) => {
         const itemOptions = optionsForType(options, item.type);
         const matchedOption = findMatchingOption(item, itemOptions);
-        const warnings = selectedItemWarnings(item, matchedOption, duplicateDestinationKeys);
+        const warnings = selectedItemWarnings(item, matchedOption, itemOptions, duplicateDestinationKeys);
 
         return (
         <div key={item.id} className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4">
@@ -255,6 +355,7 @@ function SelectedItemsEditor({
                       itemSlug: "",
                       itemName: "",
                       city: "",
+                      country: "",
                     },
                     onChange,
                   )
@@ -273,9 +374,6 @@ function SelectedItemsEditor({
               options={itemOptions}
               matchedOption={matchedOption}
               onSelect={(option) => updateSelectedItem(items, index, selectedItemPatchFromOption(item, option), onChange)}
-              onUnmatchedQuery={(query) =>
-                updateSelectedItem(items, index, { itemName: query, itemSlug: "", itemId: "" }, onChange)
-              }
             />
             <SmallField
               label="Display order"
@@ -399,7 +497,7 @@ function ItineraryEditor({
               Remove
             </button>
           </div>
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-3">
             <SmallField
               label="Day number"
               type="number"
@@ -425,20 +523,12 @@ function ItineraryEditor({
               placeholder="20 min"
             />
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <SmallField
-              label="Place title"
-              value={item.placeTitle}
-              onChange={(placeTitle) => updateItineraryItem(items, index, { placeTitle }, onChange)}
-              placeholder="Mutrah Corniche"
-            />
-            <SmallField
-              label="Destination ID or slug"
-              value={item.destinationId}
-              onChange={(destinationId) => updateItineraryItem(items, index, { destinationId }, onChange)}
-              placeholder="mutrah-corniche"
-            />
-          </div>
+          <SmallField
+            label="Place title"
+            value={item.placeTitle}
+            onChange={(placeTitle) => updateItineraryItem(items, index, { placeTitle }, onChange)}
+            placeholder="Mutrah Corniche"
+          />
           <TextAreaField
             label="Details"
             value={item.details}
@@ -529,64 +619,130 @@ function TextAreaField({
   );
 }
 
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-semibold text-slate-600">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  values,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  values: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-semibold text-slate-600">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+      >
+        <option value="">All</option>
+        {values.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function SelectedItemEntityPicker({
   item,
   options,
   matchedOption,
   onSelect,
-  onUnmatchedQuery,
 }: {
   item: GuideSelectedItem;
   options: SelectedItemOption[];
   matchedOption?: SelectedItemOption;
   onSelect: (option: SelectedItemOption) => void;
-  onUnmatchedQuery: (query: string) => void;
 }) {
   const [query, setQuery] = useState(() => selectedOptionInputValue(matchedOption, item));
-  const listId = `selected-item-options-${item.id || "new"}`;
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = normalizeSearchText(query);
+
+    if (!normalizedQuery) {
+      return options.slice(0, 8);
+    }
+
+    return options
+      .filter((option) => normalizeSearchText(optionSearchText(option)).includes(normalizedQuery))
+      .slice(0, 8);
+  }, [options, query]);
 
   useEffect(() => {
     setQuery(selectedOptionInputValue(matchedOption, item));
   }, [item, matchedOption]);
 
   return (
-    <label className="grid gap-2">
-      <span className="text-xs font-semibold text-slate-600">Search/select existing item</span>
+    <div className="grid gap-2">
+      <span className="text-xs font-semibold text-slate-600">Selected reusable item</span>
       <input
-        list={listId}
         value={query}
-        onChange={(event) => {
-          const nextQuery = event.target.value;
-          const nextOption = findOptionFromQuery(nextQuery, options);
-          setQuery(nextQuery);
-          if (nextOption) {
-            onSelect(nextOption);
-          }
-        }}
-        onBlur={() => {
-          if (!query.trim()) {
-            onUnmatchedQuery("");
-            return;
-          }
-
-          const nextOption = findOptionFromQuery(query, options);
-          if (nextOption) {
-            onSelect(nextOption);
-          } else {
-            onUnmatchedQuery(query);
-          }
-        }}
+        onChange={(event) => setQuery(event.target.value)}
         placeholder={options.length > 0 ? "Search by name, slug, city, or country" : "No items available"}
         className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none transition focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
       />
-      <datalist id={listId}>
-        {options.map((option) => (
-          <option key={option.id} value={optionInputValue(option)}>
-            {optionSearchText(option)}
-          </option>
-        ))}
-      </datalist>
-    </label>
+      <div className="grid max-h-48 gap-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2">
+        {filteredOptions.length > 0 ? (
+          filteredOptions.map((option) => {
+            const selected = matchedOption?.id === option.id;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                className={
+                  selected
+                    ? "rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-left text-xs font-semibold text-[#0A2A66]"
+                    : "rounded-md border border-transparent px-3 py-2 text-left text-xs font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-50"
+                }
+                onClick={() => onSelect(option)}
+              >
+                <span className="block truncate">{option.label}</span>
+                <span className="mt-0.5 block truncate font-normal text-slate-500">
+                  {[option.city, option.country, option.category, option.status, option.slug].filter(Boolean).join(" - ")}
+                </span>
+              </button>
+            );
+          })
+        ) : (
+          <span className="px-3 py-2 text-xs text-slate-500">No matching records found.</span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -643,6 +799,7 @@ function newSelectedItem(displayOrder: number): GuideSelectedItem {
     itemSlug: "",
     itemName: "",
     city: "",
+    country: "",
     displayOrder,
     customTitle: "",
     customSummary: "",
@@ -728,7 +885,24 @@ function selectedItemPatchFromOption(item: GuideSelectedItem, option: SelectedIt
     itemSlug: option.slug || "",
     itemName: option.label,
     city: option.city || "",
+    country: option.country || "",
     customTitle: item.customTitle || "",
+  };
+}
+
+function newSelectedItemFromOption(
+  type: GuideSelectedItemType,
+  option: SelectedItemOption,
+  displayOrder: number,
+): GuideSelectedItem {
+  return {
+    ...newSelectedItem(displayOrder),
+    type,
+    itemId: option.id,
+    itemSlug: option.slug || "",
+    itemName: option.label,
+    city: option.city || "",
+    country: option.country || "",
   };
 }
 
@@ -741,35 +915,14 @@ function resolveSelectedItemForStorage(item: GuideSelectedItem, options: Selecte
         itemSlug: item.itemSlug || option.slug || "",
         itemName: item.itemName || option.label,
         city: item.city || option.city || "",
+        country: item.country || option.country || "",
       }
     : item;
 }
 
 function findMatchingOption(item: GuideSelectedItem, options: SelectedItemOption[]) {
-  const candidates = [item.itemId, item.itemSlug, item.itemName, item.customTitle].filter(isNonEmptyString);
-  const requestedCity = normalizeSearchText(item.city || "");
-
-  for (const candidate of candidates) {
-    const matches = options.filter((option) => optionSearchValues(option).some((value) => value === normalizeSearchText(candidate)));
-    const cityMatch = requestedCity
-      ? matches.find((option) => optionSearchValues(option).some((value) => value === requestedCity))
-      : matches[0];
-
-    if (cityMatch) {
-      return cityMatch;
-    }
-  }
-
-  return undefined;
-}
-
-function findOptionFromQuery(query: string, options: SelectedItemOption[]) {
-  const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) {
-    return undefined;
-  }
-
-  return options.find((option) => optionSearchValues(option).some((value) => value === normalizedQuery));
+  const result = findMatchingOptions(item, options);
+  return result.matches.length === 1 ? result.matches[0] : undefined;
 }
 
 function optionInputValue(option: SelectedItemOption) {
@@ -781,34 +934,136 @@ function selectedOptionInputValue(option: SelectedItemOption | undefined, item: 
 }
 
 function optionSearchText(option: SelectedItemOption) {
-  return [option.label, option.slug, option.city, option.country, option.meta].filter(Boolean).join(" ");
+  return [option.label, option.slug, option.city, option.country, option.category, option.status, option.meta]
+    .filter(Boolean)
+    .join(" ");
 }
 
-function optionSearchValues(option: SelectedItemOption) {
-  return Array.from(
-    new Set(
-      [option.id, option.slug, option.label, option.city, option.country, option.meta, optionInputValue(option)]
-        .flatMap((value) => String(value || "").split(/\s+-\s+|,/))
-        .map(normalizeSearchText)
-        .filter(Boolean),
-    ),
+function findMatchingOptions(item: GuideSelectedItem, options: SelectedItemOption[]) {
+  const requestedId = normalizeSearchText(item.itemId || "");
+  const requestedSlug = normalizeSearchText(item.itemSlug || "");
+  const requestedName = normalizeSearchText(item.itemName || item.customTitle || "");
+  const requestedCity = normalizeSearchText(item.city || "");
+  const requestedCountry = normalizeSearchText(item.country || "");
+  const exactIdMatches = requestedId ? options.filter((option) => normalizeSearchText(option.id) === requestedId) : [];
+
+  if (exactIdMatches.length > 0) {
+    return { matches: exactIdMatches, ambiguous: exactIdMatches.length > 1 };
+  }
+
+  const exactSlugMatches = requestedSlug ? options.filter((option) => normalizeSearchText(option.slug || "") === requestedSlug) : [];
+
+  if (exactSlugMatches.length > 0) {
+    return { matches: exactSlugMatches, ambiguous: exactSlugMatches.length > 1 };
+  }
+
+  const nameMatches = requestedName ? options.filter((option) => normalizeSearchText(option.label) === requestedName) : [];
+
+  if (requestedCity && nameMatches.length > 0) {
+    const cityMatches = nameMatches.filter((option) => normalizeSearchText(option.city || "") === requestedCity);
+    if (cityMatches.length > 0) {
+      return { matches: cityMatches, ambiguous: cityMatches.length > 1 };
+    }
+  }
+
+  if (requestedCountry && nameMatches.length > 0) {
+    const countryMatches = nameMatches.filter((option) => normalizeSearchText(option.country || "") === requestedCountry);
+    if (countryMatches.length > 0) {
+      return { matches: countryMatches, ambiguous: countryMatches.length > 1 };
+    }
+  }
+
+  if (nameMatches.length > 0) {
+    return { matches: nameMatches, ambiguous: nameMatches.length > 1 };
+  }
+
+  return { matches: [] as SelectedItemOption[], ambiguous: false };
+}
+
+function allTypedOptions(options: SelectedItemOptions) {
+  return manualSelectedItemTypeOptions.flatMap(({ value }) =>
+    optionsForType(options, value).map((option) => ({
+      type: value,
+      option,
+    })),
   );
+}
+
+function filterTypedOptions(
+  options: Array<{ type: GuideSelectedItemType; option: SelectedItemOption }>,
+  filters: {
+    type: GuideSelectedItemType;
+    country: string;
+    city: string;
+    category: string;
+    status: string;
+    search: string;
+  },
+) {
+  const normalizedSearch = normalizeSearchText(filters.search);
+
+  return options
+    .filter(({ type }) => type === filters.type)
+    .filter(({ option }) => !filters.country || option.country === filters.country)
+    .filter(({ option }) => !filters.city || option.city === filters.city)
+    .filter(({ option }) => !filters.category || option.category === filters.category)
+    .filter(({ option }) => !filters.status || option.status === filters.status)
+    .filter(({ option }) => !normalizedSearch || normalizeSearchText(optionSearchText(option)).includes(normalizedSearch))
+    .slice(0, 80);
+}
+
+function optionFilterChoices(
+  options: Array<{ type: GuideSelectedItemType; option: SelectedItemOption }>,
+  type: GuideSelectedItemType,
+) {
+  const filtered = options.filter((item) => item.type === type).map((item) => item.option);
+
+  return {
+    countries: uniqueSorted(filtered.map((option) => option.country)),
+    cities: uniqueSorted(filtered.map((option) => option.city)),
+    categories: uniqueSorted(filtered.map((option) => option.category)),
+    statuses: uniqueSorted(filtered.map((option) => option.status)),
+  };
+}
+
+function uniqueSorted(values: Array<string | undefined>) {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))).sort(
+    (a, b) => a.localeCompare(b),
+  );
+}
+
+function typedOptionKey(type: GuideSelectedItemType, option: SelectedItemOption) {
+  return `${type}:${option.id}`;
+}
+
+function selectedItemOptionKey(item: GuideSelectedItem, option?: SelectedItemOption) {
+  return option ? typedOptionKey(item.type, option) : `${item.type}:${item.itemId || item.itemSlug || item.itemName || item.id}`;
 }
 
 function selectedItemWarnings(
   item: GuideSelectedItem,
   matchedOption: SelectedItemOption | undefined,
+  itemOptions: SelectedItemOption[],
   duplicateDestinationKeys: Set<string>,
 ): SelectedItemWarning[] {
   const warnings: SelectedItemWarning[] = [];
   const reference = selectedItemReference(item);
   const duplicateKey = selectedDestinationKey(item, matchedOption);
+  const matchResult = findMatchingOptions(item, itemOptions);
 
-  if (item.type === "destination" && reference && !matchedOption) {
+  if (reference && !matchedOption) {
     warnings.push({
-      key: "unmatched-destination",
+      key: "unmatched-item",
       tone: "warning",
-      message: `Selected destination is not matched: ${reference}`,
+      message: `Selected item is not matched to an existing record: ${reference}`,
+    });
+  }
+
+  if (matchResult.ambiguous) {
+    warnings.push({
+      key: "ambiguous-item",
+      tone: "warning",
+      message: `Multiple records match "${reference}". Please select the correct item manually.`,
     });
   }
 
@@ -853,10 +1108,6 @@ function selectedDestinationKey(item: GuideSelectedItem, option?: SelectedItemOp
 
 function normalizeSearchText(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function isNonEmptyString(value: string | undefined): value is string {
-  return Boolean(value);
 }
 
 function splitList(value: string) {

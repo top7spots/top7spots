@@ -990,26 +990,31 @@ function blockValidation(block: GuideContentBlock, selectorItems: SelectorItems)
 
 function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
   return blocks
-    .map((block, index) => ({
-      id: block.id || `guide-block-${index + 1}`,
-      type: block.type,
-      title: clean(block.title),
-      eyebrow: clean(block.eyebrow),
-      body: clean(block.body),
-      image: clean(block.image),
-      imageAlt: clean(block.imageAlt),
-      itemIds: uniqueStrings(block.itemIds || []),
-      quickInfo: block.quickInfo || [],
-      estimatedCost: block.estimatedCost || [],
-      tips: uniqueStrings(block.tips || []),
-      faqs: block.faqs || [],
-      mapEmbedUrl: clean(block.mapEmbedUrl),
-      mapLabel: clean(block.mapLabel),
-      ctaLabel: clean(block.ctaLabel),
-      ctaHref: clean(block.ctaHref),
-      ctaTargetBlank: Boolean(block.ctaTargetBlank),
-      ctaRel: ctaRelValue(block.ctaRel),
-    }))
+    .map((block, index) => {
+      const quickInfo = quickInfoItems((block as { quickInfo?: unknown }).quickInfo);
+      const estimatedCost = quickInfoItems((block as { estimatedCost?: unknown }).estimatedCost);
+
+      return {
+        id: block.id || `guide-block-${index + 1}`,
+        type: block.type,
+        title: clean(block.title),
+        eyebrow: clean(block.eyebrow),
+        body: block.type === "estimated-cost" && estimatedCost.length > 0 ? undefined : clean(block.body),
+        image: clean(block.image),
+        imageAlt: clean(block.imageAlt),
+        itemIds: uniqueStrings(block.itemIds || []),
+        quickInfo,
+        estimatedCost,
+        tips: uniqueStrings(block.tips || []),
+        faqs: block.faqs || [],
+        mapEmbedUrl: clean(block.mapEmbedUrl),
+        mapLabel: clean(block.mapLabel),
+        ctaLabel: clean(block.ctaLabel),
+        ctaHref: clean(block.ctaHref),
+        ctaTargetBlank: Boolean(block.ctaTargetBlank),
+        ctaRel: ctaRelValue(block.ctaRel),
+      };
+    })
     .filter((block) =>
       Boolean(
         block.title ||
@@ -1078,6 +1083,19 @@ function blockSummary(block: GuideContentBlock) {
 
   if (block.type === "faq") {
     return `${block.faqs?.length || 0} FAQs`;
+  }
+
+  if (block.type === "quick-info") {
+    return `${quickInfoItems((block as { quickInfo?: unknown }).quickInfo).length} quick info rows`;
+  }
+
+  if (block.type === "estimated-cost") {
+    const costRows = quickInfoItems((block as { estimatedCost?: unknown }).estimatedCost).length;
+    if (costRows > 0) {
+      return `${costRows} cost cards`;
+    }
+
+    return block.body?.trim() ? "Fallback text added" : "Draft";
   }
 
   if (listTextBlockTypes.includes(block.type)) {

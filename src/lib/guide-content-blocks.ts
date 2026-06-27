@@ -60,6 +60,7 @@ function normalizeGuideContentBlock(block: Record<string, unknown>, index: numbe
     imageAlt: optionalString(block.imageAlt),
     itemIds: stringArrayValue(block.itemIds),
     quickInfo: quickInfoValue(block.quickInfo),
+    estimatedCost: quickInfoValue(block.estimatedCost),
     tips: stringArrayValue(block.tips),
     faqs: faqValue(block.faqs),
     mapEmbedUrl: optionalString(block.mapEmbedUrl),
@@ -84,6 +85,7 @@ function hasBlockContent(block: GuideContentBlock) {
       block.image ||
       block.itemIds?.length ||
       block.quickInfo?.length ||
+      block.estimatedCost?.length ||
       block.tips?.length ||
       block.faqs?.length ||
       block.mapEmbedUrl ||

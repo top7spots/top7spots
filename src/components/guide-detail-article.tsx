@@ -56,6 +56,7 @@ import type {
   GuideContentBlock as GuideCmsBlock,
   GuideItineraryItem,
   GuideFaq,
+  GuideQuickInfoItem,
   GuideRouteData,
   GuideSelectedItem,
   Restaurant,
@@ -236,10 +237,11 @@ export function GuideDetailArticle({
       : guide.guideType === "best_places"
         ? mainPageBlocks.filter((block) => block.type !== "selected-countries")
         : mainPageBlocks;
-  const faqPageBlocks = hasPageBlocks ? displayPageBlocks.filter((block) => block.type === "faq") : [];
+  const renderPageBlocks = dedupeEstimatedCostBlocks(displayPageBlocks);
+  const faqPageBlocks = hasPageBlocks ? renderPageBlocks.filter((block) => block.type === "faq") : [];
   const blockFaqItems = mergeFaqItems(faqPageBlocks.flatMap((block) => block.faqs || []));
   const visibleFaqItems = faqPageBlocks.length > 0 ? blockFaqItems : legacyFaqItems;
-  const contentListingBlocks = displayPageBlocks
+  const contentListingBlocks = renderPageBlocks
     .map((block) =>
       listingBlockForContentBlock(block, {
         guide,
@@ -253,7 +255,7 @@ export function GuideDetailArticle({
     )
     .filter((block): block is ResolvedGuideListingBlock => Boolean(block));
   const allListingBlocks = [...listingBlocks, ...contentListingBlocks];
-  const primaryPageBlocks = hasPageBlocks ? displayPageBlocks.filter((block) => block.type !== "faq") : [];
+  const primaryPageBlocks = hasPageBlocks ? renderPageBlocks.filter((block) => block.type !== "faq") : [];
   const bestPlacesIntroBlocks = guide.guideType === "best_places"
     ? primaryPageBlocks.filter((block) => block.type === "quick-answer" || block.type === "intro" || block.type === "overview")
     : [];
@@ -278,7 +280,7 @@ export function GuideDetailArticle({
     city,
     guide,
     hasPageBlocks,
-    pageBlocks: displayPageBlocks,
+    pageBlocks: renderPageBlocks,
     legacyBlocks: contentBlocks,
     renderedListingBlocks,
     hasStructuredSelectedItems: structuredSelectedItems.length > 0,
@@ -1322,7 +1324,11 @@ function GuidePageBlock({
     return <MapBlock block={block} />;
   }
 
-  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit" || block.type === "estimated-cost") {
+  if (block.type === "estimated-cost") {
+    return <EstimatedCostBlock block={block} />;
+  }
+
+  if (block.type === "travel-tips" || block.type === "warnings" || block.type === "best-time-to-visit") {
     return <TipsBlock block={block} />;
   }
 
@@ -1395,6 +1401,38 @@ function QuickAnswerBlock({ block }: { block: GuideCmsBlock }) {
         {block.title || "Quick Answer"}
       </h2>
       <MarkdownContent content={block.body} className="mt-3" />
+    </section>
+  );
+}
+
+function EstimatedCostBlock({ block }: { block: GuideCmsBlock }) {
+  const items = estimatedCostItemsForBlock(block);
+
+  if (items.length > 0) {
+    return (
+      <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-7">
+        <BlockHeading block={block} fallbackTitle="Estimated cost" />
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {items.map((item) => (
+            <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-orange-100 bg-[#FCFBF8] p-4 shadow-sm">
+              <p className="text-sm font-semibold text-[#C24A00]">{item.label}</p>
+              <MarkdownContent content={item.value} className="mt-2" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  const fallbackText = estimatedCostPlainText(block);
+  if (!fallbackText) {
+    return null;
+  }
+
+  return (
+    <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] [content-visibility:auto] [contain-intrinsic-size:1px_320px] md:p-7">
+      <BlockHeading block={block} fallbackTitle="Estimated cost" />
+      <MarkdownContent content={fallbackText} className="mt-4" />
     </section>
   );
 }
@@ -3129,6 +3167,96 @@ function splitQuickAnswerFromText(value: string) {
 
 function isPlaceholderQuickInfo(item: { label: string; value: string }) {
   return item.label.trim().toLowerCase() === "label" && item.value.trim().toLowerCase() === "value";
+}
+
+function dedupeEstimatedCostBlocks(blocks: GuideCmsBlock[]) {
+  const estimatedCostBlocks = blocks.filter((block) => block.type === "estimated-cost");
+  const preferredEstimatedCostBlock =
+    estimatedCostBlocks.find((block) => estimatedCostItemsForBlock(block).length > 0) || estimatedCostBlocks[0];
+  let emittedEstimatedCost = false;
+
+  return blocks.filter((block) => {
+    if (block.type !== "estimated-cost") {
+      return true;
+    }
+
+    if (emittedEstimatedCost || block !== preferredEstimatedCostBlock) {
+      return false;
+    }
+
+    emittedEstimatedCost = true;
+    return true;
+  });
+}
+
+function estimatedCostItemsForBlock(block: GuideCmsBlock): GuideQuickInfoItem[] {
+  const storedItems = (block.estimatedCost || []).filter((item) => item.label && item.value && !isEstimatedCostLabelOnly(item.value));
+  const parsedItems = storedItems.length > 0 ? storedItems : parseEstimatedCostItems(block.body || block.tips?.join("\n") || "");
+  const seen = new Set<string>();
+
+  return parsedItems.filter((item) => {
+    const label = normalizeDisplayKey(item.label);
+    const value = normalizeDisplayKey(item.value);
+    const key = `${label}:${value}`;
+
+    if (!label || !value || isEstimatedCostLabelOnly(item.label) || isEstimatedCostLabelOnly(item.value) || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function estimatedCostPlainText(block: GuideCmsBlock) {
+  if (estimatedCostItemsForBlock(block).length > 0) {
+    return "";
+  }
+
+  const parts = [block.body, ...(block.tips || [])]
+    .map((item) => String(item || "").trim())
+    .filter((item) => item && !isEstimatedCostLabelOnly(item));
+
+  return Array.from(new Set(parts)).join("\n\n");
+}
+
+function parseEstimatedCostItems(value: string) {
+  const labels = ["Budget", "Mid-range", "Premium"];
+  const items: GuideQuickInfoItem[] = [];
+
+  for (let index = 0; index < labels.length; index += 1) {
+    const label = labels[index];
+    const nextLabel = labels[index + 1];
+    const pattern = nextLabel
+      ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
+      : new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*)$`, "i");
+    const match = value.match(pattern);
+    const sectionValue = cleanEstimatedCostText(match?.[1] || "");
+
+    if (sectionValue) {
+      items.push({ label, value: sectionValue });
+    }
+  }
+
+  return items;
+}
+
+function cleanEstimatedCostText(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .filter((line) => line && !isEstimatedCostLabelOnly(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function isEstimatedCostLabelOnly(value: string) {
+  return /^(budget|mid-range|mid range|premium)\s*:?\s*$/i.test(value.trim());
+}
+
+function normalizeDisplayKey(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function isPlaceholderSelectedItem(item: GuideSelectedItem) {

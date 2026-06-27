@@ -39,11 +39,13 @@ type SelectorItems = {
 
 const manualBlockTypes: Array<{ value: GuideContentBlockType; label: string }> = [
   { value: "hero", label: "Hero" },
+  { value: "quick-answer", label: "Quick answer" },
   { value: "intro", label: "Intro" },
   { value: "overview", label: "Overview" },
   { value: "travel-tips", label: "Tips" },
   { value: "warnings", label: "Warnings" },
   { value: "best-time-to-visit", label: "Best time to visit" },
+  { value: "estimated-cost", label: "Estimated cost" },
   { value: "cta", label: "CTA text" },
   { value: "car-rental-cta", label: "Car rental CTA" },
   { value: "newsletter-cta", label: "Newsletter CTA" },
@@ -82,6 +84,7 @@ export function GuideContentBlocksField({
       ...block,
       itemIds: uniqueStrings(block.itemIds || []),
       quickInfo: block.quickInfo || [],
+      estimatedCost: block.estimatedCost || [],
       tips: block.tips || [],
       faqs: block.faqs || [],
     })),
@@ -277,6 +280,7 @@ function normalizeEditableBlock(block: GuideContentBlock): GuideContentBlock {
     ...block,
     itemIds: uniqueStrings(block.itemIds || []),
     quickInfo: block.quickInfo || [],
+    estimatedCost: block.estimatedCost || [],
     tips: block.tips || [],
     faqs: block.faqs || [],
   };
@@ -322,6 +326,27 @@ function BlockEditor({
         helperText="Use Label | Value on each line."
         placeholder={"Duration | 2 to 3 days\nBest for | First-time visitors"}
       />
+    );
+  }
+
+  if (block.type === "estimated-cost") {
+    return (
+      <div className="grid gap-4">
+        <KeyValueTextarea
+          label="Estimated cost cards"
+          value={formatQuickInfo(block.estimatedCost)}
+          onChange={(estimatedCost) => updateBlock(blockIndex, { estimatedCost: parseQuickInfo(estimatedCost) }, setBlocks)}
+          helperText="Use Budget | text, Mid-range | text, and Premium | text. Leave body empty when using cards."
+          placeholder={"Budget | Free and low-cost places, public transport, and casual meals.\nMid-range | Mix free places with a few paid attractions.\nPremium | Add premium viewpoints, fine dining, and private transfers."}
+        />
+        <LargeTextField
+          label="Plain fallback text"
+          value={block.body || ""}
+          onChange={(body) => updateBlock(blockIndex, { body }, setBlocks)}
+          placeholder="Use only when you do not have Budget, Mid-range, and Premium rows."
+          linkItems={allLinkItems(selectorItems)}
+        />
+      </div>
     );
   }
 
@@ -857,6 +882,7 @@ function blockDefaultsForType(type: GuideContentBlockType): Partial<GuideContent
     type,
     itemIds: [],
     quickInfo: [],
+    estimatedCost: [],
     tips: [],
     faqs: [],
     mapEmbedUrl: "",
@@ -923,6 +949,17 @@ function blockValidation(block: GuideContentBlock, selectorItems: SelectorItems)
     return block.quickInfo?.length ? "" : "Add at least one quick info row using Label | Value.";
   }
 
+  if (block.type === "estimated-cost") {
+    const estimatedCost = block.estimatedCost || [];
+    const labelOnly = estimatedCost.some((item) => !item.value.trim());
+
+    if (labelOnly) {
+      return "Remove empty Estimated Cost rows or add text for each label.";
+    }
+
+    return estimatedCost.length || block.body?.trim() ? "" : "Add Budget, Mid-range, and Premium rows or plain fallback text.";
+  }
+
   if (block.type === "map") {
     return block.mapEmbedUrl?.trim() ? "" : "Add a map embed URL.";
   }
@@ -970,6 +1007,7 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
       imageAlt: clean(block.imageAlt),
       itemIds: uniqueStrings(block.itemIds || []),
       quickInfo: block.quickInfo || [],
+      estimatedCost: block.estimatedCost || [],
       tips: uniqueStrings(block.tips || []),
       faqs: block.faqs || [],
       mapEmbedUrl: clean(block.mapEmbedUrl),
@@ -986,6 +1024,7 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
           block.image ||
           block.itemIds.length ||
           block.quickInfo.length ||
+          block.estimatedCost.length ||
           block.tips.length ||
           block.faqs.length ||
           block.mapEmbedUrl ||

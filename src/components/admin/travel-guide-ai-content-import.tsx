@@ -151,6 +151,7 @@ export function TravelGuideAiContentImport({
       guides,
       warnings,
     });
+    validateGuideImport(parsed, structuredImport.selectedItems || [], builderBlocks, warnings);
 
     if (builderBlocks.length > 0) {
       window.dispatchEvent(new CustomEvent("guide-builder-import", { detail: { blocks: builderBlocks } }));
@@ -197,10 +198,13 @@ export function TravelGuideAiContentImport({
             rows={12}
             className="min-h-56 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#2563EB] focus:bg-white focus:ring-4 focus:ring-blue-100"
             placeholder={
-              "Title: Best places in Muscat\nSlug: best-places-in-muscat\nCity: Muscat\nCountry: Oman\nCategory: City guide\nShort Description: A first-time guide to Muscat.\n\nDescription:\nUse this guide to plan the best stops.\n\nHero Image: /uploads/guides/muscat.jpg\nSelected Destinations: Mutrah Corniche, Sultan Qaboos Grand Mosque\nQuick Info:\nDuration | 2 days\nBest for | First-time visitors\n\nBest Time To Visit: October to April\nTravel Tips:\nBook popular activities early\nStart outdoor visits in the morning\n\nFAQs:\nQuestion: Is Muscat good for first-time visitors?\nAnswer: Yes, it is easy to plan with a few focused areas.\n\nSEO Title: Best places in Muscat | Top7Spots\nSEO Description: Plan the best places to visit in Muscat."
+              "Title: Best Places to Visit in Dubai\nCity: Dubai\nCountry: United Arab Emirates\nCategory: Best Places\nGuide Type: best_places\nShort Description: A focused guide to Dubai's strongest sightseeing areas and attractions.\n\nQuick Answer:\nFor most first-time visitors, prioritize Downtown Dubai, Dubai Marina/JBR, Old Dubai, Palm Jumeirah viewpoints, and one seasonal evening attraction.\n\nContent:\n## How to plan Dubai sightseeing by area\nCover Downtown Dubai, Palm Jumeirah, Dubai Marina/JBR, Old Dubai, and seasonal/evening attractions.\n\n## Best places in Dubai for first-time visitors\nExplain priority choices without turning the guide into an itinerary.\n\n## Best places in Dubai for families\nMention family-friendly places from the selected list.\n\n## Best free and low-cost places to visit in Dubai\nMention Dubai Fountain, JBR Beach, Dubai Marina Walk, Al Fahidi, Gold Souk, Spice Souk, and waterfront areas.\n\n## Best places to visit in Dubai at night\nMention Dubai Fountain, Dubai Marina, JBR Beach, Global Village, Downtown Dubai, and Palm Jumeirah viewpoints.\n\n## Best cultural places in Dubai\nMention Al Fahidi Historical District, Gold Souk, Spice Souk, Dubai Creek, and Dubai Frame.\n\n## Best indoor places in Dubai during summer\nMention Dubai Mall, Museum of the Future, Dubai Frame, Atlantis indoor experiences, and malls.\n\n## Suggested Dubai sightseeing plan\nGive simple 1-day, 3-day, and 5-day planning suggestions while keeping this a best_places guide.\n\nSelected Items:\ndestination | burj-khalifa | Burj Khalifa | Dubai | 1 | Burj Khalifa | Fresh 80-150 word guide-specific summary. | First-time visitors, skyline views | 2-3 hours | Dubai Mall, Dubai Fountain | Read more\n\nQuick Info:\nBest months | November to March\nGood for | First-time visitors, families, stopovers\n\nEstimated Cost:\nBudget:\nUse free waterfronts, souks, public beaches, and metro-friendly areas.\n\nMid-range:\nMix free areas with one or two paid headline attractions.\n\nPremium:\nAdd observation decks, private transfers, fine dining, and premium experiences.\n\nBest Time To Visit: November to March is the most comfortable season.\nTravel Tips:\nBook major paid attractions early.\nUse evenings for waterfront and outdoor areas in hotter months.\nCommon Mistakes:\nTrying to cross too many distant areas in one day.\nSkipping Old Dubai when planning only modern landmarks.\n\nFAQs:\nQuestion: How many days do you need for Dubai sightseeing?\nAnswer: Three to five days works well for most first-time visitors.\n\nSEO Title: Best Places to Visit in Dubai | Top7Spots\nSEO Description: Plan the best places to visit in Dubai by area, travel style, timing, and budget."
             }
           />
         </label>
+        <p className="text-xs leading-5 text-slate-500">
+          For competitive best_places guides, use fresh 80-150 word selected item summaries and add deeper planning sections for SEO depth. Major city guides usually need about 3,500-4,500 words when competition is high; do not copy destination page descriptions.
+        </p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -670,7 +674,7 @@ function buildGuideBuilderBlocks(
       id: "imported-intro",
       type: "intro",
       title: "Introduction",
-      body: parsed.content,
+      body: cleanImportedContentBody(parsed.content, parsed),
     });
   }
 
@@ -719,12 +723,13 @@ function buildGuideBuilderBlocks(
   }
 
   if (parsed.estimatedCost) {
+    const estimatedCost = parseEstimatedCostText(parsed.estimatedCost, context.warnings);
     blocks.push({
       id: "imported-estimated-cost",
       type: "estimated-cost",
       title: "Estimated cost",
-      body: parsed.estimatedCost,
-      tips: lines(parsed.estimatedCost).length > 1 ? lines(parsed.estimatedCost) : [],
+      body: estimatedCost.length > 0 ? undefined : parsed.estimatedCost,
+      estimatedCost,
     });
   }
 
@@ -760,6 +765,119 @@ function buildGuideBuilderBlocks(
   }
 
   return blocks;
+}
+
+function validateGuideImport(
+  parsed: ReturnType<typeof parseTravelGuideImportContent>,
+  selectedItems: GuideSelectedItem[],
+  blocks: GuideContentBlock[],
+  warnings: string[],
+) {
+  const guideType = normalizeGuideType(parsed.guideType);
+  const contentText = [
+    parsed.excerpt,
+    parsed.quickAnswer,
+    parsed.content,
+    parsed.bestTimeToVisit,
+    parsed.estimatedCost,
+    parsed.travelTips,
+    parsed.commonMistakes,
+    parsed.faqs,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  for (const item of selectedItems) {
+    const label = item.customTitle || item.itemName || item.itemSlug || item.itemId || "selected item";
+    const summaryWords = wordCount(item.customSummary);
+
+    if (!item.customSummary) {
+      warnings.push(`Selected item needs a fresh custom summary: ${label}.`);
+    } else if (summaryWords > 250) {
+      warnings.push(`Selected item summary is over 250 words: ${label}.`);
+    }
+  }
+
+  if (guideType === "best_places" && wordCount(contentText) < 2000) {
+    warnings.push("Warning: this best_places guide appears under 2,000 words. Competitive city guides often need deeper planning sections.");
+  }
+
+  if (guideType === "best_places" && hasDayByDayWording(parsed.content || "") && !hasSuggestedSightseeingPlan(parsed.content || "")) {
+    warnings.push('Warning: content has itinerary-style "Day 1 / Day 2 / Day 3" wording. Keep best_places guides non-itinerary unless it is inside a Suggested sightseeing plan section.');
+  }
+
+  const estimatedCostBlocks = blocks.filter((block) => block.type === "estimated-cost");
+  const hasStructuredEstimatedCost = estimatedCostBlocks.some((block) => (block.estimatedCost || []).length > 0);
+  const hasPlainEstimatedCost = estimatedCostBlocks.some((block) => Boolean(block.body));
+
+  if (hasStructuredEstimatedCost && hasPlainEstimatedCost) {
+    warnings.push("Warning: Estimated Cost has structured cards and plain text. Structured cards will be preferred.");
+  }
+
+  if (parsed.estimatedCost && parsed.content && /estimated cost\s*:/i.test(parsed.content)) {
+    warnings.push("Warning: Estimated Cost appears both in Content and the Estimated Cost field. The duplicate content copy will be ignored.");
+  }
+}
+
+function cleanImportedContentBody(
+  content: string,
+  parsed: ReturnType<typeof parseTravelGuideImportContent>,
+) {
+  if (!parsed.estimatedCost) {
+    return content;
+  }
+
+  return content
+    .replace(/(^|\n)#{2,3}\s*Estimated Cost[\s\S]*?(?=\n#{2,3}\s+|$)/i, "\n")
+    .replace(/(^|\n)Estimated Cost\s*:[\s\S]*?(?=\n[A-Z][^\n:]{2,80}\s*:|$)/i, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function wordCount(value?: string) {
+  return String(value || "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+function hasDayByDayWording(value: string) {
+  return /\bDay\s+[123]\b/i.test(value);
+}
+
+function hasSuggestedSightseeingPlan(value: string) {
+  return /suggested\s+dubai\s+sightseeing\s+plan|suggested\s+sightseeing\s+plan/i.test(value);
+}
+
+function parseEstimatedCostText(value: string | undefined, warnings: string[]): GuideQuickInfoItem[] {
+  const text = String(value || "").trim();
+  if (!text) {
+    return [];
+  }
+
+  const labels = ["Budget", "Mid-range", "Premium"];
+  const sections: GuideQuickInfoItem[] = [];
+
+  for (let index = 0; index < labels.length; index += 1) {
+    const label = labels[index];
+    const nextLabel = labels[index + 1];
+    const pattern = nextLabel
+      ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
+      : new RegExp(`${escapeRegExp(label)}\\s*:\\s*([\\s\\S]*)$`, "i");
+    const match = text.match(pattern);
+    const sectionValue = cleanEstimatedCostValue(match?.[1] || "");
+
+    if (match && !sectionValue) {
+      warnings.push(`Warning: Estimated Cost has an empty ${label} entry.`);
+    }
+
+    if (sectionValue) {
+      sections.push({ label, value: sectionValue });
+    }
+  }
+
+  if (sections.length > 0 && hasPlainEstimatedCostOutsideSections(text, labels)) {
+    warnings.push("Warning: Estimated Cost includes structured labels and extra plain text. Structured cards will be used.");
+  }
+
+  return dedupeQuickInfoItems(sections);
 }
 
 function pushEntityBlock(
@@ -871,6 +989,52 @@ function parseQuickInfoText(value?: string): GuideQuickInfoItem[] {
       return { label: "", value: "" };
     })
     .filter((item): item is GuideQuickInfoItem => Boolean(item.label && item.value && !isPlaceholderQuickInfo(item)));
+}
+
+function cleanEstimatedCostValue(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .filter((line) => !isEstimatedCostLabelOnly(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function hasPlainEstimatedCostOutsideSections(value: string, labels: string[]) {
+  const withoutSections = labels
+    .reduce((text, label, index) => {
+      const nextLabel = labels[index + 1];
+      const pattern = nextLabel
+        ? new RegExp(`${escapeRegExp(label)}\\s*:\\s*[\\s\\S]*?(?=\\n\\s*${escapeRegExp(nextLabel)}\\s*:|$)`, "i")
+        : new RegExp(`${escapeRegExp(label)}\\s*:\\s*[\\s\\S]*$`, "i");
+      return text.replace(pattern, "");
+    }, value)
+    .trim();
+
+  return Boolean(withoutSections);
+}
+
+function isEstimatedCostLabelOnly(value: string) {
+  return /^(budget|mid-range|mid range|premium)\s*:?\s*$/i.test(value.trim());
+}
+
+function dedupeQuickInfoItems(items: GuideQuickInfoItem[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = `${normalizeMatchValue(item.label)}:${normalizeMatchValue(item.value)}`;
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function cleanHeroExcerpt(value?: string) {

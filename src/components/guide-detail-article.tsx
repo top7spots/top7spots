@@ -1474,12 +1474,13 @@ function EstimatedCostBlock({ block }: { block: GuideCmsBlock }) {
 }
 
 function TipsBlock({ block }: { block: GuideCmsBlock }) {
-  const tips = block.tips || [];
+  const tips = block.type === "warnings" ? commonMistakesForBlock(block) : block.tips || [];
+  const body = block.type === "warnings" && tips.length > 0 ? "" : block.body;
 
   return (
     <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-7">
       <BlockHeading block={block} fallbackTitle={tipsFallbackTitle(block.type)} />
-      {block.body ? <MarkdownContent content={block.body} className="mt-4" /> : null}
+      {body ? <MarkdownContent content={body} className="mt-4" /> : null}
       {tips.length > 0 ? (
         <div className="mt-4 grid gap-2.5">
           {tips.map((tip) => (
@@ -2566,37 +2567,160 @@ function uniqueId(baseId: string, idCounts: Map<string, number>) {
 function resolveSimilarGuides(currentGuide: Guide, guides: Guide[], city?: City) {
   const selected = new Map<string, Guide>();
   const sameCitySlug = currentGuide.citySlug || city?.slug;
-  const sameCountryId = currentGuide.countryId;
+  const sameCountryId = guideCountryKey(currentGuide, city);
+  const currentPlaceKeys = guidePlaceKeys(currentGuide);
 
+  const eligibleGuides = guides.filter((guide) => guide.id !== currentGuide.id && isSafeGuideSlug(guide.slug));
   const addGuides = (items: Guide[]) => {
     for (const guide of items) {
-      if (guide.id !== currentGuide.id && isSafeGuideSlug(guide.slug) && !selected.has(guide.id)) {
+      if (!selected.has(guide.id)) {
         selected.set(guide.id, guide);
       }
     }
   };
 
+  addGuides(
+    guideStringListValues(currentGuide.relatedGuideSlugs)
+      .map((slug) => eligibleGuides.find((guide) => guide.slug === slugify(slug) || guide.id === slug))
+      .filter((guide): guide is Guide => Boolean(guide)),
+  );
+
   if (sameCitySlug) {
-    addGuides(guides.filter((guide) => guide.citySlug === sameCitySlug));
+    addGuides(sortGuidesNewestFirstList(eligibleGuides.filter((guide) => guide.citySlug === sameCitySlug)));
   }
 
   if (sameCountryId) {
-    addGuides(guides.filter((guide) => guide.countryId === sameCountryId));
+    addGuides(sortGuidesNewestFirstList(eligibleGuides.filter((guide) => guideCountryKey(guide) === sameCountryId)));
   }
 
-  if (currentGuide.category) {
-    addGuides(guides.filter((guide) => guide.category === currentGuide.category));
+  if (currentPlaceKeys.size > 0) {
+    addGuides(
+      sortGuidesNewestFirstList(
+        eligibleGuides.filter(
+          (guide) => isGuideContextCompatible(currentGuide, guide, city) && hasSharedGuidePlace(currentPlaceKeys, guide),
+        ),
+      ),
+    );
   }
 
-  addGuides(guides);
+  addGuides(
+    sortGuidesNewestFirstList(
+      eligibleGuides.filter(
+        (guide) =>
+          isGuideContextCompatible(currentGuide, guide, city) &&
+          isRelatedGuideTypeOrCategory(currentGuide, guide),
+      ),
+    ),
+  );
 
-  return Array.from(selected.values()).sort(sortGuidesNewestFirst);
+  const contextualFallbacks = eligibleGuides.filter((guide) => isGuideContextCompatible(currentGuide, guide, city));
+  if (selected.size < 6) {
+    addGuides(sortGuidesNewestFirstList(contextualFallbacks));
+  }
+
+  if (selected.size < 3) {
+    addGuides(sortGuidesNewestFirstList(eligibleGuides.filter((guide) => !hasConflictingGuideCountry(currentGuide, guide, city))));
+  }
+
+  return Array.from(selected.values());
+}
+
+function sortGuidesNewestFirstList(guides: Guide[]) {
+  return [...guides].sort(sortGuidesNewestFirst);
 }
 
 function sortGuidesNewestFirst(a: Guide, b: Guide) {
   const aTime = new Date(a.updatedAt || a.createdAt).getTime();
   const bTime = new Date(b.updatedAt || b.createdAt).getTime();
   return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+}
+
+function guideCountryKey(guide: Guide, city?: City) {
+  return slugify(guide.countryId || city?.country || "");
+}
+
+function guidePlaceKeys(guide: Guide) {
+  const keys = new Set<string>();
+  const add = (value?: string) => {
+    const key = slugify(value || "");
+    if (key) {
+      keys.add(key);
+    }
+  };
+
+  add(guide.citySlug);
+  add(guide.destinationId);
+  guideStringListValues(guide.relatedPlaceSlugs).forEach(add);
+  guide.guideSelectedItems.forEach((item) => {
+    add(item.itemId);
+    add(item.itemSlug);
+    add(item.itemName);
+    add(item.city);
+  });
+  guide.guideData.itinerary?.forEach((item) => {
+    add(item.destinationId);
+    add(item.placeTitle);
+  });
+
+  return keys;
+}
+
+function guideStringListValues(values: string[]) {
+  return values.flatMap((value) => String(value || "").split(/\r?\n|,|;/)).map((value) => value.trim()).filter(Boolean);
+}
+
+function hasSharedGuidePlace(currentPlaceKeys: Set<string>, guide: Guide) {
+  for (const key of guidePlaceKeys(guide)) {
+    if (currentPlaceKeys.has(key)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isRelatedGuideTypeOrCategory(currentGuide: Guide, guide: Guide) {
+  return (
+    currentGuide.guideType === guide.guideType ||
+    guideTypeFamily(currentGuide.guideType) === guideTypeFamily(guide.guideType) ||
+    Boolean(currentGuide.category && guide.category && slugify(currentGuide.category) === slugify(guide.category))
+  );
+}
+
+function guideTypeFamily(type: Guide["guideType"]) {
+  if (type === "best_places" || type === "things_to_do" || type === "itinerary" || type === "day_trip" || type === "road_trip") {
+    return "planning";
+  }
+
+  return type;
+}
+
+function isGuideContextCompatible(currentGuide: Guide, guide: Guide, city?: City) {
+  if (guide.citySlug && currentGuide.citySlug && guide.citySlug === currentGuide.citySlug) {
+    return true;
+  }
+
+  const currentCountry = guideCountryKey(currentGuide, city);
+  const candidateCountry = guideCountryKey(guide);
+
+  if (currentCountry && candidateCountry) {
+    return currentCountry === candidateCountry;
+  }
+
+  if (guide.citySlug && currentGuide.citySlug && guide.citySlug !== currentGuide.citySlug) {
+    return false;
+  }
+
+  return !candidateCountry;
+}
+
+function hasConflictingGuideCountry(currentGuide: Guide, guide: Guide, city?: City) {
+  const currentCountry = guideCountryKey(currentGuide, city);
+  const candidateCountry = guideCountryKey(guide);
+  return Boolean(
+    (currentGuide.citySlug && guide.citySlug && currentGuide.citySlug !== guide.citySlug) ||
+      (currentCountry && candidateCountry && currentCountry !== candidateCountry),
+  );
 }
 
 function guideToEntityCardItem(guide: Guide): GuideEntityCardItem {
@@ -3108,6 +3232,28 @@ function isSelectedEntityBlock(type: GuideCmsBlock["type"]) {
     type === "selected-activities" ||
     type === "related-guides"
   );
+}
+
+function commonMistakesForBlock(block: GuideCmsBlock) {
+  const seen = new Set<string>();
+  const values = [...(block.tips || []), ...splitCommonMistakeLines(block.body || "")];
+
+  return values.filter((value) => {
+    const normalized = normalizeDisplayKey(value);
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+
+    seen.add(normalized);
+    return true;
+  });
+}
+
+function splitCommonMistakeLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean);
 }
 
 function isSelectedReusableContentBlock(type: GuideCmsBlock["type"]) {

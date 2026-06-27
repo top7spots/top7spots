@@ -43,7 +43,7 @@ const manualBlockTypes: Array<{ value: GuideContentBlockType; label: string }> =
   { value: "intro", label: "Intro" },
   { value: "overview", label: "Overview" },
   { value: "travel-tips", label: "Tips" },
-  { value: "warnings", label: "Warnings" },
+  { value: "warnings", label: "Common mistakes" },
   { value: "best-time-to-visit", label: "Best time to visit" },
   { value: "estimated-cost", label: "Estimated cost" },
   { value: "cta", label: "CTA text" },
@@ -344,6 +344,18 @@ function BlockEditor({
   }
 
   if (listTextBlockTypes.includes(block.type)) {
+    if (block.type === "warnings") {
+      return (
+        <KeyValueTextarea
+          label="Common Mistakes, one per line"
+          value={commonMistakeLines(block).join("\n")}
+          onChange={(tips) => updateBlock(blockIndex, { body: undefined, tips: lines(tips) }, setBlocks)}
+          helperText="Add one mistake per line."
+          placeholder={"Trying to visit too many distant areas in one day.\nSkipping older neighborhoods when planning only modern landmarks."}
+        />
+      );
+    }
+
     return (
       <div className="grid gap-4">
         <LargeTextField
@@ -999,7 +1011,11 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
         type: block.type,
         title: clean(block.title),
         eyebrow: clean(block.eyebrow),
-        body: block.type === "estimated-cost" && estimatedCost.length > 0 ? undefined : clean(block.body),
+        body:
+          (block.type === "estimated-cost" && estimatedCost.length > 0) ||
+          (block.type === "warnings" && uniqueStrings(block.tips || []).length > 0)
+            ? undefined
+            : clean(block.body),
         image: clean(block.image),
         imageAlt: clean(block.imageAlt),
         itemIds: uniqueStrings(block.itemIds || []),
@@ -1064,7 +1080,7 @@ function quickInfoItems(value: unknown): GuideQuickInfoItem[] {
 }
 
 function lines(value: string) {
-  return uniqueStrings(value.split("\n"));
+  return uniqueStrings(value.split("\n").map((line) => line.replace(/^[-*]\s*/, "")));
 }
 
 function clean(value?: string) {
@@ -1099,6 +1115,10 @@ function blockSummary(block: GuideContentBlock) {
   }
 
   if (listTextBlockTypes.includes(block.type)) {
+    if (block.type === "warnings") {
+      return `${commonMistakeLines(block).length} common mistakes`;
+    }
+
     return `${block.tips?.length || 0} list items`;
   }
 
@@ -1111,7 +1131,7 @@ function blockTypeLabel(type: GuideContentBlockType) {
 
 function titlePlaceholder(type: GuideContentBlockType) {
   if (type === "intro") return "Introduction";
-  if (type === "warnings") return "What to know before you go";
+  if (type === "warnings") return "Common mistakes";
   if (type === "best-time-to-visit") return "Best time to visit";
   if (type === "cta") return "Plan your trip";
   return blockTypeLabel(type);
@@ -1119,20 +1139,24 @@ function titlePlaceholder(type: GuideContentBlockType) {
 
 function manualBodyLabel(type: GuideContentBlockType) {
   if (type === "travel-tips") return "Tips";
-  if (type === "warnings") return "Warnings";
+  if (type === "warnings") return "Common mistakes";
   if (type === "best-time-to-visit") return "Best time to visit";
   return "Text";
 }
 
 function manualBodyPlaceholder(type: GuideContentBlockType) {
   if (type === "travel-tips") return "Write practical tips for this guide.";
-  if (type === "warnings") return "Add cautions, closures, booking notes, or safety context.";
+  if (type === "warnings") return "Add one common mistake per line.";
   if (type === "best-time-to-visit") return "Explain the best months, seasons, or times of day.";
   return "Write the block text.";
 }
 
 function listFieldLabel(type: GuideContentBlockType) {
-  if (type === "warnings") return "Warnings, one per line";
+  if (type === "warnings") return "Common Mistakes, one per line";
   if (type === "best-time-to-visit") return "Season notes, one per line";
   return "Tips, one per line";
+}
+
+function commonMistakeLines(block: GuideContentBlock) {
+  return uniqueStrings([...(block.tips || []), ...lines(block.body || "")]);
 }

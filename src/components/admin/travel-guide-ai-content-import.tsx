@@ -749,8 +749,7 @@ function buildGuideBuilderBlocks(
       id: "imported-common-mistakes",
       type: "warnings",
       title: "Common mistakes",
-      body: parsed.commonMistakes,
-      tips: mistakes.length > 1 ? mistakes : [],
+      tips: mistakes.length > 0 ? mistakes : [],
     });
   }
 

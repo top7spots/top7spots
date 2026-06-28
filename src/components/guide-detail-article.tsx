@@ -1475,8 +1475,8 @@ function EstimatedCostBlock({ block }: { block: GuideCmsBlock }) {
 }
 
 function TipsBlock({ block }: { block: GuideCmsBlock }) {
-  const tips = block.type === "warnings" ? commonMistakesForBlock(block) : block.tips || [];
-  const body = block.type === "warnings" && tips.length > 0 ? "" : block.body;
+  const tips = tipsForBlock(block);
+  const body = bodyForTipsBlock(block, tips);
 
   return (
     <section id={block.id} className="scroll-mt-32 rounded-[1.75rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] [content-visibility:auto] [contain-intrinsic-size:1px_420px] md:p-7">
@@ -1735,6 +1735,22 @@ function MarkdownContent({
       })}
     </div>
   );
+}
+
+function tipsForBlock(block: GuideCmsBlock) {
+  if (block.type === "warnings") {
+    return commonMistakesForBlock(block);
+  }
+
+  return uniqueGuideTextItems(block.tips || []).filter((tip) => !isDuplicateStructuredText(tip, block.body || ""));
+}
+
+function bodyForTipsBlock(block: GuideCmsBlock, tips: string[]) {
+  if (block.type === "warnings" && tips.length > 0) {
+    return "";
+  }
+
+  return block.body || "";
 }
 
 function parseMarkdownBlocksWithHeadingIds(content: string, headingIdPrefix?: string): ParsedMarkdownBlock[] {
@@ -3587,6 +3603,40 @@ function displayEstimatedCostLabel(value: string) {
 
 function normalizeDisplayKey(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeComparableText(value: string) {
+  return normalizeDisplayKey(value).replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function isDuplicateStructuredText(item: string, body: string) {
+  const normalizedItem = normalizeComparableText(item);
+  const normalizedBody = normalizeComparableText(body);
+
+  if (!normalizedItem || !normalizedBody) {
+    return false;
+  }
+
+  return normalizedBody.includes(normalizedItem) || normalizedItem.includes(normalizedBody);
+}
+
+function uniqueGuideTextItems(values: string[]) {
+  const seen = new Set<string>();
+  const items: string[] = [];
+
+  for (const value of values) {
+    const text = value.trim();
+    const key = normalizeComparableText(text);
+
+    if (!text || !key || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    items.push(text);
+  }
+
+  return items;
 }
 
 function isPlaceholderSelectedItem(item: GuideSelectedItem) {

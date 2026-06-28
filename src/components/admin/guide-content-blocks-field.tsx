@@ -356,6 +356,18 @@ function BlockEditor({
       );
     }
 
+    if (block.type === "best-time-to-visit") {
+      return (
+        <LargeTextField
+          label="Best time to visit"
+          value={bestTimeText(block)}
+          onChange={(body) => updateBlock(blockIndex, { body, tips: [] }, setBlocks)}
+          placeholder={manualBodyPlaceholder(block.type)}
+          linkItems={allLinkItems(selectorItems)}
+        />
+      );
+    }
+
     return (
       <div className="grid gap-4">
         <LargeTextField
@@ -1005,6 +1017,7 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
     .map((block, index) => {
       const quickInfo = quickInfoItems((block as { quickInfo?: unknown }).quickInfo);
       const estimatedCost = quickInfoItems((block as { estimatedCost?: unknown }).estimatedCost);
+      const bestTimeBody = block.type === "best-time-to-visit" ? clean(bestTimeText(block)) : undefined;
 
       return {
         id: block.id || `guide-block-${index + 1}`,
@@ -1015,13 +1028,15 @@ function toPayload(blocks: GuideContentBlock[]): GuideContentBlock[] {
           (block.type === "estimated-cost" && estimatedCost.length > 0) ||
           (block.type === "warnings" && uniqueStrings(block.tips || []).length > 0)
             ? undefined
-            : clean(block.body),
+            : block.type === "best-time-to-visit"
+              ? bestTimeBody
+              : clean(block.body),
         image: clean(block.image),
         imageAlt: clean(block.imageAlt),
         itemIds: uniqueStrings(block.itemIds || []),
         quickInfo,
         estimatedCost,
-        tips: uniqueStrings(block.tips || []),
+        tips: block.type === "best-time-to-visit" && bestTimeBody ? [] : uniqueStrings(block.tips || []),
         faqs: block.faqs || [],
         mapEmbedUrl: clean(block.mapEmbedUrl),
         mapLabel: clean(block.mapLabel),
@@ -1159,4 +1174,8 @@ function listFieldLabel(type: GuideContentBlockType) {
 
 function commonMistakeLines(block: GuideContentBlock) {
   return uniqueStrings([...(block.tips || []), ...lines(block.body || "")]);
+}
+
+function bestTimeText(block: GuideContentBlock) {
+  return block.body?.trim() || uniqueStrings(block.tips || []).join("\n\n");
 }
